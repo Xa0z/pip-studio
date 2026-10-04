@@ -1,31 +1,222 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pip Studio · AI cartoon videos for your TikTok</title><link rel="icon" href="/logo.png"><style>
-:root{--card:#161B45;--text:#F4F5FF;--muted:#B9BEE6;--orange:#FF7A1A;--yellow:#FFD23F;--cyan:#3DF5FF}
-*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#0B1030,#3A1C6B);background-attachment:fixed;color:var(--text);font:17px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
-main{max-width:720px;margin:0 auto;padding:32px 16px 64px}
-h1{font-size:34px;line-height:1.2;margin:8px 0 4px}h1 span{color:var(--orange)}h2{color:var(--yellow);font-size:21px;margin-top:32px}
-a{color:var(--cyan)}.card{background:var(--card);border:1px solid #2A3170;border-radius:16px;padding:20px;margin:16px 0}
-.muted{color:var(--muted);font-size:15px}nav{display:flex;align-items:center;gap:16px;flex-wrap:wrap}nav img{width:40px;height:40px;border-radius:10px}
-.btn{display:inline-block;background:var(--orange);color:#fff;font-weight:600;padding:12px 24px;border-radius:24px;text-decoration:none;margin-top:8px}
-.hero{text-align:center}.hero img{width:180px;height:180px;border-radius:40px;margin-top:16px}
-</style></head>
-<body><main><nav><img src="/logo.png" alt=""><a href="/">Home</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a></nav>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pip Studio · Explainer videos for your TikTok, made from Telegram</title>
+<meta name="description" content="Pip Studio writes, animates, voices and posts one-minute explainer videos to your TikTok account. You set it up and approve videos in Telegram.">
+<link rel="icon" href="/logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="/"><img src="/logo.svg" alt="">Pip Studio</a>
+    <nav aria-label="Main">
+      <a class="opt" href="#how">How it works</a>
+      <a class="opt" href="#output">Output</a>
+      <a class="opt" href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a class="btn primary" href="https://t.me/PipStudio_bot">Open in Telegram</a>
+  </div>
+</header>
+
+<main id="main">
 <section class="hero">
-<img src="/logo.png" alt="Pip, an orange robot">
-<h1>Pip <span>Studio</span></h1>
-<p>A Telegram bot that runs a TikTok channel for you. It writes, animates, voices and posts short cartoon explainer videos in your niche, then shows you what works.</p>
-<a class="btn" href="https://t.me/PipStudio_bot">Open in Telegram</a>
+  <div class="wrap">
+    <div>
+      <p class="eyebrow">TikTok · 1080×1920 · about one minute</p>
+      <h1>A daily explainer video for your TikTok, written, animated and posted for you.</h1>
+      <p class="lead">Pick a niche and a cartoon host in Telegram. Each day Pip Studio writes a short script, records the voice-over, animates the scenes with captions and music, and sends you the finished video to approve before it posts.</p>
+      <div class="actions">
+        <a class="btn primary" href="https://t.me/PipStudio_bot">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M21 4 3 11l7 2 2 7 9-16Z"/><path d="m10 13 4-4"/></svg>
+          Start in Telegram
+        </a>
+        <a class="btn" href="#sample">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+          Play the sample
+        </a>
+      </div>
+      <ul class="facts">
+        <li><b>1–3 a day</b>on your schedule</li>
+        <li><b>Approval first</b>nothing posts unseen</li>
+        <li><b>30-day stats</b>for every video</li>
+      </ul>
+    </div>
+
+    <div id="sample">
+      <div class="editor" data-editor>
+        <div class="editor-bar">
+          <span class="name">venus-day-longer-than-year.mp4</span>
+          <span class="spec">1080×1920 · 30 fps · 1:02</span>
+        </div>
+        <div class="editor-body">
+          <ol class="shots" aria-label="Scenes">
+            <li><button class="shot" data-t="0"><img src="/media/scene-1.jpg" alt=""><span><span class="t">00:00</span><br><span class="h">A day longer than a year?</span></span></button></li>
+            <li><button class="shot" data-t="4"><img src="/media/scene-2.jpg" alt=""><span><span class="t">00:04</span><br><span class="h">Venus spins super slowly</span></span></button></li>
+            <li><button class="shot" data-t="10"><img src="/media/scene-3.jpg" alt=""><span><span class="t">00:10</span><br><span class="h">One trip around the Sun</span></span></button></li>
+            <li><button class="shot" data-t="17"><img src="/media/scene-4.jpg" alt=""><span><span class="t">00:17</span><br><span class="h">The day beats the year</span></span></button></li>
+            <li><button class="shot" data-t="24"><img src="/media/scene-5.jpg" alt=""><span><span class="t">00:24</span><br><span class="h">It spins backwards</span></span></button></li>
+            <li><button class="shot" data-t="29.5"><img src="/media/scene-6.jpg" alt=""><span><span class="t">00:29</span><br><span class="h">Sunrise in the west</span></span></button></li>
+            <li><button class="shot" data-t="35.5"><img src="/media/scene-7.jpg" alt=""><span><span class="t">00:35</span><br><span class="h">The hottest planet</span></span></button></li>
+            <li><button class="shot" data-t="42"><img src="/media/scene-8.jpg" alt=""><span><span class="t">00:42</span><br><span class="h">Hot enough to melt lead</span></span></button></li>
+            <li><button class="shot" data-t="49.5"><img src="/media/scene-9.jpg" alt=""><span><span class="t">00:49</span><br><span class="h">Quick recap</span></span></button></li>
+            <li><button class="shot" data-t="55"><img src="/media/scene-10.jpg" alt=""><span><span class="t">00:55</span><br><span class="h">A new fact every day</span></span></button></li>
+          </ol>
+          <div class="viewer">
+            <video src="/media/sample.mp4" poster="/media/poster.jpg" controls playsinline preload="metadata" aria-label="Sample video: a day on Venus is longer than its year"></video>
+          </div>
+        </div>
+        <div class="timeline" aria-hidden="true">
+          <div class="tc"><span data-now>00:00</span><span>01:02</span></div>
+          <div class="track-label">Scenes</div>
+          <div class="track" data-track></div>
+          <div class="track-label">Voice + music</div>
+          <div class="track audio"></div>
+        </div>
+      </div>
+      <p class="editor-note">An unedited test render from the same pipeline that makes your videos. Click a scene to jump to it.</p>
+    </div>
+  </div>
 </section>
-<div class="card"><h2 style="margin-top:0">How it works</h2>
-<ol>
-<li><b>Connect TikTok.</b> Log in with TikTok so Pip can post to your account and read your video stats.</li>
-<li><b>Pick a niche and a goal.</b> Space, animals, history, money and more. Grow followers, get views, or send people to a link.</li>
-<li><b>Choose a character and a voice.</b> Pip designs three original cartoon hosts; you pick one.</li>
-<li><b>Set a schedule.</b> One to three videos a day. In approval mode you see every video in Telegram before it posts.</li>
-<li><b>Watch the numbers.</b> /stats, weekly reports and a dashboard show views, likes, followers and which topics and hooks work best.</li>
-</ol></div>
-<div class="card"><h2 style="margin-top:0">What Pip does with TikTok</h2>
-<p>Pip uses TikTok Login Kit to connect your account, the Content Posting API to publish the videos you approved (or scheduled), and the Display API to read your profile, follower count and the views, likes, comments and shares of your videos. It never posts anywhere except your own account, and you can disconnect at any time with /disconnect.</p></div>
-<p class="muted" style="margin-top:40px">Pip Studio · <a href="https://t.me/PipStudio_bot">@PipStudio_bot</a> · Source code: <a href="https://github.com/Xa0z/pip-studio">github.com/Xa0z/pip-studio</a></p>
-</main></body></html>
+
+<section class="block" id="how">
+  <div class="wrap">
+    <h2>How it works</h2>
+    <p class="section-lead">Setup takes about five minutes in a chat with <a href="https://t.me/PipStudio_bot">@PipStudio_bot</a>. After that, videos arrive on schedule.</p>
+    <ol class="steps">
+      <li><h3>Connect TikTok</h3><p>Log in with TikTok so videos can be posted to your account and their stats read back.</p></li>
+      <li><h3>Add a Claude key</h3><p>Scripts are written by Claude using your own Anthropic API key, so you control the usage and cost.</p></li>
+      <li><h3>Pick a niche and a goal</h3><p>Science, history, psychology, money, tech, animals, languages or motivation. Grow followers, get views, or send people to a link.</p></li>
+      <li><h3>Choose a host and a voice</h3><p>You get three original cartoon characters to choose from, then three voice samples for the one you like.</p></li>
+      <li><h3>Set the schedule</h3><p>One to three videos a day at times you choose, in your time zone.</p></li>
+      <li><h3>Approve and post</h3><p>Each finished video comes to Telegram first. Tap Post, ask for a new version, or skip it.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="block" id="output">
+  <div class="wrap two">
+    <div>
+      <h2>What you get in each video</h2>
+      <p class="section-lead">Every render follows the same production spec, so your channel looks consistent from day one.</p>
+    </div>
+    <table class="spec-table">
+      <tr><th scope="row">Format</th><td class="mono">1080×1920 · 30 fps · H.264 · ~60 s</td></tr>
+      <tr><th scope="row">Script</th><td>One verified fact per video, opened with a hook in the first two seconds, closed with a recap.</td></tr>
+      <tr><th scope="row">Scenes</th><td>Eight to ten shots built from layouts like big numbers, side-by-side comparisons, step lists, orbits and recaps.</td></tr>
+      <tr><th scope="row">Voice</th><td>Narration recorded with the voice you picked, timed to the scenes.</td></tr>
+      <tr><th scope="row">Captions</th><td>Word-by-word captions burned in, with key words highlighted.</td></tr>
+      <tr><th scope="row">Audio</th><td>Background music mixed under the voice.</td></tr>
+      <tr><th scope="row">Host</th><td>Your own original character, kept identical in every video.</td></tr>
+      <tr><th scope="row">Publishing</th><td>Caption and hashtags written for the niche; posted straight to TikTok and labelled as AI-generated content.</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="block" id="stats">
+  <div class="wrap two">
+    <div>
+      <h2>Know what to make next</h2>
+      <p class="section-lead">Views, likes, comments, shares and follower growth are recorded for each video at 1 hour, 6 hours, 1 day, 3 days, 7 days and daily up to 30 days.</p>
+    </div>
+    <table class="spec-table">
+      <tr><th scope="row">/stats</th><td>Today and the last 30 days, with a chart.</td></tr>
+      <tr><th scope="row">/top</th><td>Your best videos by views, likes or engagement.</td></tr>
+      <tr><th scope="row">/report</th><td>A weekly summary of which topics, hooks and posting times worked, and what changes next week.</td></tr>
+      <tr><th scope="row">/dashboard</th><td>A full dashboard inside Telegram: video library, growth charts and a posting-time heatmap.</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="block" id="pricing">
+  <div class="wrap two">
+    <div>
+      <h2>Pricing</h2>
+      <p class="section-lead">Pip Studio itself is free. The only cost is the Claude usage for writing scripts, which Anthropic bills to your own API key.</p>
+    </div>
+    <div class="price">
+      <div class="amount">$0 <span class="muted" style="font-size:16px;font-weight:400">to use Pip Studio</span></div>
+      <ul>
+        <li>Rendering, voice, captions and posting included</li>
+        <li>Up to three videos a day</li>
+        <li>Stats, weekly reports and the dashboard</li>
+        <li>Your Anthropic API key, billed by Anthropic</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="block faq" id="faq">
+  <div class="wrap">
+    <h2>FAQ</h2>
+    <details><summary>Does anything get posted without my approval?</summary><p>Not in approval mode, which is the default. Every video is sent to you in Telegram first, and only posts when you tap Post.</p></details>
+    <details><summary>Can I use a famous cartoon character?</summary><p>No. Pip Studio only makes original characters and refuses requests for copyrighted or well-known ones, so your channel doesn't get copyright strikes.</p></details>
+    <details><summary>Where do the facts come from?</summary><p>Each script is built around one well-established fact with a named source, and the bot avoids medical, financial and other advice topics that need a professional.</p></details>
+    <details><summary>What happens to my data if I stop?</summary><p>Send /disconnect. TikTok access is revoked and your account, keys, characters, videos and stats are deleted. Videos already on TikTok stay there until you delete them. Details are in the <a href="/privacy">privacy policy</a>.</p></details>
+    <details><summary>Which accounts can I connect?</summary><p>One TikTok account per Telegram user, and only an account you own or manage.</p></details>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Pip Studio</span>
+    <nav aria-label="Footer">
+      <a href="https://t.me/PipStudio_bot">Telegram</a>
+      <a href="/terms">Terms</a>
+      <a href="/privacy">Privacy</a>
+      <a href="https://github.com/Xa0z/pip-studio">Source code</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const root = document.querySelector('[data-editor]');
+  if (!root) return;
+  const video = root.querySelector('video');
+  const shots = [...root.querySelectorAll('.shot')];
+  const times = shots.map((b) => Number(b.dataset.t));
+  const track = root.querySelector('[data-track]');
+  const now = root.querySelector('[data-now]');
+  const total = 62;
+  const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+  const clips = times.map((t, i) => {
+    const end = times[i + 1] ?? total;
+    const c = document.createElement('div');
+    c.className = 'clip';
+    c.style.flex = String(end - t);
+    c.textContent = String(i + 1).padStart(2, '0');
+    c.addEventListener('click', () => seek(t));
+    track.append(c);
+    return c;
+  });
+  const head = document.createElement('div');
+  head.className = 'playhead';
+  track.append(head);
+  const seek = (t) => { video.currentTime = t; video.play().catch(() => {}); };
+  shots.forEach((b, i) => b.addEventListener('click', () => seek(times[i])));
+  const update = () => {
+    const t = video.currentTime;
+    let idx = 0;
+    times.forEach((s, i) => { if (t >= s) idx = i; });
+    shots.forEach((b, i) => b.setAttribute('aria-current', String(i === idx)));
+    clips.forEach((c, i) => c.classList.toggle('on', i === idx));
+    head.style.left = `${Math.min(100, (t / (video.duration || total)) * 100)}%`;
+    now.textContent = fmt(t);
+  };
+  video.addEventListener('timeupdate', update);
+  video.addEventListener('seeked', update);
+  update();
+})();
+</script>
+</body>
+</html>

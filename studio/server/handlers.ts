@@ -14,7 +14,7 @@ import type {createBot} from '../bot/bot.js';
 const page = (title: string, body: string, status = 200) =>
   new Response(
     `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title>
-<style>body{font-family:system-ui,sans-serif;background:#0B1030;color:#fff;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;padding:16px}main{max-width:420px;text-align:center}a{display:inline-block;margin-top:16px;background:#FF7A1A;color:#fff;padding:12px 22px;border-radius:24px;text-decoration:none;font-weight:600}</style></head>
+<link rel="icon" href="/logo.svg"><style>body{font:16px/1.6 'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:#EBE5DF;color:#24272A;display:flex;min-height:100vh;align-items:center;justify-content:center;margin:0;padding:16px}main{max-width:420px;text-align:center;background:#F7F6F2;border:1px solid #D1D5DB;border-radius:8px;padding:28px 24px}h2{margin:0 0 8px;font-size:20px}p{color:#5B6B68;margin:0}a{display:inline-block;margin-top:20px;background:#465B53;color:#F7F6F2;padding:11px 18px;border-radius:8px;text-decoration:none;font-weight:600}a:focus-visible{outline:2px solid #73847C;outline-offset:2px}</style></head>
 <body><main>${body}</main></body></html>`,
     {status, headers: {'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store'}},
   );
@@ -29,7 +29,7 @@ export async function tiktokCallback(req: Request, store: Store, api: Api): Prom
   const q = url.searchParams;
   const state = verifyState(q.get('state') ?? '');
   if (!state.ok) {
-    return page('Link expired', `<h2>⏱ This link ${state.reason === 'expired' ? 'expired' : 'is not valid'}</h2><p>Go back to Telegram and tap <b>Connect TikTok</b> again.</p>${backLink()}`, 400);
+    return page('Link expired', `<h2>This link ${state.reason === 'expired' ? 'expired' : 'is not valid'}</h2><p>Go back to Telegram and tap <b>Connect TikTok</b> again.</p>${backLink()}`, 400);
   }
   const uid = state.telegramId;
   if (q.get('error')) {
@@ -71,7 +71,7 @@ export async function tiktokCallback(req: Request, store: Store, api: Api): Prom
       video_count: me.video_count ?? 0,
     });
     await onTikTokConnected(api, store, uid, me);
-    return page('Connected', `<h2>✅ Connected as @${(me.username ?? '').replace(/[<>&]/g, '')}</h2><p>You can close this page and go back to Telegram.</p>${backLink()}`);
+    return page('Connected', `<h2>Connected as @${(me.username ?? '').replace(/[<>&]/g, '')}</h2><p>You can close this page and go back to Telegram.</p>${backLink()}`);
   } catch (e) {
     console.error('TikTok callback failed:', redact((e as Error).message));
     await api.sendMessage(uid, '⚠️ Connecting TikTok failed. Tap /start and try again.').catch(() => undefined);
