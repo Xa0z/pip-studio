@@ -138,11 +138,14 @@ Your existing TikTok developer app (from Pip Explains) needs a web login now, be
    Actions > **Post Pip video** > **...** > **Disable workflow**.
 
 ## 7. Connect Telegram to Vercel
-On your computer, in the repo folder:
+Open `https://<your-app>.vercel.app/api/setup` in your browser. You should see `"ok": true` with
+`setWebhook`, `setMyCommands` and `setChatMenuButton` all `ok`. The menu button opens the dashboard.
+Opening it again is harmless. If you change `TELEGRAM_WEBHOOK_SECRET`, open `/api/setup?force=<the new secret>`.
+
+Or from your computer, in the repo folder:
 ```
 TELEGRAM_BOT_TOKEN=... TELEGRAM_WEBHOOK_SECRET=... PUBLIC_BASE_URL=https://<your-app>.vercel.app npm run set-webhook
 ```
-You should see `setWebhook: ok`, `setMyCommands: ok`, `setChatMenuButton: ok`. The menu button opens the dashboard.
 
 Optional (faster cold starts): open `https://api.telegram.org/bot<TOKEN>/getMe`, copy the `result` object
 and add it in Vercel as `BOT_INFO`.
