@@ -68,7 +68,9 @@ export function createBot(deps: BotDeps) {
     try {
       await deps.dispatch(job.id);
     } catch (e) {
-      await store.updateJob(job.id, {status: 'failed', log: 'could not start GitHub job'});
+      const why = redact(e instanceof Error ? e.message : String(e));
+      console.error(`Could not start ${kind} job ${job.id}: ${why}`);
+      await store.updateJob(job.id, {status: 'failed', log: `could not start GitHub job: ${why}`.slice(0, 500)});
       await ctx.reply(T.jobFailed('starting the job'), html(K.retry(`rj:${job.id}`)));
       return null;
     }
