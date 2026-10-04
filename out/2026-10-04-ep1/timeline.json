@@ -1,0 +1,1007 @@
+{
+  "scenes": [
+    {
+      "role": "hook",
+      "narration": "A day on Venus is longer than its year.",
+      "headline": "A day longer than a year?",
+      "highlight": [
+        "longer"
+      ],
+      "pip": {
+        "expression": "surprised",
+        "pose": "idle"
+      },
+      "from": 0,
+      "durationInFrames": 99
+    },
+    {
+      "role": "fact",
+      "narration": "Here is why. Venus spins super slowly. One full spin takes about two hundred forty-three Earth days.",
+      "headline": "Venus spins super slowly",
+      "highlight": [
+        "slowly"
+      ],
+      "pip": {
+        "expression": "thinking",
+        "pose": "pointing"
+      },
+      "visual": {
+        "layout": "bigNumber",
+        "value": 243,
+        "unit": "days",
+        "label": "for Venus to spin once",
+        "icon": "planet"
+      },
+      "from": 99,
+      "durationInFrames": 218
+    },
+    {
+      "role": "fact",
+      "narration": "But its trip around the Sun is quicker. One full orbit takes only about two hundred twenty-five Earth days.",
+      "headline": "One trip around the Sun",
+      "highlight": [
+        "Sun"
+      ],
+      "pip": {
+        "expression": "happy",
+        "pose": "pointing"
+      },
+      "visual": {
+        "layout": "orbit",
+        "center": "sun",
+        "satellite": "planet",
+        "label": "One orbit: about 225 days"
+      },
+      "from": 317,
+      "durationInFrames": 217
+    },
+    {
+      "role": "fact",
+      "narration": "So on Venus, one single day lasts longer than a whole year. Your birthday would come before tomorrow!",
+      "headline": "The day beats the year",
+      "highlight": [
+        "day"
+      ],
+      "pip": {
+        "expression": "excited",
+        "pose": "jumping"
+      },
+      "visual": {
+        "layout": "compare",
+        "unit": "days",
+        "items": [
+          {
+            "label": "Venus day",
+            "value": 243,
+            "icon": "clock"
+          },
+          {
+            "label": "Venus year",
+            "value": 225,
+            "icon": "planet"
+          }
+        ]
+      },
+      "from": 534,
+      "durationInFrames": 202
+    },
+    {
+      "role": "fact",
+      "narration": "And it gets even weirder. Venus spins backwards compared to Earth and most other planets.",
+      "headline": "It spins backwards",
+      "highlight": [
+        "backwards"
+      ],
+      "pip": {
+        "expression": "surprised",
+        "pose": "idle"
+      },
+      "visual": {
+        "layout": "spotlight",
+        "icon": "planet",
+        "caption": "Venus spins the opposite way to Earth"
+      },
+      "from": 736,
+      "durationInFrames": 184
+    },
+    {
+      "role": "fact",
+      "narration": "That means on Venus, the Sun rises in the west and slowly sets in the east.",
+      "headline": "Sunrise in the west",
+      "highlight": [
+        "west"
+      ],
+      "pip": {
+        "expression": "wink",
+        "pose": "pointing"
+      },
+      "visual": {
+        "layout": "steps",
+        "steps": [
+          {
+            "icon": "sun",
+            "text": "Sun rises in the west"
+          },
+          {
+            "icon": "clock",
+            "text": "Crosses the sky slowly"
+          },
+          {
+            "icon": "moon",
+            "text": "Sets in the east"
+          }
+        ]
+      },
+      "from": 920,
+      "durationInFrames": 164
+    },
+    {
+      "role": "fact",
+      "narration": "Venus is also the hottest planet in our solar system, even though Mercury is closer to the Sun.",
+      "headline": "The hottest planet",
+      "highlight": [
+        "hottest"
+      ],
+      "pip": {
+        "expression": "thinking",
+        "pose": "idle"
+      },
+      "visual": {
+        "layout": "compare",
+        "unit": "°C",
+        "items": [
+          {
+            "label": "Venus",
+            "value": 475,
+            "icon": "fire"
+          },
+          {
+            "label": "Mercury by day",
+            "value": 430,
+            "icon": "sun"
+          }
+        ]
+      },
+      "from": 1084,
+      "durationInFrames": 198
+    },
+    {
+      "role": "fact",
+      "narration": "Its thick clouds trap heat, so the ground reaches about four hundred seventy-five degrees Celsius. Hot enough to melt lead!",
+      "headline": "Hot enough to melt lead",
+      "highlight": [
+        "melt lead"
+      ],
+      "pip": {
+        "expression": "surprised",
+        "pose": "jumping"
+      },
+      "visual": {
+        "layout": "bigNumber",
+        "value": 475,
+        "unit": "°C",
+        "label": "on the ground of Venus",
+        "icon": "thermometer"
+      },
+      "from": 1282,
+      "durationInFrames": 234
+    },
+    {
+      "role": "recap",
+      "narration": "Quick recap. Venus spins slowly and backwards, so its day is longer than its year.",
+      "headline": "Quick recap",
+      "highlight": [
+        "recap"
+      ],
+      "pip": {
+        "expression": "happy",
+        "pose": "pointing"
+      },
+      "bullets": [
+        "Day: 243 Earth days",
+        "Year: 225 Earth days",
+        "Sun rises in the west"
+      ],
+      "from": 1516,
+      "durationInFrames": 178
+    },
+    {
+      "role": "cta",
+      "narration": "Follow Pip for a new mind-blowing fact every day!",
+      "headline": "A new fact every day!",
+      "highlight": [
+        "every day"
+      ],
+      "pip": {
+        "expression": "happy",
+        "pose": "waving"
+      },
+      "from": 1694,
+      "durationInFrames": 166
+    }
+  ],
+  "words": [
+    {
+      "text": "A",
+      "start": 0.18,
+      "end": 0.22999999999999998
+    },
+    {
+      "text": "day",
+      "start": 0.22,
+      "end": 0.43000000000000005
+    },
+    {
+      "text": "on",
+      "start": 0.43000000000000005,
+      "end": 0.57
+    },
+    {
+      "text": "Venus",
+      "start": 0.57,
+      "end": 0.91
+    },
+    {
+      "text": "is",
+      "start": 0.91,
+      "end": 1.06
+    },
+    {
+      "text": "longer",
+      "start": 1.06,
+      "end": 1.48
+    },
+    {
+      "text": "than",
+      "start": 1.48,
+      "end": 1.76
+    },
+    {
+      "text": "its",
+      "start": 1.76,
+      "end": 1.97
+    },
+    {
+      "text": "year.",
+      "start": 1.97,
+      "end": 2.426083333333333
+    },
+    {
+      "text": "Here",
+      "start": 3.4663072916661237,
+      "end": 3.8563072916661234
+    },
+    {
+      "text": "is",
+      "start": 3.8563072916661234,
+      "end": 4.086307291666124
+    },
+    {
+      "text": "why.",
+      "start": 4.086307291666124,
+      "end": 4.506307291666124
+    },
+    {
+      "text": "Venus",
+      "start": 4.506307291666124,
+      "end": 4.9763072916661235
+    },
+    {
+      "text": "spins",
+      "start": 4.9763072916661235,
+      "end": 5.346307291666124
+    },
+    {
+      "text": "super",
+      "start": 5.346307291666124,
+      "end": 5.7663072916661235
+    },
+    {
+      "text": "slowly.",
+      "start": 5.7663072916661235,
+      "end": 6.546307291666124
+    },
+    {
+      "text": "One",
+      "start": 6.546307291666124,
+      "end": 6.866307291666123
+    },
+    {
+      "text": "full",
+      "start": 6.866307291666123,
+      "end": 7.086307291666124
+    },
+    {
+      "text": "spin",
+      "start": 7.086307291666124,
+      "end": 7.396307291666123
+    },
+    {
+      "text": "takes",
+      "start": 7.396307291666123,
+      "end": 7.786307291666124
+    },
+    {
+      "text": "about",
+      "start": 7.786307291666124,
+      "end": 8.176307291666124
+    },
+    {
+      "text": "two",
+      "start": 8.176307291666124,
+      "end": 8.282021577380409
+    },
+    {
+      "text": "hundred",
+      "start": 8.282021577380409,
+      "end": 8.528688244047077
+    },
+    {
+      "text": "forty-three",
+      "start": 8.528688244047077,
+      "end": 8.916307291666126
+    },
+    {
+      "text": "Earth",
+      "start": 8.916307291666124,
+      "end": 9.316307291666124
+    },
+    {
+      "text": "days.",
+      "start": 9.316307291666124,
+      "end": 9.70409895833279
+    },
+    {
+      "text": "But",
+      "start": 10.694322916665579,
+      "end": 10.87432291666558
+    },
+    {
+      "text": "its",
+      "start": 10.87432291666558,
+      "end": 11.15432291666558
+    },
+    {
+      "text": "trip",
+      "start": 11.15432291666558,
+      "end": 11.37432291666558
+    },
+    {
+      "text": "around",
+      "start": 11.37432291666558,
+      "end": 11.80432291666558
+    },
+    {
+      "text": "the",
+      "start": 11.80432291666558,
+      "end": 12.03432291666558
+    },
+    {
+      "text": "Sun",
+      "start": 12.03432291666558,
+      "end": 12.21432291666558
+    },
+    {
+      "text": "is",
+      "start": 12.21432291666558,
+      "end": 12.41432291666558
+    },
+    {
+      "text": "quicker.",
+      "start": 12.41432291666558,
+      "end": 13.14432291666558
+    },
+    {
+      "text": "One",
+      "start": 13.14432291666558,
+      "end": 13.364322916665579
+    },
+    {
+      "text": "full",
+      "start": 13.364322916665579,
+      "end": 13.674322916665579
+    },
+    {
+      "text": "orbit",
+      "start": 13.674322916665579,
+      "end": 14.114322916665579
+    },
+    {
+      "text": "takes",
+      "start": 14.114322916665579,
+      "end": 14.46432291666558
+    },
+    {
+      "text": "only",
+      "start": 14.46432291666558,
+      "end": 14.74432291666558
+    },
+    {
+      "text": "about",
+      "start": 14.74432291666558,
+      "end": 15.19432291666558
+    },
+    {
+      "text": "two",
+      "start": 15.19432291666558,
+      "end": 15.311465773808436
+    },
+    {
+      "text": "hundred",
+      "start": 15.311465773808436,
+      "end": 15.58479910714177
+    },
+    {
+      "text": "twenty-five",
+      "start": 15.58479910714177,
+      "end": 16.01432291666558
+    },
+    {
+      "text": "Earth",
+      "start": 16.014322916665577,
+      "end": 16.54432291666558
+    },
+    {
+      "text": "days.",
+      "start": 16.54432291666558,
+      "end": 16.94019791666558
+    },
+    {
+      "text": "So",
+      "start": 17.97042187499837,
+      "end": 18.08042187499837
+    },
+    {
+      "text": "on",
+      "start": 18.08042187499837,
+      "end": 18.25042187499837
+    },
+    {
+      "text": "Venus,",
+      "start": 18.25042187499837,
+      "end": 18.940421874998368
+    },
+    {
+      "text": "one",
+      "start": 18.940421874998368,
+      "end": 19.120421874998367
+    },
+    {
+      "text": "single",
+      "start": 19.120421874998367,
+      "end": 19.570421874998367
+    },
+    {
+      "text": "day",
+      "start": 19.570421874998367,
+      "end": 19.780421874998368
+    },
+    {
+      "text": "lasts",
+      "start": 19.780421874998368,
+      "end": 20.15042187499837
+    },
+    {
+      "text": "longer",
+      "start": 20.15042187499837,
+      "end": 20.620421874998367
+    },
+    {
+      "text": "than",
+      "start": 20.620421874998367,
+      "end": 20.93042187499837
+    },
+    {
+      "text": "a",
+      "start": 20.93042187499837,
+      "end": 21.00042187499837
+    },
+    {
+      "text": "whole",
+      "start": 21.00042187499837,
+      "end": 21.370421874998367
+    },
+    {
+      "text": "year.",
+      "start": 21.370421874998367,
+      "end": 21.940421874998368
+    },
+    {
+      "text": "Your",
+      "start": 21.940421874998368,
+      "end": 22.190421874998368
+    },
+    {
+      "text": "birthday",
+      "start": 22.190421874998368,
+      "end": 22.56042187499837
+    },
+    {
+      "text": "would",
+      "start": 22.56042187499837,
+      "end": 22.83042187499837
+    },
+    {
+      "text": "come",
+      "start": 22.83042187499837,
+      "end": 23.070421874998367
+    },
+    {
+      "text": "before",
+      "start": 23.070421874998367,
+      "end": 23.36042187499837
+    },
+    {
+      "text": "tomorrow!",
+      "start": 23.36042187499837,
+      "end": 23.689463541665035
+    },
+    {
+      "text": "And",
+      "start": 24.679687499997826,
+      "end": 24.909687499997826
+    },
+    {
+      "text": "it",
+      "start": 24.909687499997826,
+      "end": 25.079687499997824
+    },
+    {
+      "text": "gets",
+      "start": 25.079687499997824,
+      "end": 25.419687499997824
+    },
+    {
+      "text": "even",
+      "start": 25.419687499997824,
+      "end": 25.759687499997824
+    },
+    {
+      "text": "weirder.",
+      "start": 25.759687499997824,
+      "end": 26.389687499997823
+    },
+    {
+      "text": "Venus",
+      "start": 26.389687499997823,
+      "end": 26.749687499997826
+    },
+    {
+      "text": "spins",
+      "start": 26.749687499997826,
+      "end": 27.109687499997825
+    },
+    {
+      "text": "backwards",
+      "start": 27.109687499997825,
+      "end": 27.789687499997825
+    },
+    {
+      "text": "compared",
+      "start": 27.789687499997825,
+      "end": 28.169687499997824
+    },
+    {
+      "text": "to",
+      "start": 28.169687499997824,
+      "end": 28.319687499997826
+    },
+    {
+      "text": "Earth",
+      "start": 28.319687499997826,
+      "end": 28.689687499997824
+    },
+    {
+      "text": "and",
+      "start": 28.689687499997824,
+      "end": 28.859687499997825
+    },
+    {
+      "text": "most",
+      "start": 28.859687499997825,
+      "end": 29.089687499997826
+    },
+    {
+      "text": "other",
+      "start": 29.089687499997826,
+      "end": 29.379687499997825
+    },
+    {
+      "text": "planets.",
+      "start": 29.379687499997825,
+      "end": 29.812645833331157
+    },
+    {
+      "text": "That",
+      "start": 30.812869791663946,
+      "end": 31.052869791663948
+    },
+    {
+      "text": "means",
+      "start": 31.052869791663948,
+      "end": 31.412869791663947
+    },
+    {
+      "text": "on",
+      "start": 31.412869791663947,
+      "end": 31.542869791663946
+    },
+    {
+      "text": "Venus,",
+      "start": 31.542869791663946,
+      "end": 32.122869791663945
+    },
+    {
+      "text": "the",
+      "start": 32.122869791663945,
+      "end": 32.32286979166395
+    },
+    {
+      "text": "Sun",
+      "start": 32.32286979166395,
+      "end": 32.57286979166395
+    },
+    {
+      "text": "rises",
+      "start": 32.57286979166395,
+      "end": 33.012869791663945
+    },
+    {
+      "text": "in",
+      "start": 33.012869791663945,
+      "end": 33.162869791663944
+    },
+    {
+      "text": "the",
+      "start": 33.162869791663944,
+      "end": 33.38286979166395
+    },
+    {
+      "text": "west",
+      "start": 33.38286979166395,
+      "end": 33.692869791663945
+    },
+    {
+      "text": "and",
+      "start": 33.692869791663945,
+      "end": 33.902869791663946
+    },
+    {
+      "text": "slowly",
+      "start": 33.902869791663946,
+      "end": 34.32286979166395
+    },
+    {
+      "text": "sets",
+      "start": 34.32286979166395,
+      "end": 34.60286979166395
+    },
+    {
+      "text": "in",
+      "start": 34.60286979166395,
+      "end": 34.74286979166395
+    },
+    {
+      "text": "the",
+      "start": 34.74286979166395,
+      "end": 34.95286979166394
+    },
+    {
+      "text": "east.",
+      "start": 34.95286979166394,
+      "end": 35.26707812499728
+    },
+    {
+      "text": "Venus",
+      "start": 36.30730208333007,
+      "end": 36.617302083330074
+    },
+    {
+      "text": "is",
+      "start": 36.617302083330074,
+      "end": 36.787302083330076
+    },
+    {
+      "text": "also",
+      "start": 36.787302083330076,
+      "end": 37.077302083330075
+    },
+    {
+      "text": "the",
+      "start": 37.077302083330075,
+      "end": 37.30730208333007
+    },
+    {
+      "text": "hottest",
+      "start": 37.30730208333007,
+      "end": 37.83730208333007
+    },
+    {
+      "text": "planet",
+      "start": 37.83730208333007,
+      "end": 38.357302083330076
+    },
+    {
+      "text": "in",
+      "start": 38.357302083330076,
+      "end": 38.51730208333007
+    },
+    {
+      "text": "our",
+      "start": 38.51730208333007,
+      "end": 38.77730208333007
+    },
+    {
+      "text": "solar",
+      "start": 38.77730208333007,
+      "end": 39.20730208333007
+    },
+    {
+      "text": "system,",
+      "start": 39.20730208333007,
+      "end": 39.74730208333008
+    },
+    {
+      "text": "even",
+      "start": 39.74730208333008,
+      "end": 39.99730208333008
+    },
+    {
+      "text": "though",
+      "start": 39.99730208333008,
+      "end": 40.37730208333007
+    },
+    {
+      "text": "Mercury",
+      "start": 40.37730208333007,
+      "end": 40.83730208333007
+    },
+    {
+      "text": "is",
+      "start": 40.83730208333007,
+      "end": 40.94730208333007
+    },
+    {
+      "text": "closer",
+      "start": 40.94730208333007,
+      "end": 41.33730208333007
+    },
+    {
+      "text": "to",
+      "start": 41.33730208333007,
+      "end": 41.44730208333007
+    },
+    {
+      "text": "the",
+      "start": 41.44730208333007,
+      "end": 41.63730208333007
+    },
+    {
+      "text": "Sun.",
+      "start": 41.63730208333007,
+      "end": 41.887677083330075
+    },
+    {
+      "text": "Its",
+      "start": 42.87790104166287,
+      "end": 43.15790104166287
+    },
+    {
+      "text": "thick",
+      "start": 43.15790104166287,
+      "end": 43.54790104166287
+    },
+    {
+      "text": "clouds",
+      "start": 43.54790104166287,
+      "end": 44.01790104166287
+    },
+    {
+      "text": "trap",
+      "start": 44.01790104166287,
+      "end": 44.36790104166287
+    },
+    {
+      "text": "heat,",
+      "start": 44.36790104166287,
+      "end": 44.68790104166287
+    },
+    {
+      "text": "so",
+      "start": 44.68790104166287,
+      "end": 44.807901041662866
+    },
+    {
+      "text": "the",
+      "start": 44.807901041662866,
+      "end": 45.01790104166287
+    },
+    {
+      "text": "ground",
+      "start": 45.01790104166287,
+      "end": 45.35790104166286
+    },
+    {
+      "text": "reaches",
+      "start": 45.35790104166286,
+      "end": 45.807901041662866
+    },
+    {
+      "text": "about",
+      "start": 45.807901041662866,
+      "end": 46.32790104166286
+    },
+    {
+      "text": "four",
+      "start": 46.32790104166286,
+      "end": 46.493118432967215
+    },
+    {
+      "text": "hundred",
+      "start": 46.493118432967215,
+      "end": 46.78224886774982
+    },
+    {
+      "text": "seventy-five",
+      "start": 46.78224886774982,
+      "end": 47.277901041662865
+    },
+    {
+      "text": "degrees",
+      "start": 47.277901041662865,
+      "end": 47.997901041662864
+    },
+    {
+      "text": "Celsius.",
+      "start": 47.997901041662864,
+      "end": 49.04790104166287
+    },
+    {
+      "text": "Hot",
+      "start": 49.04790104166287,
+      "end": 49.22790104166287
+    },
+    {
+      "text": "enough",
+      "start": 49.22790104166287,
+      "end": 49.597901041662865
+    },
+    {
+      "text": "to",
+      "start": 49.597901041662865,
+      "end": 49.71790104166286
+    },
+    {
+      "text": "melt",
+      "start": 49.71790104166286,
+      "end": 49.957901041662865
+    },
+    {
+      "text": "lead!",
+      "start": 49.957901041662865,
+      "end": 50.24319270832953
+    },
+    {
+      "text": "Quick",
+      "start": 50.677901041662864,
+      "end": 51.04790104166286
+    },
+    {
+      "text": "recap.",
+      "start": 51.04790104166286,
+      "end": 51.71790104166286
+    },
+    {
+      "text": "Venus",
+      "start": 51.71790104166286,
+      "end": 52.00790104166286
+    },
+    {
+      "text": "spins",
+      "start": 52.00790104166286,
+      "end": 52.40790104166286
+    },
+    {
+      "text": "slowly",
+      "start": 52.40790104166286,
+      "end": 52.887901041662865
+    },
+    {
+      "text": "and",
+      "start": 52.887901041662865,
+      "end": 53.12790104166286
+    },
+    {
+      "text": "backwards,",
+      "start": 53.12790104166286,
+      "end": 53.887901041662865
+    },
+    {
+      "text": "so",
+      "start": 53.887901041662865,
+      "end": 54.00790104166286
+    },
+    {
+      "text": "its",
+      "start": 54.00790104166286,
+      "end": 54.237901041662866
+    },
+    {
+      "text": "day",
+      "start": 54.237901041662866,
+      "end": 54.387901041662865
+    },
+    {
+      "text": "is",
+      "start": 54.387901041662865,
+      "end": 54.50790104166286
+    },
+    {
+      "text": "longer",
+      "start": 54.50790104166286,
+      "end": 54.887901041662865
+    },
+    {
+      "text": "than",
+      "start": 54.887901041662865,
+      "end": 55.137901041662865
+    },
+    {
+      "text": "its",
+      "start": 55.137901041662865,
+      "end": 55.32790104166286
+    },
+    {
+      "text": "year.",
+      "start": 55.32790104166286,
+      "end": 55.59306770832953
+    },
+    {
+      "text": "Follow",
+      "start": 56.66329166666232,
+      "end": 56.98329166666232
+    },
+    {
+      "text": "Pip",
+      "start": 56.98329166666232,
+      "end": 57.40329166666232
+    },
+    {
+      "text": "for",
+      "start": 57.40329166666232,
+      "end": 57.45329166666232
+    },
+    {
+      "text": "a",
+      "start": 57.44329166666232,
+      "end": 57.493291666662316
+    },
+    {
+      "text": "new",
+      "start": 57.47329166666232,
+      "end": 57.68329166666232
+    },
+    {
+      "text": "mind-blowing",
+      "start": 57.68329166666232,
+      "end": 58.57329166666232
+    },
+    {
+      "text": "fact",
+      "start": 58.57329166666232,
+      "end": 58.91329166666232
+    },
+    {
+      "text": "every",
+      "start": 58.91329166666232,
+      "end": 59.213291666662315
+    },
+    {
+      "text": "day!",
+      "start": 59.213291666662315,
+      "end": 59.49999999999565
+    }
+  ],
+  "speechEnd": 59.49999999999565,
+  "speed": 1
+}

@@ -1,0 +1,218 @@
+{
+  "episode": 2,
+  "title": "Did you know? #2",
+  "category": "human_body",
+  "topic": "How many times your heart beats in a day",
+  "mainFact": "An adult heart beats about 100,000 times a day.",
+  "supportingDetails": [
+    "It pumps about 2,000 gallons (about 7,500 liters) of blood a day.",
+    "That adds up to about 35 million beats a year and more than 2.5 billion in an average lifetime.",
+    "Your heart is a muscle about the size of your fist, with four chambers."
+  ],
+  "source": "American Heart Association: How the Healthy Heart Works / 'Your heart beats about 100,000 times a day'",
+  "caption": "Your heart never takes a day off. Guess how many beats it does in 24 hours? 💓",
+  "hashtags": [
+    "#humanbody",
+    "#heart",
+    "#didyouknow",
+    "#science",
+    "#facts"
+  ],
+  "scenes": [
+    {
+      "role": "hook",
+      "narration": "Your heart is doing something insane right now.",
+      "headline": "Your heart is insane",
+      "highlight": [
+        "heart"
+      ],
+      "pip": {
+        "expression": "excited",
+        "pose": "jumping"
+      }
+    },
+    {
+      "role": "fact",
+      "narration": "Every single day, an adult heart beats about one hundred thousand times. Without a break!",
+      "headline": "Beats in one day",
+      "highlight": [
+        "one day"
+      ],
+      "pip": {
+        "expression": "surprised",
+        "pose": "pointing"
+      },
+      "visual": {
+        "layout": "bigNumber",
+        "value": 100000,
+        "unit": "beats",
+        "label": "every single day",
+        "icon": "heart"
+      }
+    },
+    {
+      "role": "fact",
+      "narration": "And it is not huge at all. Your heart is a muscle about the size of your fist.",
+      "headline": "As big as your fist",
+      "highlight": [
+        "fist"
+      ],
+      "pip": {
+        "expression": "happy",
+        "pose": "idle"
+      },
+      "visual": {
+        "layout": "spotlight",
+        "icon": "hand",
+        "caption": "Your heart is about the size of your fist"
+      }
+    },
+    {
+      "role": "fact",
+      "narration": "With every beat, it squeezes blood out to your whole body. Then the blood comes back to be pumped again.",
+      "headline": "One loop of blood",
+      "highlight": [
+        "blood"
+      ],
+      "pip": {
+        "expression": "thinking",
+        "pose": "pointing"
+      },
+      "visual": {
+        "layout": "steps",
+        "steps": [
+          {
+            "icon": "heart",
+            "text": "Heart squeezes"
+          },
+          {
+            "icon": "drop",
+            "text": "Blood flows out"
+          },
+          {
+            "icon": "hand",
+            "text": "Reaches your body"
+          },
+          {
+            "icon": "heart",
+            "text": "Comes back again"
+          }
+        ]
+      }
+    },
+    {
+      "role": "fact",
+      "narration": "In just one day, it pumps about seven thousand five hundred liters of blood. That is a lot of blood!",
+      "headline": "Liters pumped per day",
+      "highlight": [
+        "per day"
+      ],
+      "pip": {
+        "expression": "surprised",
+        "pose": "idle"
+      },
+      "visual": {
+        "layout": "bigNumber",
+        "value": 7500,
+        "unit": "liters",
+        "label": "of blood pumped per day",
+        "icon": "drop"
+      }
+    },
+    {
+      "role": "fact",
+      "narration": "Inside, your heart has four rooms called chambers. Two on top, and two on the bottom, working as a team.",
+      "headline": "Four rooms inside",
+      "highlight": [
+        "Four rooms"
+      ],
+      "pip": {
+        "expression": "excited",
+        "pose": "pointing"
+      },
+      "visual": {
+        "layout": "iconGrid",
+        "icon": "heart",
+        "count": 4,
+        "label": "chambers in your heart"
+      }
+    },
+    {
+      "role": "fact",
+      "narration": "Now zoom out. In one single year, your heart beats about thirty-five million times. Wow.",
+      "headline": "Beats in one year",
+      "highlight": [
+        "one year"
+      ],
+      "pip": {
+        "expression": "thinking",
+        "pose": "idle"
+      },
+      "visual": {
+        "layout": "compare",
+        "unit": "beats",
+        "items": [
+          {
+            "label": "One day",
+            "value": 100000,
+            "icon": "clock"
+          },
+          {
+            "label": "One year",
+            "value": 35000000,
+            "icon": "earth"
+          }
+        ]
+      }
+    },
+    {
+      "role": "fact",
+      "narration": "And over an average lifetime, it beats more than two and a half billion times. Billion!",
+      "headline": "Over a whole life",
+      "highlight": [
+        "life"
+      ],
+      "pip": {
+        "expression": "surprised",
+        "pose": "pointing"
+      },
+      "visual": {
+        "layout": "bigNumber",
+        "value": 2.5,
+        "decimals": 1,
+        "unit": "billion",
+        "label": "beats in a lifetime",
+        "icon": "heart"
+      }
+    },
+    {
+      "role": "recap",
+      "narration": "Quick recap. Your fist-sized heart beats about one hundred thousand times a day, without ever stopping.",
+      "headline": "Quick recap",
+      "highlight": [
+        "recap"
+      ],
+      "pip": {
+        "expression": "happy",
+        "pose": "pointing"
+      },
+      "bullets": [
+        "100,000 beats a day",
+        "7,500 liters of blood",
+        "Size of your fist"
+      ]
+    },
+    {
+      "role": "cta",
+      "narration": "Follow Pip for a new mind-blowing fact every day!",
+      "headline": "A new fact every day!",
+      "highlight": [
+        "every day"
+      ],
+      "pip": {
+        "expression": "happy",
+        "pose": "waving"
+      }
+    }
+  ]
+}

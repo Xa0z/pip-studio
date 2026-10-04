@@ -1,0 +1,1008 @@
+{
+  "scenes": [
+    {
+      "role": "hook",
+      "narration": "Your heart is doing something insane right now.",
+      "headline": "Your heart is insane",
+      "highlight": [
+        "heart"
+      ],
+      "pip": {
+        "expression": "excited",
+        "pose": "jumping"
+      },
+      "from": 0,
+      "durationInFrames": 102
+    },
+    {
+      "role": "fact",
+      "narration": "Every single day, an adult heart beats about one hundred thousand times. Without a break!",
+      "headline": "Beats in one day",
+      "highlight": [
+        "one day"
+      ],
+      "pip": {
+        "expression": "surprised",
+        "pose": "pointing"
+      },
+      "visual": {
+        "layout": "bigNumber",
+        "value": 100000,
+        "unit": "beats",
+        "label": "every single day",
+        "icon": "heart"
+      },
+      "from": 102,
+      "durationInFrames": 185
+    },
+    {
+      "role": "fact",
+      "narration": "And it is not huge at all. Your heart is a muscle about the size of your fist.",
+      "headline": "As big as your fist",
+      "highlight": [
+        "fist"
+      ],
+      "pip": {
+        "expression": "happy",
+        "pose": "idle"
+      },
+      "visual": {
+        "layout": "spotlight",
+        "icon": "hand",
+        "caption": "Your heart is about the size of your fist"
+      },
+      "from": 287,
+      "durationInFrames": 164
+    },
+    {
+      "role": "fact",
+      "narration": "With every beat, it squeezes blood out to your whole body. Then the blood comes back to be pumped again.",
+      "headline": "One loop of blood",
+      "highlight": [
+        "blood"
+      ],
+      "pip": {
+        "expression": "thinking",
+        "pose": "pointing"
+      },
+      "visual": {
+        "layout": "steps",
+        "steps": [
+          {
+            "icon": "heart",
+            "text": "Heart squeezes"
+          },
+          {
+            "icon": "drop",
+            "text": "Blood flows out"
+          },
+          {
+            "icon": "hand",
+            "text": "Reaches your body"
+          },
+          {
+            "icon": "heart",
+            "text": "Comes back again"
+          }
+        ]
+      },
+      "from": 451,
+      "durationInFrames": 201
+    },
+    {
+      "role": "fact",
+      "narration": "In just one day, it pumps about seven thousand five hundred liters of blood. That is a lot of blood!",
+      "headline": "Liters pumped per day",
+      "highlight": [
+        "per day"
+      ],
+      "pip": {
+        "expression": "surprised",
+        "pose": "idle"
+      },
+      "visual": {
+        "layout": "bigNumber",
+        "value": 7500,
+        "unit": "liters",
+        "label": "of blood pumped per day",
+        "icon": "drop"
+      },
+      "from": 652,
+      "durationInFrames": 204
+    },
+    {
+      "role": "fact",
+      "narration": "Inside, your heart has four rooms called chambers. Two on top, and two on the bottom, working as a team.",
+      "headline": "Four rooms inside",
+      "highlight": [
+        "Four rooms"
+      ],
+      "pip": {
+        "expression": "excited",
+        "pose": "pointing"
+      },
+      "visual": {
+        "layout": "iconGrid",
+        "icon": "heart",
+        "count": 4,
+        "label": "chambers in your heart"
+      },
+      "from": 856,
+      "durationInFrames": 217
+    },
+    {
+      "role": "fact",
+      "narration": "Now zoom out. In one single year, your heart beats about thirty-five million times. Wow.",
+      "headline": "Beats in one year",
+      "highlight": [
+        "one year"
+      ],
+      "pip": {
+        "expression": "thinking",
+        "pose": "idle"
+      },
+      "visual": {
+        "layout": "compare",
+        "unit": "beats",
+        "items": [
+          {
+            "label": "One day",
+            "value": 100000,
+            "icon": "clock"
+          },
+          {
+            "label": "One year",
+            "value": 35000000,
+            "icon": "earth"
+          }
+        ]
+      },
+      "from": 1073,
+      "durationInFrames": 198
+    },
+    {
+      "role": "fact",
+      "narration": "And over an average lifetime, it beats more than two and a half billion times. Billion!",
+      "headline": "Over a whole life",
+      "highlight": [
+        "life"
+      ],
+      "pip": {
+        "expression": "surprised",
+        "pose": "pointing"
+      },
+      "visual": {
+        "layout": "bigNumber",
+        "value": 2.5,
+        "decimals": 1,
+        "unit": "billion",
+        "label": "beats in a lifetime",
+        "icon": "heart"
+      },
+      "from": 1271,
+      "durationInFrames": 184
+    },
+    {
+      "role": "recap",
+      "narration": "Quick recap. Your fist-sized heart beats about one hundred thousand times a day, without ever stopping.",
+      "headline": "Quick recap",
+      "highlight": [
+        "recap"
+      ],
+      "pip": {
+        "expression": "happy",
+        "pose": "pointing"
+      },
+      "bullets": [
+        "100,000 beats a day",
+        "7,500 liters of blood",
+        "Size of your fist"
+      ],
+      "from": 1455,
+      "durationInFrames": 207
+    },
+    {
+      "role": "cta",
+      "narration": "Follow Pip for a new mind-blowing fact every day!",
+      "headline": "A new fact every day!",
+      "highlight": [
+        "every day"
+      ],
+      "pip": {
+        "expression": "happy",
+        "pose": "waving"
+      },
+      "from": 1662,
+      "durationInFrames": 198
+    }
+  ],
+  "words": [
+    {
+      "text": "Your",
+      "start": 0.2,
+      "end": 0.43000000000000005
+    },
+    {
+      "text": "heart",
+      "start": 0.43000000000000005,
+      "end": 0.79
+    },
+    {
+      "text": "is",
+      "start": 0.79,
+      "end": 0.93
+    },
+    {
+      "text": "doing",
+      "start": 0.93,
+      "end": 1.3499999999999999
+    },
+    {
+      "text": "something",
+      "start": 1.3499999999999999,
+      "end": 1.94
+    },
+    {
+      "text": "insane",
+      "start": 1.94,
+      "end": 2.37
+    },
+    {
+      "text": "right",
+      "start": 2.37,
+      "end": 2.48
+    },
+    {
+      "text": "now.",
+      "start": 2.48,
+      "end": 2.483458333333333
+    },
+    {
+      "text": "Every",
+      "start": 3.513458333332696,
+      "end": 3.903458333332696
+    },
+    {
+      "text": "single",
+      "start": 3.903458333332696,
+      "end": 4.403458333332696
+    },
+    {
+      "text": "day,",
+      "start": 4.403458333332696,
+      "end": 4.673458333332697
+    },
+    {
+      "text": "an",
+      "start": 4.673458333332697,
+      "end": 4.793458333332696
+    },
+    {
+      "text": "adult",
+      "start": 4.793458333332696,
+      "end": 5.143458333332696
+    },
+    {
+      "text": "heart",
+      "start": 5.143458333332696,
+      "end": 5.493458333332696
+    },
+    {
+      "text": "beats",
+      "start": 5.493458333332696,
+      "end": 5.7634583333326965
+    },
+    {
+      "text": "about",
+      "start": 5.7634583333326965,
+      "end": 5.963458333332696
+    },
+    {
+      "text": "one",
+      "start": 5.963458333332696,
+      "end": 6.12679166666603
+    },
+    {
+      "text": "hundred",
+      "start": 6.12679166666603,
+      "end": 6.507902777777141
+    },
+    {
+      "text": "thousand",
+      "start": 6.507902777777141,
+      "end": 6.943458333332696
+    },
+    {
+      "text": "times.",
+      "start": 6.943458333332696,
+      "end": 7.883458333332697
+    },
+    {
+      "text": "Without",
+      "start": 7.883458333332697,
+      "end": 8.24559166666603
+    },
+    {
+      "text": "a",
+      "start": 8.24559166666603,
+      "end": 8.349058333332696
+    },
+    {
+      "text": "break!",
+      "start": 8.349058333332696,
+      "end": 8.659458333332697
+    },
+    {
+      "text": "And",
+      "start": 9.68945833333206,
+      "end": 9.94945833333206
+    },
+    {
+      "text": "it",
+      "start": 9.94945833333206,
+      "end": 10.139458333332062
+    },
+    {
+      "text": "is",
+      "start": 10.139458333332062,
+      "end": 10.43945833333206
+    },
+    {
+      "text": "not",
+      "start": 10.43945833333206,
+      "end": 10.639458333332062
+    },
+    {
+      "text": "huge",
+      "start": 10.639458333332062,
+      "end": 10.999458333332061
+    },
+    {
+      "text": "at",
+      "start": 10.999458333332061,
+      "end": 11.51945833333206
+    },
+    {
+      "text": "all.",
+      "start": 11.51945833333206,
+      "end": 11.569458333332062
+    },
+    {
+      "text": "Your",
+      "start": 11.51945833333206,
+      "end": 11.799458333332062
+    },
+    {
+      "text": "heart",
+      "start": 11.799458333332062,
+      "end": 12.099458333332061
+    },
+    {
+      "text": "is",
+      "start": 12.099458333332061,
+      "end": 12.229458333332062
+    },
+    {
+      "text": "a",
+      "start": 12.229458333332062,
+      "end": 12.28945833333206
+    },
+    {
+      "text": "muscle",
+      "start": 12.28945833333206,
+      "end": 12.69945833333206
+    },
+    {
+      "text": "about",
+      "start": 12.69945833333206,
+      "end": 13.01945833333206
+    },
+    {
+      "text": "the",
+      "start": 13.01945833333206,
+      "end": 13.209458333332062
+    },
+    {
+      "text": "size",
+      "start": 13.209458333332062,
+      "end": 13.459458333332062
+    },
+    {
+      "text": "of",
+      "start": 13.459458333332062,
+      "end": 13.579458333332061
+    },
+    {
+      "text": "your",
+      "start": 13.579458333332061,
+      "end": 13.829458333332061
+    },
+    {
+      "text": "fist.",
+      "start": 13.829458333332061,
+      "end": 14.139083333332062
+    },
+    {
+      "text": "With",
+      "start": 15.169083333331425,
+      "end": 15.409083333331425
+    },
+    {
+      "text": "every",
+      "start": 15.409083333331425,
+      "end": 15.749083333331425
+    },
+    {
+      "text": "beat,",
+      "start": 15.749083333331425,
+      "end": 16.209083333331424
+    },
+    {
+      "text": "it",
+      "start": 16.209083333331424,
+      "end": 16.299083333331424
+    },
+    {
+      "text": "squeezes",
+      "start": 16.299083333331424,
+      "end": 16.879083333331426
+    },
+    {
+      "text": "blood",
+      "start": 16.879083333331426,
+      "end": 17.129083333331426
+    },
+    {
+      "text": "out",
+      "start": 17.129083333331426,
+      "end": 17.339083333331427
+    },
+    {
+      "text": "to",
+      "start": 17.339083333331427,
+      "end": 17.479083333331424
+    },
+    {
+      "text": "your",
+      "start": 17.479083333331424,
+      "end": 17.769083333331427
+    },
+    {
+      "text": "whole",
+      "start": 17.769083333331427,
+      "end": 18.129083333331426
+    },
+    {
+      "text": "body.",
+      "start": 18.129083333331426,
+      "end": 18.659083333331427
+    },
+    {
+      "text": "Then",
+      "start": 18.659083333331427,
+      "end": 18.899083333331426
+    },
+    {
+      "text": "the",
+      "start": 18.899083333331426,
+      "end": 19.079083333331425
+    },
+    {
+      "text": "blood",
+      "start": 19.079083333331425,
+      "end": 19.379083333331426
+    },
+    {
+      "text": "comes",
+      "start": 19.379083333331426,
+      "end": 19.679083333331427
+    },
+    {
+      "text": "back",
+      "start": 19.679083333331427,
+      "end": 19.919083333331425
+    },
+    {
+      "text": "to",
+      "start": 19.919083333331425,
+      "end": 20.039083333331426
+    },
+    {
+      "text": "be",
+      "start": 20.039083333331426,
+      "end": 20.159083333331424
+    },
+    {
+      "text": "pumped",
+      "start": 20.159083333331424,
+      "end": 20.509083333331425
+    },
+    {
+      "text": "again.",
+      "start": 20.509083333331425,
+      "end": 20.826374999998094
+    },
+    {
+      "text": "In",
+      "start": 21.85637499999746,
+      "end": 21.98637499999746
+    },
+    {
+      "text": "just",
+      "start": 21.98637499999746,
+      "end": 22.316374999997457
+    },
+    {
+      "text": "one",
+      "start": 22.316374999997457,
+      "end": 22.566374999997457
+    },
+    {
+      "text": "day,",
+      "start": 22.566374999997457,
+      "end": 23.01637499999746
+    },
+    {
+      "text": "it",
+      "start": 23.01637499999746,
+      "end": 23.16637499999746
+    },
+    {
+      "text": "pumps",
+      "start": 23.16637499999746,
+      "end": 23.566374999997457
+    },
+    {
+      "text": "about",
+      "start": 23.566374999997457,
+      "end": 23.96637499999746
+    },
+    {
+      "text": "seven",
+      "start": 23.96637499999746,
+      "end": 24.208041666664126
+    },
+    {
+      "text": "thousand",
+      "start": 24.208041666664126,
+      "end": 24.594708333330793
+    },
+    {
+      "text": "five",
+      "start": 24.594708333330793,
+      "end": 24.788041666664125
+    },
+    {
+      "text": "hundred",
+      "start": 24.788041666664125,
+      "end": 25.12637499999746
+    },
+    {
+      "text": "liters",
+      "start": 25.12637499999746,
+      "end": 25.62637499999746
+    },
+    {
+      "text": "of",
+      "start": 25.62637499999746,
+      "end": 25.726374999997457
+    },
+    {
+      "text": "blood.",
+      "start": 25.726374999997457,
+      "end": 26.386374999997457
+    },
+    {
+      "text": "That",
+      "start": 26.386374999997457,
+      "end": 26.64637499999746
+    },
+    {
+      "text": "is",
+      "start": 26.64637499999746,
+      "end": 26.776374999997458
+    },
+    {
+      "text": "a",
+      "start": 26.776374999997458,
+      "end": 26.83637499999746
+    },
+    {
+      "text": "lot",
+      "start": 26.83637499999746,
+      "end": 27.03637499999746
+    },
+    {
+      "text": "of",
+      "start": 27.03637499999746,
+      "end": 27.16637499999746
+    },
+    {
+      "text": "blood!",
+      "start": 27.16637499999746,
+      "end": 27.62262499999746
+    },
+    {
+      "text": "Inside,",
+      "start": 28.652624999996824,
+      "end": 29.252624999996822
+    },
+    {
+      "text": "your",
+      "start": 29.252624999996822,
+      "end": 29.492624999996824
+    },
+    {
+      "text": "heart",
+      "start": 29.492624999996824,
+      "end": 29.962624999996823
+    },
+    {
+      "text": "has",
+      "start": 29.962624999996823,
+      "end": 30.072624999996822
+    },
+    {
+      "text": "four",
+      "start": 30.072624999996822,
+      "end": 30.36262499999682
+    },
+    {
+      "text": "rooms",
+      "start": 30.36262499999682,
+      "end": 30.722624999996825
+    },
+    {
+      "text": "called",
+      "start": 30.722624999996825,
+      "end": 31.152624999996824
+    },
+    {
+      "text": "chambers.",
+      "start": 31.152624999996824,
+      "end": 31.782624999996823
+    },
+    {
+      "text": "Two",
+      "start": 31.782624999996823,
+      "end": 32.152624999996824
+    },
+    {
+      "text": "on",
+      "start": 32.152624999996824,
+      "end": 32.37262499999682
+    },
+    {
+      "text": "top,",
+      "start": 32.37262499999682,
+      "end": 32.77262499999682
+    },
+    {
+      "text": "and",
+      "start": 32.77262499999682,
+      "end": 32.932624999996825
+    },
+    {
+      "text": "two",
+      "start": 32.932624999996825,
+      "end": 33.12262499999682
+    },
+    {
+      "text": "on",
+      "start": 33.12262499999682,
+      "end": 33.24262499999682
+    },
+    {
+      "text": "the",
+      "start": 33.24262499999682,
+      "end": 33.432624999996825
+    },
+    {
+      "text": "bottom,",
+      "start": 33.432624999996825,
+      "end": 33.932624999996825
+    },
+    {
+      "text": "working",
+      "start": 33.932624999996825,
+      "end": 34.37262499999682
+    },
+    {
+      "text": "as",
+      "start": 34.37262499999682,
+      "end": 34.49262499999682
+    },
+    {
+      "text": "a",
+      "start": 34.49262499999682,
+      "end": 34.56262499999682
+    },
+    {
+      "text": "team.",
+      "start": 34.56262499999682,
+      "end": 34.87854166666349
+    },
+    {
+      "text": "Now",
+      "start": 35.90854166666285,
+      "end": 36.22854166666285
+    },
+    {
+      "text": "zoom",
+      "start": 36.22854166666285,
+      "end": 36.69854166666285
+    },
+    {
+      "text": "out.",
+      "start": 36.69854166666285,
+      "end": 37.07854166666285
+    },
+    {
+      "text": "In",
+      "start": 37.07854166666285,
+      "end": 37.19854166666285
+    },
+    {
+      "text": "one",
+      "start": 37.19854166666285,
+      "end": 37.37854166666285
+    },
+    {
+      "text": "single",
+      "start": 37.37854166666285,
+      "end": 37.73854166666285
+    },
+    {
+      "text": "year,",
+      "start": 37.73854166666285,
+      "end": 38.08854166666285
+    },
+    {
+      "text": "your",
+      "start": 38.08854166666285,
+      "end": 38.278541666662846
+    },
+    {
+      "text": "heart",
+      "start": 38.278541666662846,
+      "end": 38.50854166666285
+    },
+    {
+      "text": "beats",
+      "start": 38.50854166666285,
+      "end": 38.75854166666285
+    },
+    {
+      "text": "about",
+      "start": 38.75854166666285,
+      "end": 39.08854166666285
+    },
+    {
+      "text": "thirty-five",
+      "start": 39.08854166666285,
+      "end": 39.51854166666285
+    },
+    {
+      "text": "million",
+      "start": 39.51854166666285,
+      "end": 40.068541666662846
+    },
+    {
+      "text": "times.",
+      "start": 40.068541666662846,
+      "end": 41.07854166666285
+    },
+    {
+      "text": "Wow.",
+      "start": 41.07854166666285,
+      "end": 41.48145833332951
+    },
+    {
+      "text": "And",
+      "start": 42.511458333328875,
+      "end": 42.70145833332887
+    },
+    {
+      "text": "over",
+      "start": 42.70145833332887,
+      "end": 42.99145833332887
+    },
+    {
+      "text": "an",
+      "start": 42.99145833332887,
+      "end": 43.16145833332887
+    },
+    {
+      "text": "average",
+      "start": 43.16145833332887,
+      "end": 43.651458333328875
+    },
+    {
+      "text": "lifetime,",
+      "start": 43.651458333328875,
+      "end": 44.24145833332887
+    },
+    {
+      "text": "it",
+      "start": 44.24145833332887,
+      "end": 44.43145833332888
+    },
+    {
+      "text": "beats",
+      "start": 44.43145833332888,
+      "end": 44.71145833332887
+    },
+    {
+      "text": "more",
+      "start": 44.71145833332887,
+      "end": 44.981458333328874
+    },
+    {
+      "text": "than",
+      "start": 44.981458333328874,
+      "end": 45.25145833332888
+    },
+    {
+      "text": "two",
+      "start": 45.25145833332888,
+      "end": 45.45145833332887
+    },
+    {
+      "text": "and",
+      "start": 45.45145833332887,
+      "end": 45.651458333328875
+    },
+    {
+      "text": "a",
+      "start": 45.651458333328875,
+      "end": 45.71145833332887
+    },
+    {
+      "text": "half",
+      "start": 45.71145833332887,
+      "end": 45.981458333328874
+    },
+    {
+      "text": "billion",
+      "start": 45.981458333328874,
+      "end": 46.45145833332887
+    },
+    {
+      "text": "times.",
+      "start": 46.45145833332887,
+      "end": 47.041458333328876
+    },
+    {
+      "text": "Billion!",
+      "start": 47.041458333328876,
+      "end": 47.59249999999554
+    },
+    {
+      "text": "Quick",
+      "start": 48.6324999999949,
+      "end": 49.0424999999949
+    },
+    {
+      "text": "recap.",
+      "start": 49.0424999999949,
+      "end": 49.7324999999949
+    },
+    {
+      "text": "Your",
+      "start": 49.7324999999949,
+      "end": 49.9324999999949
+    },
+    {
+      "text": "fist-sized",
+      "start": 49.9324999999949,
+      "end": 50.5324999999949
+    },
+    {
+      "text": "heart",
+      "start": 50.5324999999949,
+      "end": 50.8624999999949
+    },
+    {
+      "text": "beats",
+      "start": 50.8624999999949,
+      "end": 51.1724999999949
+    },
+    {
+      "text": "about",
+      "start": 51.1724999999949,
+      "end": 51.4324999999949
+    },
+    {
+      "text": "one",
+      "start": 51.4324999999949,
+      "end": 51.5974999999949
+    },
+    {
+      "text": "hundred",
+      "start": 51.5974999999949,
+      "end": 51.9824999999949
+    },
+    {
+      "text": "thousand",
+      "start": 51.9824999999949,
+      "end": 52.4224999999949
+    },
+    {
+      "text": "times",
+      "start": 52.4224999999949,
+      "end": 52.7124999999949
+    },
+    {
+      "text": "a",
+      "start": 52.7124999999949,
+      "end": 52.8524999999949
+    },
+    {
+      "text": "day,",
+      "start": 52.8524999999949,
+      "end": 53.3724999999949
+    },
+    {
+      "text": "without",
+      "start": 53.3724999999949,
+      "end": 53.6924999999949
+    },
+    {
+      "text": "ever",
+      "start": 53.6924999999949,
+      "end": 53.9124999999949
+    },
+    {
+      "text": "stopping.",
+      "start": 53.9124999999949,
+      "end": 54.49691666666157
+    },
+    {
+      "text": "Follow",
+      "start": 55.60691666666093,
+      "end": 55.92691666666093
+    },
+    {
+      "text": "Pip",
+      "start": 55.92691666666093,
+      "end": 56.34691666666093
+    },
+    {
+      "text": "for",
+      "start": 56.34691666666093,
+      "end": 56.39691666666093
+    },
+    {
+      "text": "a",
+      "start": 56.38691666666093,
+      "end": 56.43691666666093
+    },
+    {
+      "text": "new",
+      "start": 56.41691666666093,
+      "end": 56.62691666666093
+    },
+    {
+      "text": "mind-blowing",
+      "start": 56.62691666666093,
+      "end": 57.51691666666093
+    },
+    {
+      "text": "fact",
+      "start": 57.51691666666093,
+      "end": 57.85691666666093
+    },
+    {
+      "text": "every",
+      "start": 57.85691666666093,
+      "end": 58.15691666666093
+    },
+    {
+      "text": "day!",
+      "start": 58.15691666666093,
+      "end": 58.44362499999426
+    }
+  ],
+  "speechEnd": 58.44362499999426,
+  "speed": 0.9676190476189512
+}

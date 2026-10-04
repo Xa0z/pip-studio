@@ -1,0 +1,27 @@
+{
+  "dryRun": true,
+  "runSeconds": 793.669,
+  "results": [
+    {
+      "episode": 1,
+      "ok": true,
+      "dir": "/home/runner/work/pip-studio/pip-studio/out/2026-10-04-ep1",
+      "topic": "A day on Venus is longer than its year",
+      "seconds": 267.345
+    },
+    {
+      "episode": 2,
+      "ok": true,
+      "dir": "/home/runner/work/pip-studio/pip-studio/out/2026-10-04-ep2",
+      "topic": "How many times your heart beats in a day",
+      "seconds": 260.724
+    },
+    {
+      "episode": 3,
+      "ok": true,
+      "dir": "/home/runner/work/pip-studio/pip-studio/out/2026-10-04-ep3",
+      "topic": "Octopuses have three hearts and blue blood",
+      "seconds": 265.599
+    }
+  ]
+}

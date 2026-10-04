@@ -1,0 +1,974 @@
+{
+  "scenes": [
+    {
+      "role": "hook",
+      "narration": "This animal has three hearts. Seriously.",
+      "headline": "Three hearts?!",
+      "highlight": [
+        "Three"
+      ],
+      "pip": {
+        "expression": "surprised",
+        "pose": "jumping"
+      },
+      "from": 0,
+      "durationInFrames": 107
+    },
+    {
+      "role": "fact",
+      "narration": "Meet the octopus! Eight arms, no bones, and inside its soft body, it has not one, but three hearts.",
+      "headline": "The octopus",
+      "highlight": [
+        "octopus"
+      ],
+      "pip": {
+        "expression": "excited",
+        "pose": "pointing"
+      },
+      "visual": {
+        "layout": "spotlight",
+        "icon": "octopus",
+        "caption": "Soft body, eight arms, three hearts"
+      },
+      "from": 107,
+      "durationInFrames": 220
+    },
+    {
+      "role": "fact",
+      "narration": "Two small hearts push blood through the gills, where it picks up oxygen from the water.",
+      "headline": "Two hearts for the gills",
+      "highlight": [
+        "Two hearts"
+      ],
+      "pip": {
+        "expression": "happy",
+        "pose": "pointing"
+      },
+      "visual": {
+        "layout": "iconGrid",
+        "icon": "heart",
+        "count": 3,
+        "label": "hearts in one octopus"
+      },
+      "from": 327,
+      "durationInFrames": 164
+    },
+    {
+      "role": "fact",
+      "narration": "Then the third heart, the big one, pumps that blood to the rest of its body.",
+      "headline": "One heart for the body",
+      "highlight": [
+        "body"
+      ],
+      "pip": {
+        "expression": "thinking",
+        "pose": "idle"
+      },
+      "visual": {
+        "layout": "steps",
+        "steps": [
+          {
+            "icon": "heart",
+            "text": "Gill hearts pump"
+          },
+          {
+            "icon": "wave",
+            "text": "Blood grabs oxygen"
+          },
+          {
+            "icon": "heart",
+            "text": "Main heart pumps"
+          },
+          {
+            "icon": "octopus",
+            "text": "Whole body fed"
+          }
+        ]
+      },
+      "from": 491,
+      "durationInFrames": 152
+    },
+    {
+      "role": "fact",
+      "narration": "Fun twist. When an octopus swims, that main heart stops beating. That may be why they prefer crawling!",
+      "headline": "Swimming stops a heart",
+      "highlight": [
+        "stops"
+      ],
+      "pip": {
+        "expression": "surprised",
+        "pose": "idle"
+      },
+      "visual": {
+        "layout": "orbit",
+        "center": "octopus",
+        "satellite": "heart",
+        "label": "Swimming is tiring for octopuses"
+      },
+      "from": 643,
+      "durationInFrames": 218
+    },
+    {
+      "role": "fact",
+      "narration": "And their blood is blue! It uses copper to carry oxygen. Our blood uses iron, so ours is red.",
+      "headline": "Blue blood",
+      "highlight": [
+        "Blue"
+      ],
+      "pip": {
+        "expression": "excited",
+        "pose": "jumping"
+      },
+      "visual": {
+        "layout": "spotlight",
+        "icon": "drop",
+        "caption": "Copper in its blood makes it blue"
+      },
+      "from": 861,
+      "durationInFrames": 215
+    },
+    {
+      "role": "fact",
+      "narration": "One more thing. About two thirds of an octopus's brain cells are in its arms, not its head.",
+      "headline": "Smart arms",
+      "highlight": [
+        "arms"
+      ],
+      "pip": {
+        "expression": "wink",
+        "pose": "pointing"
+      },
+      "visual": {
+        "layout": "bigNumber",
+        "value": 2,
+        "unit": "out of 3",
+        "label": "brain cells are in its arms",
+        "icon": "brain"
+      },
+      "from": 1076,
+      "durationInFrames": 195
+    },
+    {
+      "role": "fact",
+      "narration": "So each arm can explore, touch, and taste things on its own. Like eight curious helpers!",
+      "headline": "Eight curious arms",
+      "highlight": [
+        "Eight"
+      ],
+      "pip": {
+        "expression": "happy",
+        "pose": "waving"
+      },
+      "visual": {
+        "layout": "iconGrid",
+        "icon": "hand",
+        "count": 8,
+        "label": "arms that explore on their own"
+      },
+      "from": 1271,
+      "durationInFrames": 189
+    },
+    {
+      "role": "recap",
+      "narration": "Quick recap. Octopuses have three hearts, blue blood, and arms that can almost think for themselves.",
+      "headline": "Quick recap",
+      "highlight": [
+        "recap"
+      ],
+      "pip": {
+        "expression": "happy",
+        "pose": "pointing"
+      },
+      "bullets": [
+        "Three hearts",
+        "Blue, copper-based blood",
+        "Brainy arms"
+      ],
+      "from": 1460,
+      "durationInFrames": 211
+    },
+    {
+      "role": "cta",
+      "narration": "Follow Pip for a new mind-blowing fact every day!",
+      "headline": "A new fact every day!",
+      "highlight": [
+        "every day"
+      ],
+      "pip": {
+        "expression": "happy",
+        "pose": "waving"
+      },
+      "from": 1671,
+      "durationInFrames": 189
+    }
+  ],
+  "words": [
+    {
+      "text": "This",
+      "start": 0.18,
+      "end": 0.43000000000000005
+    },
+    {
+      "text": "animal",
+      "start": 0.43000000000000005,
+      "end": 0.8300000000000001
+    },
+    {
+      "text": "has",
+      "start": 0.8300000000000001,
+      "end": 1.06
+    },
+    {
+      "text": "three",
+      "start": 1.06,
+      "end": 1.41
+    },
+    {
+      "text": "hearts.",
+      "start": 1.41,
+      "end": 1.99
+    },
+    {
+      "text": "Seriously.",
+      "start": 1.99,
+      "end": 2.67
+    },
+    {
+      "text": "Meet",
+      "start": 3.7050833333326962,
+      "end": 4.055083333332696
+    },
+    {
+      "text": "the",
+      "start": 4.055083333332696,
+      "end": 4.345083333332696
+    },
+    {
+      "text": "octopus!",
+      "start": 4.345083333332696,
+      "end": 5.195083333332697
+    },
+    {
+      "text": "Eight",
+      "start": 5.195083333332697,
+      "end": 5.495083333332697
+    },
+    {
+      "text": "arms,",
+      "start": 5.495083333332697,
+      "end": 5.885083333332696
+    },
+    {
+      "text": "no",
+      "start": 5.885083333332696,
+      "end": 6.125083333332697
+    },
+    {
+      "text": "bones,",
+      "start": 6.125083333332697,
+      "end": 6.7950833333326965
+    },
+    {
+      "text": "and",
+      "start": 6.7950833333326965,
+      "end": 6.985083333332696
+    },
+    {
+      "text": "inside",
+      "start": 6.985083333332696,
+      "end": 7.405083333332696
+    },
+    {
+      "text": "its",
+      "start": 7.405083333332696,
+      "end": 7.565083333332696
+    },
+    {
+      "text": "soft",
+      "start": 7.565083333332696,
+      "end": 7.825083333332697
+    },
+    {
+      "text": "body,",
+      "start": 7.825083333332697,
+      "end": 8.255083333332696
+    },
+    {
+      "text": "it",
+      "start": 8.255083333332696,
+      "end": 8.375083333332697
+    },
+    {
+      "text": "has",
+      "start": 8.375083333332697,
+      "end": 8.585083333332697
+    },
+    {
+      "text": "not",
+      "start": 8.585083333332697,
+      "end": 8.795083333332697
+    },
+    {
+      "text": "one,",
+      "start": 8.795083333332697,
+      "end": 9.005083333332696
+    },
+    {
+      "text": "but",
+      "start": 9.005083333332696,
+      "end": 9.215083333332696
+    },
+    {
+      "text": "three",
+      "start": 9.215083333332696,
+      "end": 9.555083333332696
+    },
+    {
+      "text": "hearts.",
+      "start": 9.555083333332696,
+      "end": 9.998958333332697
+    },
+    {
+      "text": "Two",
+      "start": 11.02895833333206,
+      "end": 11.19895833333206
+    },
+    {
+      "text": "small",
+      "start": 11.19895833333206,
+      "end": 11.538958333332062
+    },
+    {
+      "text": "hearts",
+      "start": 11.538958333332062,
+      "end": 11.94895833333206
+    },
+    {
+      "text": "push",
+      "start": 11.94895833333206,
+      "end": 12.218958333332061
+    },
+    {
+      "text": "blood",
+      "start": 12.218958333332061,
+      "end": 12.648958333332061
+    },
+    {
+      "text": "through",
+      "start": 12.648958333332061,
+      "end": 13.038958333332062
+    },
+    {
+      "text": "the",
+      "start": 13.038958333332062,
+      "end": 13.23895833333206
+    },
+    {
+      "text": "gills,",
+      "start": 13.23895833333206,
+      "end": 13.638958333332061
+    },
+    {
+      "text": "where",
+      "start": 13.638958333332061,
+      "end": 13.92895833333206
+    },
+    {
+      "text": "it",
+      "start": 13.92895833333206,
+      "end": 14.04895833333206
+    },
+    {
+      "text": "picks",
+      "start": 14.04895833333206,
+      "end": 14.32895833333206
+    },
+    {
+      "text": "up",
+      "start": 14.32895833333206,
+      "end": 14.478958333332061
+    },
+    {
+      "text": "oxygen",
+      "start": 14.478958333332061,
+      "end": 14.77895833333206
+    },
+    {
+      "text": "from",
+      "start": 14.77895833333206,
+      "end": 15.00895833333206
+    },
+    {
+      "text": "the",
+      "start": 15.00895833333206,
+      "end": 15.17895833333206
+    },
+    {
+      "text": "water.",
+      "start": 15.17895833333206,
+      "end": 15.47833333333206
+    },
+    {
+      "text": "Then",
+      "start": 16.508333333331425,
+      "end": 16.728333333331424
+    },
+    {
+      "text": "the",
+      "start": 16.728333333331424,
+      "end": 16.918333333331425
+    },
+    {
+      "text": "third",
+      "start": 16.918333333331425,
+      "end": 17.238333333331425
+    },
+    {
+      "text": "heart,",
+      "start": 17.238333333331425,
+      "end": 17.758333333331425
+    },
+    {
+      "text": "the",
+      "start": 17.758333333331425,
+      "end": 17.918333333331425
+    },
+    {
+      "text": "big",
+      "start": 17.918333333331425,
+      "end": 18.138333333331424
+    },
+    {
+      "text": "one,",
+      "start": 18.138333333331424,
+      "end": 18.588333333331423
+    },
+    {
+      "text": "pumps",
+      "start": 18.588333333331423,
+      "end": 18.948333333331423
+    },
+    {
+      "text": "that",
+      "start": 18.948333333331423,
+      "end": 19.158333333331424
+    },
+    {
+      "text": "blood",
+      "start": 19.158333333331424,
+      "end": 19.438333333331425
+    },
+    {
+      "text": "to",
+      "start": 19.438333333331425,
+      "end": 19.528333333331425
+    },
+    {
+      "text": "the",
+      "start": 19.528333333331425,
+      "end": 19.668333333331425
+    },
+    {
+      "text": "rest",
+      "start": 19.668333333331425,
+      "end": 19.878333333331422
+    },
+    {
+      "text": "of",
+      "start": 19.878333333331422,
+      "end": 20.018333333331423
+    },
+    {
+      "text": "its",
+      "start": 20.018333333331423,
+      "end": 20.228333333331424
+    },
+    {
+      "text": "body.",
+      "start": 20.228333333331424,
+      "end": 20.518333333331423
+    },
+    {
+      "text": "Fun",
+      "start": 21.634999999997454,
+      "end": 21.974999999997454
+    },
+    {
+      "text": "twist.",
+      "start": 21.974999999997454,
+      "end": 22.864999999997455
+    },
+    {
+      "text": "When",
+      "start": 22.864999999997455,
+      "end": 23.184999999997455
+    },
+    {
+      "text": "an",
+      "start": 23.184999999997455,
+      "end": 23.294999999997454
+    },
+    {
+      "text": "octopus",
+      "start": 23.294999999997454,
+      "end": 23.774999999997455
+    },
+    {
+      "text": "swims,",
+      "start": 23.774999999997455,
+      "end": 24.244999999997454
+    },
+    {
+      "text": "that",
+      "start": 24.244999999997454,
+      "end": 24.444999999997457
+    },
+    {
+      "text": "main",
+      "start": 24.444999999997457,
+      "end": 24.704999999997455
+    },
+    {
+      "text": "heart",
+      "start": 24.704999999997455,
+      "end": 24.924999999997453
+    },
+    {
+      "text": "stops",
+      "start": 24.924999999997453,
+      "end": 25.324999999997456
+    },
+    {
+      "text": "beating.",
+      "start": 25.324999999997456,
+      "end": 26.084999999997454
+    },
+    {
+      "text": "That",
+      "start": 26.084999999997454,
+      "end": 26.284999999997453
+    },
+    {
+      "text": "may",
+      "start": 26.284999999997453,
+      "end": 26.434999999997455
+    },
+    {
+      "text": "be",
+      "start": 26.434999999997455,
+      "end": 26.534999999997453
+    },
+    {
+      "text": "why",
+      "start": 26.534999999997453,
+      "end": 26.684999999997455
+    },
+    {
+      "text": "they",
+      "start": 26.684999999997455,
+      "end": 26.884999999997454
+    },
+    {
+      "text": "prefer",
+      "start": 26.884999999997454,
+      "end": 27.184999999997455
+    },
+    {
+      "text": "crawling!",
+      "start": 27.184999999997455,
+      "end": 27.764999999997457
+    },
+    {
+      "text": "And",
+      "start": 28.84283333333015,
+      "end": 29.002833333330152
+    },
+    {
+      "text": "their",
+      "start": 29.002833333330152,
+      "end": 29.322833333330152
+    },
+    {
+      "text": "blood",
+      "start": 29.322833333330152,
+      "end": 29.64283333333015
+    },
+    {
+      "text": "is",
+      "start": 29.64283333333015,
+      "end": 29.76283333333015
+    },
+    {
+      "text": "blue!",
+      "start": 29.76283333333015,
+      "end": 30.23283333333015
+    },
+    {
+      "text": "It",
+      "start": 30.23283333333015,
+      "end": 30.392833333330152
+    },
+    {
+      "text": "uses",
+      "start": 30.392833333330152,
+      "end": 30.74283333333015
+    },
+    {
+      "text": "copper",
+      "start": 30.74283333333015,
+      "end": 31.22283333333015
+    },
+    {
+      "text": "to",
+      "start": 31.22283333333015,
+      "end": 31.38283333333015
+    },
+    {
+      "text": "carry",
+      "start": 31.38283333333015,
+      "end": 31.80283333333015
+    },
+    {
+      "text": "oxygen.",
+      "start": 31.80283333333015,
+      "end": 32.59283333333015
+    },
+    {
+      "text": "Our",
+      "start": 32.59283333333015,
+      "end": 32.79283333333015
+    },
+    {
+      "text": "blood",
+      "start": 32.79283333333015,
+      "end": 33.12283333333015
+    },
+    {
+      "text": "uses",
+      "start": 33.12283333333015,
+      "end": 33.39283333333015
+    },
+    {
+      "text": "iron,",
+      "start": 33.39283333333015,
+      "end": 33.86283333333015
+    },
+    {
+      "text": "so",
+      "start": 33.86283333333015,
+      "end": 33.992833333330154
+    },
+    {
+      "text": "ours",
+      "start": 33.992833333330154,
+      "end": 34.35283333333015
+    },
+    {
+      "text": "is",
+      "start": 34.35283333333015,
+      "end": 34.53283333333015
+    },
+    {
+      "text": "red.",
+      "start": 34.53283333333015,
+      "end": 34.957083333330154
+    },
+    {
+      "text": "One",
+      "start": 35.987083333329515,
+      "end": 36.207083333329514
+    },
+    {
+      "text": "more",
+      "start": 36.207083333329514,
+      "end": 36.53708333332951
+    },
+    {
+      "text": "thing.",
+      "start": 36.53708333332951,
+      "end": 37.21708333332951
+    },
+    {
+      "text": "About",
+      "start": 37.21708333332951,
+      "end": 37.527083333329514
+    },
+    {
+      "text": "two",
+      "start": 37.527083333329514,
+      "end": 37.707083333329514
+    },
+    {
+      "text": "thirds",
+      "start": 37.707083333329514,
+      "end": 38.07708333332951
+    },
+    {
+      "text": "of",
+      "start": 38.07708333332951,
+      "end": 38.197083333329516
+    },
+    {
+      "text": "an",
+      "start": 38.197083333329516,
+      "end": 38.31708333332951
+    },
+    {
+      "text": "octopus's",
+      "start": 38.31708333332951,
+      "end": 39.00708333332951
+    },
+    {
+      "text": "brain",
+      "start": 39.00708333332951,
+      "end": 39.31708333332951
+    },
+    {
+      "text": "cells",
+      "start": 39.31708333332951,
+      "end": 39.737083333329515
+    },
+    {
+      "text": "are",
+      "start": 39.737083333329515,
+      "end": 39.947083333329516
+    },
+    {
+      "text": "in",
+      "start": 39.947083333329516,
+      "end": 40.08708333332952
+    },
+    {
+      "text": "its",
+      "start": 40.08708333332952,
+      "end": 40.28708333332951
+    },
+    {
+      "text": "arms,",
+      "start": 40.28708333332951,
+      "end": 40.807083333329516
+    },
+    {
+      "text": "not",
+      "start": 40.807083333329516,
+      "end": 40.957083333329514
+    },
+    {
+      "text": "its",
+      "start": 40.957083333329514,
+      "end": 41.127083333329516
+    },
+    {
+      "text": "head.",
+      "start": 41.127083333329516,
+      "end": 41.470916666662845
+    },
+    {
+      "text": "So",
+      "start": 42.53091666666221,
+      "end": 42.610916666662206
+    },
+    {
+      "text": "each",
+      "start": 42.610916666662206,
+      "end": 42.89091666666221
+    },
+    {
+      "text": "arm",
+      "start": 42.89091666666221,
+      "end": 43.10091666666221
+    },
+    {
+      "text": "can",
+      "start": 43.10091666666221,
+      "end": 43.31091666666221
+    },
+    {
+      "text": "explore,",
+      "start": 43.31091666666221,
+      "end": 43.940916666662204
+    },
+    {
+      "text": "touch,",
+      "start": 43.940916666662204,
+      "end": 44.470916666662205
+    },
+    {
+      "text": "and",
+      "start": 44.470916666662205,
+      "end": 44.680916666662206
+    },
+    {
+      "text": "taste",
+      "start": 44.680916666662206,
+      "end": 45.00091666666221
+    },
+    {
+      "text": "things",
+      "start": 45.00091666666221,
+      "end": 45.2709166666622
+    },
+    {
+      "text": "on",
+      "start": 45.2709166666622,
+      "end": 45.5209166666622
+    },
+    {
+      "text": "its",
+      "start": 45.5209166666622,
+      "end": 46.2709166666622
+    },
+    {
+      "text": "own.",
+      "start": 46.2709166666622,
+      "end": 46.32091666666221
+    },
+    {
+      "text": "Like",
+      "start": 46.2709166666622,
+      "end": 46.56091666666221
+    },
+    {
+      "text": "eight",
+      "start": 46.56091666666221,
+      "end": 46.8809166666622
+    },
+    {
+      "text": "curious",
+      "start": 46.8809166666622,
+      "end": 47.32091666666221
+    },
+    {
+      "text": "helpers!",
+      "start": 47.32091666666221,
+      "end": 47.78154166666221
+    },
+    {
+      "text": "Quick",
+      "start": 48.82154166666157,
+      "end": 49.28154166666157
+    },
+    {
+      "text": "recap.",
+      "start": 49.28154166666157,
+      "end": 50.001541666661566
+    },
+    {
+      "text": "Octopuses",
+      "start": 50.001541666661566,
+      "end": 50.63154166666157
+    },
+    {
+      "text": "have",
+      "start": 50.63154166666157,
+      "end": 51.03154166666157
+    },
+    {
+      "text": "three",
+      "start": 51.03154166666157,
+      "end": 51.261541666661564
+    },
+    {
+      "text": "hearts,",
+      "start": 51.261541666661564,
+      "end": 51.91154166666157
+    },
+    {
+      "text": "blue",
+      "start": 51.91154166666157,
+      "end": 52.21154166666157
+    },
+    {
+      "text": "blood,",
+      "start": 52.21154166666157,
+      "end": 52.66154166666157
+    },
+    {
+      "text": "and",
+      "start": 52.66154166666157,
+      "end": 52.831541666661565
+    },
+    {
+      "text": "arms",
+      "start": 52.831541666661565,
+      "end": 53.041541666661566
+    },
+    {
+      "text": "that",
+      "start": 53.041541666661566,
+      "end": 53.28154166666157
+    },
+    {
+      "text": "can",
+      "start": 53.28154166666157,
+      "end": 53.42154166666157
+    },
+    {
+      "text": "almost",
+      "start": 53.42154166666157,
+      "end": 53.751541666661566
+    },
+    {
+      "text": "think",
+      "start": 53.751541666661566,
+      "end": 54.051541666661564
+    },
+    {
+      "text": "for",
+      "start": 54.051541666661564,
+      "end": 54.191541666661564
+    },
+    {
+      "text": "themselves.",
+      "start": 54.191541666661564,
+      "end": 54.78633333332824
+    },
+    {
+      "text": "Follow",
+      "start": 55.8963333333276,
+      "end": 56.2163333333276
+    },
+    {
+      "text": "Pip",
+      "start": 56.2163333333276,
+      "end": 56.6363333333276
+    },
+    {
+      "text": "for",
+      "start": 56.6363333333276,
+      "end": 56.686333333327596
+    },
+    {
+      "text": "a",
+      "start": 56.6763333333276,
+      "end": 56.726333333327595
+    },
+    {
+      "text": "new",
+      "start": 56.7063333333276,
+      "end": 56.9163333333276
+    },
+    {
+      "text": "mind-blowing",
+      "start": 56.9163333333276,
+      "end": 57.8063333333276
+    },
+    {
+      "text": "fact",
+      "start": 57.8063333333276,
+      "end": 58.1463333333276
+    },
+    {
+      "text": "every",
+      "start": 58.1463333333276,
+      "end": 58.4463333333276
+    },
+    {
+      "text": "day!",
+      "start": 58.4463333333276,
+      "end": 58.73304166666093
+    }
+  ],
+  "speechEnd": 58.73304166666093,
+  "speed": 0.9697478991595674
+}
