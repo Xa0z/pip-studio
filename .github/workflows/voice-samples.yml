@@ -1,0 +1,43 @@
+name: Voice samples
+
+on:
+  workflow_dispatch:
+    inputs:
+      voices:
+        description: 'Kokoro voices to compare'
+        default: 'af_heart,am_puck,bf_emma'
+
+permissions:
+  contents: write
+
+jobs:
+  samples:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SAMPLE_VOICES: ${{ inputs.voices }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: nm
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - if: steps.nm.outputs.cache-hit != 'true'
+        run: npm ci
+      - uses: actions/cache@v4
+        with:
+          path: .models
+          key: models-${{ runner.os }}-${{ hashFiles('pip.config.json', 'src/voice.ts') }}
+          restore-keys: models-${{ runner.os }}-
+      - run: npm run voice:samples
+      - uses: actions/upload-artifact@v4
+        with:
+          name: voice-samples
+          path: samples/
+          retention-days: 7
+      - run: bash scripts/push-previews.sh previews-samples "Voice samples ${{ github.run_id }}" samples

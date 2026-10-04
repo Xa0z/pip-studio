@@ -1,0 +1,11 @@
+{
+  "PIP_VOICE": "af_heart",
+  "VOICE_SPEED": 1.0,
+  "TIMEZONE": "Asia/Baghdad",
+  "SLOTS": ["09:00", "15:00", "21:00"],
+  "TIKTOK_PRIVACY": "PUBLIC_TO_EVERYONE",
+  "TIKTOK_POST_MODE": "direct",
+  "CLAUDE_MODEL": "opus",
+  "WHISPER_MODEL": "base.en",
+  "MONTHLY_MINUTES_WARNING": 1700
+}

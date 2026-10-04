@@ -1,0 +1,9 @@
+node_modules/
+out/
+.models/
+.env
+samples/
+*.log
+work/
+public/app/
+remotion/character/generated/

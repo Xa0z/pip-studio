@@ -1,0 +1,126 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {bundle} from '@remotion/bundler';
+import {parseMedia} from '@remotion/media-parser';
+import {nodeReader} from '@remotion/media-parser/node';
+import {renderMedia, renderStill, selectComposition} from '@remotion/renderer';
+import {ROOT} from './config.js';
+import {log} from './log.js';
+import type {VideoProps} from './schema.js';
+import {TOTAL_FRAMES, FPS} from './timeline.js';
+
+const MUSIC_EXT = /\.(mp3|wav|m4a|aac|ogg)$/i;
+
+/** Picks a track from assets/music (rotates by episode). Null if the folder is empty. */
+export const pickMusic = (episode: number): string | null => {
+  const dir = path.join(ROOT, 'assets', 'music');
+  if (!fs.existsSync(dir)) return null;
+  const files = fs.readdirSync(dir).filter((f) => MUSIC_EXT.test(f)).sort();
+  return files.length ? path.join(dir, files[episode % files.length]) : null;
+};
+
+export async function renderVideo(opts: {
+  props: Omit<VideoProps, 'voiceFile' | 'musicFile'>;
+  voicePath: string | null;
+  musicPath: string | null;
+  outPath: string;
+  compositionId?: string;
+}): Promise<void> {
+  // Each render gets its own public folder with just its audio.
+  const publicDir = fs.mkdtempSync(path.join(os.tmpdir(), 'pip-public-'));
+  let voiceFile: string | null = null;
+  let musicFile: string | null = null;
+  if (opts.voicePath) {
+    voiceFile = 'voice' + path.extname(opts.voicePath);
+    fs.copyFileSync(opts.voicePath, path.join(publicDir, voiceFile));
+  }
+  if (opts.musicPath) {
+    musicFile = 'music' + path.extname(opts.musicPath);
+    fs.copyFileSync(opts.musicPath, path.join(publicDir, musicFile));
+    log.info(`Music: ${path.basename(opts.musicPath)} at 10% volume`);
+  } else {
+    log.info('Music: none (assets/music is empty)');
+  }
+
+  const inputProps: VideoProps = {...opts.props, voiceFile, musicFile};
+  const t0 = Date.now();
+  const serveUrl = await bundle({entryPoint: path.join(ROOT, 'remotion', 'index.ts'), publicDir});
+  const composition = await selectComposition({
+    serveUrl,
+    id: opts.compositionId ?? 'PipVideo',
+    inputProps,
+    browserExecutable: process.env.REMOTION_BROWSER_EXECUTABLE || null,
+  });
+  const wantFrames = opts.props.totalFrames ?? TOTAL_FRAMES;
+  if (composition.durationInFrames !== wantFrames || composition.fps !== FPS) {
+    throw new Error(`Composition is ${composition.durationInFrames} frames at ${composition.fps} fps, expected ${wantFrames} at ${FPS}`);
+  }
+
+  let lastPct = -10;
+  await renderMedia({
+    composition,
+    serveUrl,
+    codec: 'h264',
+    outputLocation: opts.outPath,
+    inputProps,
+    crf: 17,
+    x264Preset: 'medium',
+    pixelFormat: 'yuv420p',
+    imageFormat: 'jpeg',
+    jpegQuality: 95,
+    audioCodec: 'aac',
+    audioBitrate: '320k',
+    browserExecutable: process.env.REMOTION_BROWSER_EXECUTABLE || null,
+    onProgress: ({progress}) => {
+      const pct = Math.floor(progress * 100);
+      if (pct >= lastPct + 10) {
+        lastPct = pct;
+        log.info(`Rendering ${pct}%`);
+      }
+    },
+  });
+  fs.rmSync(publicDir, {recursive: true, force: true});
+  log.info(`Rendered in ${((Date.now() - t0) / 1000).toFixed(0)} s`);
+}
+
+/** Reads the real mp4 and fails unless it has exactly the expected frames (default 1860 = 62.00 s). */
+export async function checkDuration(file: string, totalFrames = TOTAL_FRAMES) {
+  const meta = await parseMedia({
+    src: file,
+    reader: nodeReader,
+    fields: {durationInSeconds: true, slowNumberOfFrames: true, dimensions: true},
+    acknowledgeRemotionLicense: true,
+  });
+  const secs = meta.durationInSeconds ?? 0;
+  const frames = meta.slowNumberOfFrames;
+  const ok = Math.abs(secs - totalFrames / FPS) < 0.05 && frames === totalFrames;
+  const size = fs.statSync(file).size / 1024 / 1024;
+  const msg = `${path.basename(file)}: ${secs.toFixed(3)} s, ${frames} frames, ${meta.dimensions?.width}x${meta.dimensions?.height}, ${size.toFixed(1)} MB`;
+  if (!ok) throw new Error(`Duration check failed. ${msg} (must be ${(totalFrames / FPS).toFixed(3)} s, ${totalFrames} frames)`);
+  log.ok(`Duration check passed. ${msg}`);
+  return {seconds: secs, frames, sizeMb: size};
+}
+
+/** Renders one PNG frame of a composition (character sheets and thumbnails). */
+export async function renderStillPng(opts: {compositionId: string; inputProps: Record<string, unknown>; outPath: string; frame?: number; serveUrl?: string}) {
+  const serveUrl = opts.serveUrl ?? (await bundle({entryPoint: path.join(ROOT, 'remotion', 'index.ts')}));
+  const composition = await selectComposition({
+    serveUrl,
+    id: opts.compositionId,
+    inputProps: opts.inputProps,
+    browserExecutable: process.env.REMOTION_BROWSER_EXECUTABLE || null,
+  });
+  await renderStill({
+    composition,
+    serveUrl,
+    output: opts.outPath,
+    inputProps: opts.inputProps,
+    frame: opts.frame ?? 0,
+    imageFormat: opts.outPath.endsWith('.jpg') ? 'jpeg' : 'png',
+    browserExecutable: process.env.REMOTION_BROWSER_EXECUTABLE || null,
+  });
+  return serveUrl;
+}
+
+export const bundleRemotion = (publicDir?: string) => bundle({entryPoint: path.join(ROOT, 'remotion', 'index.ts'), publicDir});

@@ -1,0 +1,24 @@
+{
+  "category": "space",
+  "topic": "A day on Venus is longer than its year",
+  "mainFact": "Venus takes about 243 Earth days to spin once, but only about 225 Earth days to orbit the Sun, so its day is longer than its year.",
+  "supportingDetails": [
+    "Venus spins backwards compared to most planets, so the Sun rises in the west and sets in the east.",
+    "Venus is the hottest planet, with a surface around 475 degrees Celsius, even though Mercury is closer to the Sun."
+  ],
+  "source": "NASA Science: Venus Facts (science.nasa.gov/venus/venus-facts)",
+  "caption": "Would you survive one day on Venus? Most people get this wrong 👀",
+  "hashtags": ["#space", "#venus", "#didyouknow", "#science", "#facts"],
+  "scenes": [
+    {"role": "hook", "narration": "A day on Venus is longer than its year.", "headline": "A day longer than a year?", "highlight": ["longer"], "pip": {"expression": "surprised", "pose": "idle"}},
+    {"role": "fact", "narration": "Here is why. Venus spins super slowly. One full spin takes about two hundred forty-three Earth days.", "headline": "Venus spins super slowly", "highlight": ["slowly"], "pip": {"expression": "thinking", "pose": "pointing"}, "visual": {"layout": "bigNumber", "value": 243, "unit": "days", "label": "for Venus to spin once", "icon": "planet"}},
+    {"role": "fact", "narration": "But its trip around the Sun is quicker. One full orbit takes only about two hundred twenty-five Earth days.", "headline": "One trip around the Sun", "highlight": ["Sun"], "pip": {"expression": "happy", "pose": "pointing"}, "visual": {"layout": "orbit", "center": "sun", "satellite": "planet", "label": "One orbit: about 225 days"}},
+    {"role": "fact", "narration": "So on Venus, one single day lasts longer than a whole year. Your birthday would come before tomorrow!", "headline": "The day beats the year", "highlight": ["day"], "pip": {"expression": "excited", "pose": "jumping"}, "visual": {"layout": "compare", "unit": "days", "items": [{"label": "Venus day", "value": 243, "icon": "clock"}, {"label": "Venus year", "value": 225, "icon": "planet"}]}},
+    {"role": "fact", "narration": "And it gets even weirder. Venus spins backwards compared to Earth and most other planets.", "headline": "It spins backwards", "highlight": ["backwards"], "pip": {"expression": "surprised", "pose": "idle"}, "visual": {"layout": "spotlight", "icon": "planet", "caption": "Venus spins the opposite way to Earth"}},
+    {"role": "fact", "narration": "That means on Venus, the Sun rises in the west and slowly sets in the east.", "headline": "Sunrise in the west", "highlight": ["west"], "pip": {"expression": "wink", "pose": "pointing"}, "visual": {"layout": "steps", "steps": [{"icon": "sun", "text": "Sun rises in the west"}, {"icon": "clock", "text": "Crosses the sky slowly"}, {"icon": "moon", "text": "Sets in the east"}]}},
+    {"role": "fact", "narration": "Venus is also the hottest planet in our solar system, even though Mercury is closer to the Sun.", "headline": "The hottest planet", "highlight": ["hottest"], "pip": {"expression": "thinking", "pose": "idle"}, "visual": {"layout": "compare", "unit": "°C", "items": [{"label": "Venus", "value": 475, "icon": "fire"}, {"label": "Mercury by day", "value": 430, "icon": "sun"}]}},
+    {"role": "fact", "narration": "Its thick clouds trap heat, so the ground reaches about four hundred seventy-five degrees Celsius. Hot enough to melt lead!", "headline": "Hot enough to melt lead", "highlight": ["melt lead"], "pip": {"expression": "surprised", "pose": "jumping"}, "visual": {"layout": "bigNumber", "value": 475, "unit": "°C", "label": "on the ground of Venus", "icon": "thermometer"}},
+    {"role": "recap", "narration": "Quick recap. Venus spins slowly and backwards, so its day is longer than its year.", "headline": "Quick recap", "highlight": ["recap"], "pip": {"expression": "happy", "pose": "pointing"}, "bullets": ["Day: 243 Earth days", "Year: 225 Earth days", "Sun rises in the west"]},
+    {"role": "cta", "narration": "Follow Pip for a new mind-blowing fact every day!", "headline": "A new fact every day!", "highlight": ["every day"], "pip": {"expression": "happy", "pose": "waving"}}
+  ]
+}

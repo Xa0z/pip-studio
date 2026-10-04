@@ -1,0 +1,62 @@
+{
+  "name": "pip-studio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio remotion/index.ts",
+    "run": "tsx src/run.ts",
+    "dry-run": "cross-env DRY_RUN=true tsx src/run.ts --count 3",
+    "tiktok:login": "tsx src/auth.ts login",
+    "tiktok:check": "tsx src/auth.ts check",
+    "gen:key": "tsx src/genkey.ts",
+    "voice:samples": "tsx src/samples.ts",
+    "preview:pip": "remotion render remotion/index.ts PipPreview out/pip-preview.mp4 --crf=17",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx src/selftest.ts && vitest run && tsc --noEmit",
+    "test:studio": "vitest run",
+    "build:webapp": "vite build --config webapp/vite.config.ts",
+    "dev:webapp": "vite --config webapp/vite.config.ts",
+    "worker:tick": "tsx studio/worker/cli.ts tick",
+    "simulate": "tsx studio/dev/simulate.ts",
+    "set-webhook": "tsx studio/dev/set-webhook.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
+    "@babel/parser": "^7.29.9",
+    "@remotion/bundler": "^4.0.532",
+    "@remotion/cli": "^4.0.532",
+    "@remotion/google-fonts": "^4.0.532",
+    "@remotion/install-whisper-cpp": "^4.0.532",
+    "@remotion/media-parser": "^4.0.532",
+    "@remotion/renderer": "^4.0.532",
+    "@supabase/supabase-js": "^2.117.2",
+    "chart.js": "^4.5.1",
+    "chartjs-node-canvas": "^5.0.0",
+    "cross-env": "^10.1.0",
+    "dotenv": "^18.0.5",
+    "grammy": "^1.46.0",
+    "kokoro-js": "^1.2.1",
+    "open": "^11.0.4",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "remotion": "^4.0.532",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@babel/types": "^8.0.6",
+    "@electric-sql/pglite": "^0.5.8",
+    "@types/node": "^26.6.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "playwright-core": "^1.63.0",
+    "recharts": "^3.10.1",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.2",
+    "vitest": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

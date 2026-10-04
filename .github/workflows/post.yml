@@ -1,0 +1,107 @@
+name: Post Pip video
+
+on:
+  schedule:
+    # About 20 minutes before each slot (09:00, 15:00, 21:00 Asia/Baghdad = 06:00, 12:00, 18:00 UTC)
+    - cron: '40 5 * * *'
+    - cron: '40 11 * * *'
+    - cron: '40 17 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'DRY_RUN: make videos but do not publish'
+        type: boolean
+        default: true
+      count:
+        description: 'How many videos'
+        default: '1'
+      fixtures:
+        description: 'Optional: use hand-written plans instead of Claude, e.g. venus,heart,octopus'
+        default: ''
+
+concurrency:
+  group: pip-post
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    # 20 min for the daily posts; a manual dry run of several videos gets more room.
+    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && fromJSON(inputs.count) > 1 && 45 || 20 }}
+    env:
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+      PLAN_FIXTURES: ${{ github.event_name == 'workflow_dispatch' && inputs.fixtures || '' }}
+      TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+      TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+      TOKEN_ENCRYPTION_KEY: ${{ secrets.TOKEN_ENCRYPTION_KEY }}
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Cache node_modules (includes the Remotion browser)
+        id: nm
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install packages
+        if: steps.nm.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Make sure the Remotion browser is there
+        run: npx remotion browser ensure
+
+      - name: Cache voice models (Kokoro, Whisper)
+        uses: actions/cache@v4
+        with:
+          path: .models
+          key: models-${{ runner.os }}-${{ hashFiles('pip.config.json', 'src/voice.ts') }}
+          restore-keys: models-${{ runner.os }}-
+
+      - name: Install Claude Code
+        if: env.PLAN_FIXTURES == '' && env.ANTHROPIC_API_KEY == ''
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Make video(s)
+        run: npx tsx src/run.ts --count ${{ github.event_name == 'workflow_dispatch' && inputs.count || '1' }} ${{ github.event_name == 'schedule' && '--wait' || '' }}
+
+      - name: Save videos as artifact (7 days)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-videos-${{ github.run_id }}
+          path: |
+            out/**/video.mp4
+            out/**/*.json
+            out/**/caption.txt
+            out/**/error.txt
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Save history and refreshed TikTok tokens
+        if: always() && env.DRY_RUN != 'true'
+        run: |
+          git config user.name "pip-bot"
+          git config user.email "pip-bot@users.noreply.github.com"
+          git add src/history.json state/
+          if git diff --cached --quiet; then echo "Nothing to save"; exit 0; fi
+          git commit -m "Pip: update history and tokens [skip ci]"
+          for i in 1 2 3; do git pull --rebase && git push && exit 0; sleep 5; done
+          exit 1
+
+      - name: Publish dry-run videos to the previews-videos branch
+        if: always() && env.DRY_RUN == 'true'
+        run: bash scripts/push-previews.sh previews-videos "Dry run ${{ github.run_id }}" out

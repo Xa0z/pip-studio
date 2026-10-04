@@ -1,0 +1,109 @@
+name: Pip Studio job
+
+# Started by the bot or the tick with workflow_dispatch (input: job_id).
+# Three phases keep secrets away from Claude-written character code:
+#   prepare (secrets) -> render (no secrets, no database) -> finish (secrets)
+on:
+  workflow_dispatch:
+    inputs:
+      job_id:
+        description: 'jobs.id from the database'
+        required: true
+
+run-name: Studio job ${{ inputs.job_id }}
+
+concurrency:
+  group: studio-job-${{ inputs.job_id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      JOB_ID: ${{ inputs.job_id }}
+      STUDIO_WORK_DIR: ${{ github.workspace }}/work
+    steps:
+      - name: Check job id
+        run: |
+          if ! [[ "$JOB_ID" =~ ^[A-Za-z0-9_-]{6,64}$ ]]; then echo "bad job id"; exit 1; fi
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Cache node_modules (includes the Remotion browser)
+        id: nm
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install packages
+        if: steps.nm.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Make sure the Remotion browser is there
+        run: npx remotion browser ensure
+
+      - name: Cache voice models
+        uses: actions/cache@v4
+        with:
+          path: .models
+          key: models-${{ runner.os }}-${{ hashFiles('pip.config.json', 'src/voice.ts') }}
+          restore-keys: models-${{ runner.os }}-
+
+      - name: Does this job use the owner's Claude subscription?
+        id: cli
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: echo "needed=$(npx tsx studio/worker/cli.ts needs-cli "$JOB_ID")" >> "$GITHUB_OUTPUT"
+
+      - name: Install Claude Code
+        if: steps.cli.outputs.needed == 'true'
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Prepare (plan, voice, character code)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          MASTER_ENCRYPTION_KEY: ${{ secrets.MASTER_ENCRYPTION_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          OWNER_TELEGRAM_ID: ${{ secrets.OWNER_TELEGRAM_ID }}
+          GH_DISPATCH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+        run: npx tsx studio/worker/cli.ts job prepare "$JOB_ID"
+
+      - name: Render (no secrets)
+        # Only the job id and the work folder: this step runs character code that Claude wrote.
+        run: env -i HOME="$HOME" PATH="$PATH" STUDIO_WORK_DIR="$STUDIO_WORK_DIR" npx tsx studio/worker/cli.ts job render "$JOB_ID"
+
+      - name: Finish (upload, send to Telegram)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          MASTER_ENCRYPTION_KEY: ${{ secrets.MASTER_ENCRYPTION_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+          OWNER_TELEGRAM_ID: ${{ secrets.OWNER_TELEGRAM_ID }}
+          PUBLIC_BASE_URL: ${{ secrets.PUBLIC_BASE_URL }}
+        run: npx tsx studio/worker/cli.ts job finish "$JOB_ID"
+
+      - name: Tell the user it failed
+        if: failure()
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          MASTER_ENCRYPTION_KEY: ${{ secrets.MASTER_ENCRYPTION_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          OWNER_TELEGRAM_ID: ${{ secrets.OWNER_TELEGRAM_ID }}
+        run: npx tsx studio/worker/cli.ts fail "$JOB_ID"

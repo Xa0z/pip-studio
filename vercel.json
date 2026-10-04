@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "npm run build:webapp",
+  "outputDirectory": "public",
+  "functions": {
+    "api/**/*.ts": {"maxDuration": 30, "memory": 1024}
+  },
+  "rewrites": [{"source": "/app/(.*)", "destination": "/app/index.html"}],
+  "headers": [
+    {"source": "/api/(.*)", "headers": [{"key": "Cache-Control", "value": "no-store"}]}
+  ]
+}

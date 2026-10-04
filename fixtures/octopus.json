@@ -1,0 +1,202 @@
+{
+  "category": "animals",
+  "topic": "Octopuses have three hearts and blue blood",
+  "mainFact": "An octopus has three hearts and blue blood.",
+  "supportingDetails": [
+    "Two hearts pump blood through the gills and the third pumps it to the rest of the body.",
+    "Their blood is blue because it uses a copper-based protein called hemocyanin to carry oxygen.",
+    "About two-thirds of an octopus's neurons are in its arms, not its central brain."
+  ],
+  "source": "Smithsonian Ocean: Octopuses; Encyclopaedia Britannica: Octopus",
+  "caption": "Three hearts AND blue blood. Which animal fact blew your mind the most? 🐙",
+  "hashtags": [
+    "#animals",
+    "#octopus",
+    "#didyouknow",
+    "#ocean",
+    "#facts"
+  ],
+  "scenes": [
+    {
+      "role": "hook",
+      "narration": "This animal has three hearts. Seriously.",
+      "headline": "Three hearts?!",
+      "highlight": [
+        "Three"
+      ],
+      "pip": {
+        "expression": "surprised",
+        "pose": "jumping"
+      }
+    },
+    {
+      "role": "fact",
+      "narration": "Meet the octopus! Eight arms, no bones, and inside its soft body, it has not one, but three hearts.",
+      "headline": "The octopus",
+      "highlight": [
+        "octopus"
+      ],
+      "pip": {
+        "expression": "excited",
+        "pose": "pointing"
+      },
+      "visual": {
+        "layout": "spotlight",
+        "icon": "octopus",
+        "caption": "Soft body, eight arms, three hearts"
+      }
+    },
+    {
+      "role": "fact",
+      "narration": "Two small hearts push blood through the gills, where it picks up oxygen from the water.",
+      "headline": "Two hearts for the gills",
+      "highlight": [
+        "Two hearts"
+      ],
+      "pip": {
+        "expression": "happy",
+        "pose": "pointing"
+      },
+      "visual": {
+        "layout": "iconGrid",
+        "icon": "heart",
+        "count": 3,
+        "label": "hearts in one octopus"
+      }
+    },
+    {
+      "role": "fact",
+      "narration": "Then the third heart, the big one, pumps that blood to the rest of its body.",
+      "headline": "One heart for the body",
+      "highlight": [
+        "body"
+      ],
+      "pip": {
+        "expression": "thinking",
+        "pose": "idle"
+      },
+      "visual": {
+        "layout": "steps",
+        "steps": [
+          {
+            "icon": "heart",
+            "text": "Gill hearts pump"
+          },
+          {
+            "icon": "wave",
+            "text": "Blood grabs oxygen"
+          },
+          {
+            "icon": "heart",
+            "text": "Main heart pumps"
+          },
+          {
+            "icon": "octopus",
+            "text": "Whole body fed"
+          }
+        ]
+      }
+    },
+    {
+      "role": "fact",
+      "narration": "Fun twist. When an octopus swims, that main heart stops beating. That may be why they prefer crawling!",
+      "headline": "Swimming stops a heart",
+      "highlight": [
+        "stops"
+      ],
+      "pip": {
+        "expression": "surprised",
+        "pose": "idle"
+      },
+      "visual": {
+        "layout": "orbit",
+        "center": "octopus",
+        "satellite": "heart",
+        "label": "Swimming is tiring for octopuses"
+      }
+    },
+    {
+      "role": "fact",
+      "narration": "And their blood is blue! It uses copper to carry oxygen. Our blood uses iron, so ours is red.",
+      "headline": "Blue blood",
+      "highlight": [
+        "Blue"
+      ],
+      "pip": {
+        "expression": "excited",
+        "pose": "jumping"
+      },
+      "visual": {
+        "layout": "spotlight",
+        "icon": "drop",
+        "caption": "Copper in its blood makes it blue"
+      }
+    },
+    {
+      "role": "fact",
+      "narration": "One more thing. About two thirds of an octopus's brain cells are in its arms, not its head.",
+      "headline": "Smart arms",
+      "highlight": [
+        "arms"
+      ],
+      "pip": {
+        "expression": "wink",
+        "pose": "pointing"
+      },
+      "visual": {
+        "layout": "bigNumber",
+        "value": 2,
+        "unit": "out of 3",
+        "label": "brain cells are in its arms",
+        "icon": "brain"
+      }
+    },
+    {
+      "role": "fact",
+      "narration": "So each arm can explore, touch, and taste things on its own. Like eight curious helpers!",
+      "headline": "Eight curious arms",
+      "highlight": [
+        "Eight"
+      ],
+      "pip": {
+        "expression": "happy",
+        "pose": "waving"
+      },
+      "visual": {
+        "layout": "iconGrid",
+        "icon": "hand",
+        "count": 8,
+        "label": "arms that explore on their own"
+      }
+    },
+    {
+      "role": "recap",
+      "narration": "Quick recap. Octopuses have three hearts, blue blood, and arms that can almost think for themselves.",
+      "headline": "Quick recap",
+      "highlight": [
+        "recap"
+      ],
+      "pip": {
+        "expression": "happy",
+        "pose": "pointing"
+      },
+      "bullets": [
+        "Three hearts",
+        "Blue, copper-based blood",
+        "Brainy arms"
+      ]
+    },
+    {
+      "role": "cta",
+      "narration": "Follow Pip for a new mind-blowing fact every day!",
+      "headline": "A new fact every day!",
+      "highlight": [
+        "every day"
+      ],
+      "pip": {
+        "expression": "happy",
+        "pose": "waving"
+      }
+    }
+  ]
+}

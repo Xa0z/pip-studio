@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login code · Pip Explains</title><style>
+:root{--bg:#0B1030;--card:#161B45;--text:#F4F5FF;--muted:#B9BEE6;--orange:#FF7A1A;--yellow:#FFD23F;--cyan:#3DF5FF}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#0B1030,#3A1C6B);color:var(--text);font:17px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+main{max-width:720px;margin:0 auto;padding:40px 16px 64px}
+h1{font-size:36px;margin:8px 0 4px}h1 span{color:var(--orange)}h2{color:var(--yellow);font-size:21px;margin-top:32px}
+a{color:var(--cyan)}.card{background:var(--card);border:1px solid #2A3170;border-radius:16px;padding:20px;margin:16px 0}
+.muted{color:var(--muted);font-size:15px}nav a{margin-right:16px}code{background:#0006;padding:2px 6px;border-radius:6px;word-break:break-all}
+</style></head>
+<body><main><nav><a href="index.html">Home</a><a href="terms.html">Terms</a><a href="privacy.html">Privacy</a></nav>
+<h1>TikTok <span>login</span></h1>
+<p>Copy these two values into the terminal where <code>npm run tiktok:login</code> is waiting.</p>
+<div class="card"><p><b>Code</b><br><code id="code">(none)</code></p><p><b>State</b><br><code id="state">(none)</code></p><p id="err" style="color:#FF6F6F"></p></div>
+<script>
+const q=new URLSearchParams(location.search);
+document.getElementById('code').textContent=q.get('code')||'(none)';
+document.getElementById('state').textContent=q.get('state')||'(none)';
+if(q.get('error'))document.getElementById('err').textContent='TikTok said: '+q.get('error')+' '+(q.get('error_description')||'');
+</script>
+<p class="muted" style="margin-top:48px">Pip Explains · Last updated October 4, 2026</p>
+</main></body></html>
