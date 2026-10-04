@@ -13,6 +13,7 @@ import type {Dispatcher} from '../lib/github.js';
 import {GOALS, type Goal} from '../lib/goals.js';
 import {fmtNum, fmtPct} from '../lib/metrics.js';
 import {NICHES} from '../lib/niches.js';
+import {redact} from '../lib/redact.js';
 import {MIN_VIDEOS_FOR_PATTERNS} from '../lib/patterns.js';
 import {COMMON_TIMEZONES, fmtLocal, localParts, parseTimes, parseTimezone, slotsBetween, suggestTimes} from '../lib/schedule.js';
 import {signState} from '../lib/state.js';
@@ -795,6 +796,14 @@ export function createBot(deps: BotDeps) {
     const {redact} = await import('../lib/redact.js');
     console.error('Bot error:', redact(err.error instanceof Error ? err.error.message : String(err.error)));
     await err.ctx.reply('😵 Something broke on my side. Please try again in a minute.').catch(() => undefined);
+  });
+
+  // Log only the redacted message (the grammY error object carries the bot token), tell the user,
+  // and answer Telegram with 200 so it does not retry the same update in a loop.
+  bot.catch(async (err) => {
+    const cause = err.error instanceof Error ? err.error.message : String(err.error);
+    console.error(`Bot error on update ${err.ctx.update.update_id}: ${redact(cause)}`);
+    await err.ctx.reply('Sorry, something went wrong on my side. Please try again in a minute.').catch(() => undefined);
   });
 
   return bot;
