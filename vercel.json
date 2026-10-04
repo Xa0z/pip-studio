@@ -6,7 +6,7 @@
   "functions": {
     "api/**/*.ts": {"maxDuration": 30, "memory": 1024}
   },
-  "redirects": [{"source": "/", "destination": "https://t.me/PipStudio_bot", "permanent": false}],
+  "cleanUrls": true,
   "rewrites": [{"source": "/app/(.*)", "destination": "/app/index.html"}],
   "headers": [
     {"source": "/api/(.*)", "headers": [{"key": "Cache-Control", "value": "no-store"}]}

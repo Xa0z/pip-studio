@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Privacy Policy · Pip Studio</title><link rel="icon" href="/logo.png"><style>
+:root{--card:#161B45;--text:#F4F5FF;--muted:#B9BEE6;--orange:#FF7A1A;--yellow:#FFD23F;--cyan:#3DF5FF}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#0B1030,#3A1C6B);background-attachment:fixed;color:var(--text);font:17px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+main{max-width:720px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:34px;line-height:1.2;margin:8px 0 4px}h1 span{color:var(--orange)}h2{color:var(--yellow);font-size:21px;margin-top:32px}
+a{color:var(--cyan)}.card{background:var(--card);border:1px solid #2A3170;border-radius:16px;padding:20px;margin:16px 0}
+.muted{color:var(--muted);font-size:15px}nav{display:flex;align-items:center;gap:16px;flex-wrap:wrap}nav img{width:40px;height:40px;border-radius:10px}
+.btn{display:inline-block;background:var(--orange);color:#fff;font-weight:600;padding:12px 24px;border-radius:24px;text-decoration:none;margin-top:8px}
+.hero{text-align:center}.hero img{width:180px;height:180px;border-radius:40px;margin-top:16px}
+</style></head>
+<body><main><nav><img src="/logo.png" alt=""><a href="/">Home</a><a href="/terms">Terms</a><a href="/privacy">Privacy</a></nav>
+<h1>Privacy <span>Policy</span></h1>
+<p class="muted">Last updated: 4 October 2026</p>
+<p>Pip Studio ("Pip", "we") is a Telegram bot at <a href="https://t.me/PipStudio_bot">@PipStudio_bot</a> that makes short videos and posts them to the TikTok account you connect. This policy explains what we collect, why, and how to delete it.</p>
+<h2>What we collect</h2>
+<ul>
+<li><b>Telegram:</b> your Telegram user ID, username and first name, and the answers you give during setup (niche, goal, link, time zone, schedule, posting mode).</li>
+<li><b>TikTok</b> (only after you log in with TikTok and approve the permissions):
+<ul><li>your open ID, username, display name and avatar (<code>user.info.basic</code>, <code>user.info.profile</code>);</li>
+<li>your follower, following, likes and video counts (<code>user.info.stats</code>);</li>
+<li>the list of your public videos with their views, likes, comments and shares (<code>video.list</code>);</li>
+<li>an access token and refresh token that let Pip publish videos for you (<code>video.publish</code>).</li></ul></li>
+<li><b>Claude:</b> the Anthropic API key (or Claude token) you give the bot so it can write your videos.</li>
+<li><b>Content we make for you:</b> your character, video scripts, captions, the rendered videos and thumbnails, and the statistics of each posted video over its first 30 days.</li>
+</ul>
+<h2>How we use it</h2>
+<ul>
+<li>To make videos in your niche and post them to your TikTok account on the schedule you chose, or after you approve them.</li>
+<li>To show you statistics, reports and the dashboard, and to learn which topics, hooks and posting times work best for your account.</li>
+</ul>
+<p>We do not sell your data, use it for advertising, or share it with anyone except the services that run Pip (below). We never post to any account other than the one you connected.</p>
+<h2>How we protect it</h2>
+<ul>
+<li>TikTok tokens and Claude keys are encrypted with AES-256-GCM before they are stored and are only decrypted to make a request for you.</li>
+<li>The database is not reachable from the public internet without the server key; only Pip's own server code reads it.</li>
+</ul>
+<h2>Services that process your data</h2>
+<ul>
+<li><b>Telegram</b> (messages with the bot), <b>TikTok</b> (login, posting, statistics), <b>Anthropic</b> (writing scripts with your own Claude key),</li>
+<li><b>Supabase</b> (database and file storage), <b>Vercel</b> (the bot's server), <b>GitHub Actions</b> (rendering videos).</li>
+</ul>
+<h2>How long we keep it</h2>
+<p>We keep your data while your account is connected. Video statistics are collected for 30 days after each post.</p>
+<h2>Deleting your data</h2>
+<p>Send <b>/disconnect</b> to <a href="https://t.me/PipStudio_bot">@PipStudio_bot</a>. This revokes Pip's TikTok access and permanently deletes your account, tokens, keys, characters, videos and statistics from our database and storage. Videos already posted to TikTok stay on TikTok; you can delete them in the TikTok app. You can also remove Pip's access at any time in TikTok under Settings and privacy, Security, Manage app permissions.</p>
+<h2>Children</h2>
+<p>Pip Studio is not meant for anyone under 18.</p>
+<h2>Changes and contact</h2>
+<p>If this policy changes, we update the date above and tell active users in the bot. Questions: message <a href="https://t.me/PipStudio_bot">@PipStudio_bot</a> or open an issue at <a href="https://github.com/Xa0z/pip-studio/issues">github.com/Xa0z/pip-studio</a>.</p>
+<p class="muted" style="margin-top:40px">Pip Studio · <a href="https://t.me/PipStudio_bot">@PipStudio_bot</a> · Source code: <a href="https://github.com/Xa0z/pip-studio">github.com/Xa0z/pip-studio</a></p>
+</main></body></html>
