@@ -95,8 +95,9 @@ h1 { font-size: clamp(32px, 4.4vw, 46px); line-height: 1.12; letter-spacing: -0.
 .track { position: relative; height: 40px; display: flex; gap: 2px; margin-bottom: 4px; }
 .clip { height: 100%; background: var(--monitor-2); border: 1px solid var(--monitor-line); border-radius: 3px; font: 11px/1 var(--mono); color: var(--monitor-muted); padding: 6px; overflow: hidden; white-space: nowrap; cursor: pointer; }
 .clip.on { border-color: var(--accent-soft); color: var(--monitor-text); }
+.track.audio { height: 30px; background: url(media/wave.png) center / 100% 100% no-repeat, var(--monitor-2); border: 1px solid var(--monitor-line); border-radius: 3px; }
 .track-label { font: 10px/1 var(--mono); color: var(--monitor-muted); margin: 6px 0 4px; text-transform: uppercase; letter-spacing: .06em; }
-.playhead { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--accent-soft); left: 0; pointer-events: none; }
+.playhead { position: absolute; top: -4px; bottom: -40px; width: 2px; background: var(--accent-soft); left: 0; pointer-events: none; }
 .editor-note { font-size: 13px; color: var(--muted); margin: 10px 2px 0; }
 @media (max-width: 640px) {
   .editor-body { grid-template-columns: 1fr; }
