@@ -1,16 +1,16 @@
 import React from 'react';
 import type {IconName} from '../../src/schema';
 
-// Flat icons drawn in code, 100x100 box. Brand colors plus a few soft accents.
-const O = '#FF7A1A';
-const Y = '#FFD23F';
-const C = '#3DF5FF';
+// Flat icons drawn in code, 100x100 box. Muted tones that sit on the stone background.
+const O = '#D9622B';
+const Y = '#E0B04A';
+const C = '#5E8C8A';
 const W = '#FFFFFF';
-const N = '#1B1F3B';
-const G = '#5BE38A';
-const P = '#FF6FAE';
-const B = '#4D8BFF';
-const R = '#FF4D5E';
+const N = '#24272A';
+const G = '#5E9B6E';
+const P = '#D9798F';
+const B = '#4F7CAC';
+const R = '#C8553D';
 const T = '#B5763A';
 
 const star = (cx: number, cy: number, r: number, ir = 0.45) => {
@@ -50,10 +50,10 @@ const ICON_DRAW: Record<IconName, React.ReactNode> = {
   ),
   moon: (
     <>
-      <circle cx={50} cy={50} r={34} fill="#E8E6F0" />
-      <circle cx={38} cy={40} r={7} fill="#C9C5D8" />
-      <circle cx={60} cy={62} r={9} fill="#C9C5D8" />
-      <circle cx={62} cy={34} r={4} fill="#C9C5D8" />
+      <circle cx={50} cy={50} r={34} fill="#E4E1DA" />
+      <circle cx={38} cy={40} r={7} fill="#C4BFB6" />
+      <circle cx={60} cy={62} r={9} fill="#C4BFB6" />
+      <circle cx={62} cy={34} r={4} fill="#C4BFB6" />
     </>
   ),
   planet: (
@@ -103,7 +103,7 @@ const ICON_DRAW: Record<IconName, React.ReactNode> = {
     <>
       <ellipse cx={50} cy={50} rx={46} ry={16} fill="none" stroke={O} strokeWidth={8} />
       <ellipse cx={50} cy={50} rx={36} ry={10} fill="none" stroke={Y} strokeWidth={4} />
-      <circle cx={50} cy={50} r={22} fill="#05060F" stroke={O} strokeWidth={3} />
+      <circle cx={50} cy={50} r={22} fill="#24272A" stroke={O} strokeWidth={3} />
     </>
   ),
   astronaut: (
@@ -119,7 +119,7 @@ const ICON_DRAW: Record<IconName, React.ReactNode> = {
   brain: (
     <>
       <path d="M50,20 C34,10 14,22 18,40 C8,48 12,66 26,70 C30,84 46,84 50,76 C54,84 70,84 74,70 C88,66 92,48 82,40 C86,22 66,10 50,20Z" fill={P} />
-      <path d="M50,22 L50,76 M32,34 Q40,40 34,50 M68,34 Q60,40 66,50 M28,58 Q38,56 40,66 M72,58 Q62,56 60,66" stroke="#D94C8C" strokeWidth={4} fill="none" strokeLinecap="round" />
+      <path d="M50,22 L50,76 M32,34 Q40,40 34,50 M68,34 Q60,40 66,50 M28,58 Q38,56 40,66 M72,58 Q62,56 60,66" stroke="#B86A7C" strokeWidth={4} fill="none" strokeLinecap="round" />
     </>
   ),
   eye: (
@@ -159,7 +159,7 @@ const ICON_DRAW: Record<IconName, React.ReactNode> = {
   cell: (
     <>
       <circle cx={50} cy={50} r={40} fill={G} opacity={0.35} stroke={G} strokeWidth={4} />
-      <circle cx={46} cy={46} r={14} fill="#8E6BFF" />
+      <circle cx={46} cy={46} r={14} fill="#6E7F99" />
       <ellipse cx={70} cy={66} rx={8} ry={4} fill={O} />
       <ellipse cx={30} cy={70} rx={6} ry={3} fill={O} />
       <circle cx={68} cy={32} r={4} fill={Y} />
@@ -295,7 +295,7 @@ const ICON_DRAW: Record<IconName, React.ReactNode> = {
   ),
   mountain: (
     <>
-      <path d="M4,88 L38,24 L58,58 L68,42 L96,88Z" fill="#8E7CC3" />
+      <path d="M4,88 L38,24 L58,58 L68,42 L96,88Z" fill="#8A8FA3" />
       <path d="M38,24 L48,43 L40,40 L32,46Z" fill={W} />
       <path d="M68,42 L75,54 L66,52Z" fill={W} />
     </>
@@ -304,8 +304,8 @@ const ICON_DRAW: Record<IconName, React.ReactNode> = {
     <>
       <path d="M8,90 L36,40 L64,40 L92,90Z" fill={T} />
       <path d="M36,40 L44,52 L50,44 L56,54 L64,40Z" fill={O} />
-      <circle cx={42} cy={22} r={10} fill="#9A9AB0" />
-      <circle cx={58} cy={16} r={12} fill="#9A9AB0" />
+      <circle cx={42} cy={22} r={10} fill="#9A9C9A" />
+      <circle cx={58} cy={16} r={12} fill="#9A9C9A" />
       <path d="M50,40 L50,30" stroke={Y} strokeWidth={6} strokeLinecap="round" />
     </>
   ),
@@ -395,8 +395,8 @@ const ICON_DRAW: Record<IconName, React.ReactNode> = {
   ),
   weight: (
     <>
-      <path d="M26,34 L74,34 L88,90 L12,90Z" fill="#7A7F9A" />
-      <circle cx={50} cy={24} r={12} fill="none" stroke="#7A7F9A" strokeWidth={7} />
+      <path d="M26,34 L74,34 L88,90 L12,90Z" fill="#7A807E" />
+      <circle cx={50} cy={24} r={12} fill="none" stroke="#7A807E" strokeWidth={7} />
       <text x={50} y={74} textAnchor="middle" fontSize={24} fontWeight={700} fill={W} fontFamily="sans-serif">
         KG
       </text>
@@ -464,11 +464,11 @@ const ICON_DRAW: Record<IconName, React.ReactNode> = {
     <>
       <line x1={50} y1={10} x2={50} y2={24} stroke={W} strokeWidth={4} />
       <circle cx={50} cy={10} r={6} fill={Y} />
-      <rect x={20} y={24} width={60} height={50} rx={14} fill="#C9D3E6" />
+      <rect x={20} y={24} width={60} height={50} rx={14} fill="#C7CFD3" />
       <rect x={28} y={34} width={44} height={26} rx={8} fill={N} />
       <circle cx={40} cy={47} r={6} fill={C} />
       <circle cx={60} cy={47} r={6} fill={C} />
-      <rect x={34} y={78} width={32} height={12} rx={4} fill="#C9D3E6" />
+      <rect x={34} y={78} width={32} height={12} rx={4} fill="#C7CFD3" />
     </>
   ),
   chip: (
@@ -511,8 +511,8 @@ const ICON_DRAW: Record<IconName, React.ReactNode> = {
   ),
   castle: (
     <>
-      <rect x={16} y={40} width={68} height={50} fill="#B9B4CC" />
-      <path d="M16,40 L16,28 L26,28 L26,36 L36,36 L36,28 L46,28 L46,36 L54,36 L54,28 L64,28 L64,36 L74,36 L74,28 L84,28 L84,40Z" fill="#B9B4CC" />
+      <rect x={16} y={40} width={68} height={50} fill="#B3AEA5" />
+      <path d="M16,40 L16,28 L26,28 L26,36 L36,36 L36,28 L46,28 L46,36 L54,36 L54,28 L64,28 L64,36 L74,36 L74,28 L84,28 L84,40Z" fill="#B3AEA5" />
       <path d="M40,90 L40,66 Q50,54 60,66 L60,90Z" fill={N} />
       <rect x={24} y={50} width={8} height={12} fill={N} />
       <rect x={68} y={50} width={8} height={12} fill={N} />
@@ -575,7 +575,7 @@ const ICON_DRAW: Record<IconName, React.ReactNode> = {
   ),
   lock: (
     <>
-      <path d="M30,44 L30,32 Q30,12 50,12 Q70,12 70,32 L70,44" stroke="#C9D3E6" strokeWidth={9} fill="none" />
+      <path d="M30,44 L30,32 Q30,12 50,12 Q70,12 70,32 L70,44" stroke="#C7CFD3" strokeWidth={9} fill="none" />
       <rect x={20} y={42} width={60} height={46} rx={8} fill={Y} />
       <circle cx={50} cy={60} r={7} fill={N} />
       <rect x={47} y={62} width={6} height={14} rx={2} fill={N} />

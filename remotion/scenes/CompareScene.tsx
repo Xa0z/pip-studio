@@ -6,7 +6,7 @@ import {COLORS, FONT} from '../theme';
 import {formatNumber, Stage} from './common';
 
 type V = Extract<Visual, {layout: 'compare'}>;
-const BAR_COLORS = [COLORS.orange, COLORS.cyan, COLORS.yellow, '#FF6FAE'];
+const BAR_COLORS = [COLORS.sage, COLORS.sage2, COLORS.mint, COLORS.inkMuted];
 
 export const CompareScene: React.FC<{visual: V}> = ({visual}) => {
   const frame = useCurrentFrame();
@@ -23,13 +23,13 @@ export const CompareScene: React.FC<{visual: V}> = ({visual}) => {
             <div key={i} style={{opacity: interpolate(frame, [start - 4, start + 4], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})}}>
               <div style={{display: 'flex', alignItems: 'center', gap: 18, marginBottom: 10}}>
                 <Icon name={item.icon} size={70} />
-                <div style={{fontFamily: FONT, fontWeight: 600, fontSize: 46, color: COLORS.white}}>{item.label}</div>
-              </div>
-              <div style={{height: 64, background: 'rgba(255,255,255,0.08)', borderRadius: 32, overflow: 'hidden', position: 'relative'}}>
-                <div style={{width: `${share * grow * 100}%`, height: '100%', background: BAR_COLORS[i % 4], borderRadius: 32}} />
-                <div style={{position: 'absolute', right: 24, top: 0, height: 64, display: 'flex', alignItems: 'center', fontFamily: FONT, fontWeight: 700, fontSize: 40, color: COLORS.white, textShadow: '0 2px 8px rgba(0,0,0,0.6)'}}>
+                <div style={{fontFamily: FONT, fontWeight: 600, fontSize: 46, color: COLORS.ink}}>{item.label}</div>
+                <div style={{marginLeft: 'auto', fontFamily: FONT, fontWeight: 700, fontSize: 44, color: COLORS.ink, fontVariantNumeric: 'tabular-nums'}}>
                   {formatNumber(item.value * grow, decimals)} {visual.unit}
                 </div>
+              </div>
+              <div style={{height: 40, background: COLORS.track, borderRadius: 10, overflow: 'hidden'}}>
+                <div style={{width: `${share * grow * 100}%`, height: '100%', background: BAR_COLORS[i % 4], borderRadius: 10}} />
               </div>
             </div>
           );

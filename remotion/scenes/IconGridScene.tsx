@@ -23,8 +23,8 @@ export const IconGridScene: React.FC<{visual: V}> = ({visual}) => {
             return <Icon key={i} name={visual.icon} size={size} style={{transform: `scale(${s})`}} />;
           })}
         </div>
-        <div style={{fontFamily: FONT, fontWeight: 700, fontSize: 52, color: COLORS.white, textAlign: 'center', maxWidth: 900}}>
-          <span style={{color: COLORS.orange}}>{n}</span> {visual.label}
+        <div style={{fontFamily: FONT, fontWeight: 700, fontSize: 52, color: COLORS.ink, textAlign: 'center', maxWidth: 900}}>
+          <span style={{color: COLORS.sage}}>{n}</span> {visual.label}
         </div>
       </div>
     </Stage>

@@ -18,10 +18,10 @@ export const RecapScene: React.FC<{scene: Scene}> = ({scene}) => {
             return (
               <Card key={i} style={{width: 860, padding: '24px 34px', display: 'flex', alignItems: 'center', gap: 26, opacity: p, transform: `translateY(${(1 - p) * 30}px)`}}>
                 <svg width={64} height={64} viewBox="0 0 64 64" style={{flexShrink: 0}}>
-                  <circle cx={32} cy={32} r={30} fill={COLORS.orange} />
+                  <circle cx={32} cy={32} r={30} fill={COLORS.sage} />
                   <path d="M18,33 L28,43 L47,22" stroke="#fff" strokeWidth={7} fill="none" strokeLinecap="round" strokeLinejoin="round" strokeDasharray={50} strokeDashoffset={50 * (1 - p)} />
                 </svg>
-                <div style={{fontFamily: FONT, fontWeight: 600, fontSize: 48, color: COLORS.white}}>{b}</div>
+                <div style={{fontFamily: FONT, fontWeight: 600, fontSize: 48, color: COLORS.ink}}>{b}</div>
               </Card>
             );
           })}

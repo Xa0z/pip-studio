@@ -8,7 +8,7 @@ export const useIn = (delay = 0, damping = 14) => {
   return spring({frame: frame - delay, fps, config: {damping, mass: 0.6}});
 };
 
-/** Splits the headline and colors the highlight words orange. */
+/** Splits the headline and marks the highlight words like a highlighter pen. */
 export const Highlighted: React.FC<{text: string; highlight: string[]}> = ({text, highlight}) => {
   if (!highlight.length) return <>{text}</>;
   const escaped = highlight.map((h) => h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
@@ -17,7 +17,7 @@ export const Highlighted: React.FC<{text: string; highlight: string[]}> = ({text
     <>
       {parts.map((p, i) =>
         highlight.some((h) => h.toLowerCase() === p.toLowerCase()) ? (
-          <span key={i} style={{color: COLORS.orange}}>
+          <span key={i} style={{color: COLORS.sage, background: `linear-gradient(transparent 58%, ${COLORS.marker} 58%, ${COLORS.marker} 92%, transparent 92%)`, padding: '0 6px', margin: '0 -6px'}}>
             {p}
           </span>
         ) : (
@@ -44,11 +44,11 @@ export const Headline: React.FC<{text: string; highlight: string[]; size?: numbe
         left: 70,
         width,
         fontFamily: FONT,
-        fontWeight: 700,
+        fontWeight: 800,
         fontSize: size,
-        lineHeight: 1.08,
-        color: COLORS.white,
-        textShadow: '0 6px 24px rgba(0,0,0,0.35)',
+        lineHeight: 1.1,
+        letterSpacing: -1,
+        color: COLORS.ink,
         opacity: p,
         transform: `translateY(${interpolate(p, [0, 1], [40, 0])}px)`,
       }}
@@ -68,10 +68,9 @@ export const Stage: React.FC<{children: React.ReactNode; top?: number; height?: 
 export const Card: React.FC<{children: React.ReactNode; style?: React.CSSProperties}> = ({children, style}) => (
   <div
     style={{
-      background: COLORS.card,
-      border: `3px solid ${COLORS.cardBorder}`,
-      borderRadius: 44,
-      boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+      background: COLORS.surface,
+      border: `3px solid ${COLORS.line}`,
+      borderRadius: 28,
       ...style,
     }}
   >

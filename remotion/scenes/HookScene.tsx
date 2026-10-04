@@ -10,7 +10,7 @@ export const HookScene: React.FC<{scene: Scene; title: string}> = ({scene, title
   return (
     <>
       <div style={{position: 'absolute', top: 230, width: 1080, display: 'flex', justifyContent: 'center', opacity: badge, transform: `scale(${0.7 + 0.3 * badge})`}}>
-        <div style={{fontFamily: FONT, fontWeight: 700, fontSize: 46, color: '#1B1F3B', background: COLORS.yellow, borderRadius: 40, padding: '10px 34px'}}>{title}</div>
+        <div style={{fontFamily: FONT, fontWeight: 700, fontSize: 46, color: COLORS.onSage, background: COLORS.sage, borderRadius: 12, padding: '10px 34px'}}>{title}</div>
       </div>
       <div
         style={{
@@ -23,8 +23,7 @@ export const HookScene: React.FC<{scene: Scene; title: string}> = ({scene, title
           fontWeight: 700,
           fontSize: scene.headline.length > 30 ? 84 : 100,
           lineHeight: 1.05,
-          color: COLORS.white,
-          textShadow: '0 8px 30px rgba(0,0,0,0.4)',
+          color: COLORS.ink,
           opacity: text,
           transform: `scale(${interpolate(text, [0, 1], [1.25, 1])})`,
         }}

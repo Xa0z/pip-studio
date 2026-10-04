@@ -49,7 +49,7 @@ export const Video: React.FC<VideoProps> = ({title, scenes, words, voiceFile, mu
   const showBadge = scene.role === 'fact' || scene.role === 'recap';
 
   return (
-    <AbsoluteFill style={{backgroundColor: COLORS.bgTop}}>
+    <AbsoluteFill style={{backgroundColor: COLORS.bg}}>
       <Background />
 
       {scenes.map((s, i) => (
@@ -59,7 +59,7 @@ export const Video: React.FC<VideoProps> = ({title, scenes, words, voiceFile, mu
       ))}
 
       {showBadge ? (
-        <div style={{position: 'absolute', top: 236, left: 70, fontFamily: FONT, fontWeight: 700, fontSize: 36, color: '#1B1F3B', background: COLORS.yellow, borderRadius: 30, padding: '6px 24px'}}>{title}</div>
+        <div style={{position: 'absolute', top: 236, left: 70, fontFamily: FONT, fontWeight: 700, fontSize: 36, color: COLORS.onSage, background: COLORS.sage, borderRadius: 10, padding: '6px 24px'}}>{title}</div>
       ) : null}
 
       {Character ? (

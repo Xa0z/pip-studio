@@ -1,19 +1,23 @@
-import {loadFont} from '@remotion/google-fonts/Fredoka';
+import {loadFont} from '@remotion/google-fonts/PlusJakartaSans';
 
-const {fontFamily} = loadFont('normal', {weights: ['500', '600', '700'], subsets: ['latin']});
+const {fontFamily} = loadFont('normal', {weights: ['500', '600', '700', '800'], subsets: ['latin']});
 
 export const FONT = fontFamily;
 
+/** Sage theme, same as the website: flat stone background, porcelain panels, charcoal text, sage accents. */
 export const COLORS = {
-  bgTop: '#0B1030',
-  bgBottom: '#3A1C6B',
-  white: '#FFFFFF',
-  orange: '#FF7A1A',
-  yellow: '#FFD23F',
-  cyan: '#3DF5FF',
-  navy: '#1B1F3B',
-  card: 'rgba(255,255,255,0.08)',
-  cardBorder: 'rgba(255,255,255,0.16)',
+  bg: '#EBE5DF',
+  surface: '#F7F6F2',
+  track: '#DCD5CC',
+  line: '#CFC8BE',
+  ink: '#24272A',
+  inkMuted: '#5B6B68',
+  sage: '#465B53',
+  sage2: '#73847C',
+  mint: '#A7B8A9',
+  marker: '#C5D3C7',
+  onSage: '#F7F6F2',
+  orange: '#D9622B',
 };
 
 export const FPS = 30;

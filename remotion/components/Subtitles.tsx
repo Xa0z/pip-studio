@@ -41,13 +41,14 @@ export const Subtitles: React.FC<{words: Word[]; top?: number}> = ({words, top =
             key={i}
             style={{
               fontFamily: FONT,
-              fontWeight: 700,
-              fontSize: 84,
-              color: active ? COLORS.yellow : COLORS.white,
-              WebkitTextStroke: '12px rgba(11,16,48,0.9)',
-              paintOrder: 'stroke fill',
-              textShadow: '0 6px 18px rgba(0,0,0,0.5)',
-              transform: active ? 'scale(1.05)' : 'scale(1)',
+              fontWeight: 800,
+              fontSize: 80,
+              letterSpacing: -0.5,
+              color: active ? COLORS.onSage : COLORS.ink,
+              background: active ? COLORS.sage : 'transparent',
+              borderRadius: 14,
+              padding: '0 14px',
+              margin: '0 -14px',
               display: 'inline-block',
             }}
           >
