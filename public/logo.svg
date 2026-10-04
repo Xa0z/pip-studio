@@ -1,9 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Pip Studio">
   <rect width="1024" height="1024" fill="#465B53"/>
-  <g fill="none" stroke="#F7F6F2" stroke-width="40" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M236 356V276a40 40 0 0 1 40-40h80"/><path d="M668 236h80a40 40 0 0 1 40 40v80"/>
-    <path d="M788 668v80a40 40 0 0 1-40 40h-80"/><path d="M356 788h-80a40 40 0 0 1-40-40v-80"/>
-  </g>
-  <path transform="translate(-22 0)" d="M436 382v260c0 14 15 22 27 15l214-130c11-7 11-23 0-30L463 367c-12-7-27 1-27 15z" fill="#F7F6F2"/>
-  <circle cx="704" cy="320" r="32" fill="#A7B8A9"/>
+  <path fill="#F7F6F2" fill-rule="evenodd" d="M284 252a40 40 0 0 1 40-40h236a208 208 0 0 1 0 416H424v164a40 40 0 0 1-40 40h-60a40 40 0 0 1-40-40z M466 342v156c0 13 14 21 25 14l124-78c10-6 10-22 0-28l-124-78c-11-7-25 1-25 14z"/>
+  <circle cx="660" cy="742" r="62" fill="#A7B8A9"/>
 </svg>
