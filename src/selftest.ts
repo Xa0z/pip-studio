@@ -7,7 +7,7 @@ import {ROOT} from './config.js';
 import {isRepeatTopic, nextCategory} from './history.js';
 import {PlanSchema} from './schema.js';
 import {buildTimeline, validateTimeline, voiceProblems} from './timeline.js';
-import type {VoiceResult} from './voice.js';
+import {pausesFor, type VoiceResult} from './voice.js';
 
 let failed = 0;
 const test = (name: string, fn: () => void) => {
@@ -63,6 +63,15 @@ test('scene frames add up to exactly 1860', () => {
 });
 test('too-short speech is reported', () => {
   assert.ok(voiceProblems(plan, fakeVoice(0.8)).some((p) => /spoken length/.test(p)));
+});
+test('pauses stretch to reach the target but keep scenes under 8 s', () => {
+  const durs = [3, 5.5, 5.5, 7.6, 5.5, 5.5, 5.5, 5.5, 5, 3];
+  const p = pausesFor(durs, 59.5);
+  const end = 0.15 + durs.reduce((a, b) => a + b, 0) + p.reduce((a, b) => a + b, 0);
+  assert.ok(Math.abs(end - 59.5) < 0.01, `ends at ${end}`);
+  assert.equal(p[3], 0.3);
+  assert.ok(p.every((x, i) => x >= 0.3 && x <= 1 && durs[i] + x <= 7.9));
+  assert.deepEqual(pausesFor([3, 4], undefined), [0.3]);
 });
 test('validateTimeline catches a broken sum', () => {
   const scenes = buildTimeline(plan, fakeVoice(1.03));

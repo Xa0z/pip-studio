@@ -50,6 +50,9 @@ jobs:
         if: steps.nm.outputs.cache-hit != 'true'
         run: npm ci
 
+      - name: Install ffmpeg (not on the GitHub runner image)
+        run: command -v ffmpeg || (sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg)
+
       - name: Make sure the Remotion browser is there
         run: npx remotion browser ensure
 

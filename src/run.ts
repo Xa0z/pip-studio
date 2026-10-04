@@ -72,7 +72,7 @@ async function makeVoice(plan: Plan, dir: string): Promise<{plan: Plan; voice: V
   let speed = config.VOICE_SPEED;
   let rewrites = 0;
   for (let round = 1; round <= 12; round++) {
-    const voice = await synthesize(plan, dir, speed);
+    const voice = await synthesize(plan, dir, speed, config.PIP_VOICE, 59.5);
     const problems = voiceProblems(plan, voice);
     log.info(`Voice round ${round}: ${voice.speechEnd.toFixed(2)} s of speech at speed ${speed.toFixed(3)}`);
     if (!problems.length) return {plan, voice};

@@ -153,7 +153,7 @@ async function prepareVideo(ctx: WorkerCtx, job: JobRow) {
   let rewrites = 0;
   let voice: VoiceResult | null = null;
   for (let round = 1; round <= 12; round++) {
-    const vr = await synthesize(plan, dir, speed, voiceId);
+    const vr = await synthesize(plan, dir, speed, voiceId, (spec.speechMin + spec.speechMax) / 2);
     const problems = voiceProblems(plan, vr, spec);
     if (!problems.length) {
       voice = vr;
