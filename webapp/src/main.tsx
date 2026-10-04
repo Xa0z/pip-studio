@@ -5,6 +5,8 @@ import './styles.css';
 const tg = (window as unknown as {Telegram?: {WebApp?: TelegramWebApp}}).Telegram?.WebApp;
 tg?.ready();
 tg?.expand();
+const dark = tg?.colorScheme ? tg.colorScheme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+document.documentElement.dataset.theme = dark ? 'dark' : 'light';
 
 export type TelegramWebApp = {
   initData: string;

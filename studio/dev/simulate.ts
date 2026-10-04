@@ -39,7 +39,7 @@ const BROWSER = process.env.CHROMIUM_PATH ?? (fs.existsSync('/opt/pw-browsers/ch
 
 const log = (...a: unknown[]) => console.log('[simulate]', ...a);
 const AVATAR = `data:image/svg+xml;base64,${Buffer.from(
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF8A3D"/><stop offset="1" stop-color="#7B2FF7"/></linearGradient></defs><rect width="100" height="100" fill="url(#g)"/><text x="50" y="64" font-size="44" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="bold">NF</text></svg>',
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#73847C"/><text x="50" y="64" font-size="44" text-anchor="middle" fill="#fff" font-family="Arial" font-weight="bold">NF</text></svg>',
 ).toString('base64')}`;
 
 // ---------------------------------------------------------------- chat run
@@ -368,7 +368,7 @@ async function dashboardScreenshots(browser: Awaited<ReturnType<typeof chromium.
       );
       const page = await ctx.newPage();
       await page.goto('http://localhost:4319/app/', {waitUntil: 'networkidle'});
-      await page.waitForSelector('.kpis');
+      await page.waitForSelector('.stats');
       await page.waitForTimeout(600);
       const shot = async (name: string) => {
         const f = path.join(OUT, `dashboard-${theme}-${name}.png`);
@@ -377,15 +377,15 @@ async function dashboardScreenshots(browser: Awaited<ReturnType<typeof chromium.
       };
       await shot('1-overview');
       if (theme === 'dark') {
-        await page.click('.tab:has-text("Videos")');
+        await page.click('[role=tab]:has-text("Library")');
         await page.selectOption('select', 'views');
         await page.waitForTimeout(400);
-        await shot('2-videos');
-        await page.click('.tab:has-text("Insights")');
+        await shot('2-library');
+        await page.click('[role=tab]:has-text("Insights")');
         await page.waitForTimeout(400);
         await shot('3-insights');
-        await page.click('.tab:has-text("Overview")');
-        await page.click('.chip:has-text("7 days")');
+        await page.click('[role=tab]:has-text("Overview")');
+        await page.click('.seg button:has-text("7D")');
         await page.waitForTimeout(800);
         await shot('4-overview-7-days');
       }
@@ -400,6 +400,18 @@ async function dashboardScreenshots(browser: Awaited<ReturnType<typeof chromium.
 // ---------------------------------------------------------------- main
 async function main() {
   fs.mkdirSync(OUT, {recursive: true});
+  if (process.argv.includes('--dashboard-only')) {
+    // Just the Mini App screenshots, with frames from the website's sample render as thumbnails.
+    const media = path.join(ROOT, 'public/media');
+    const thumbs = fs.existsSync(media) ? fs.readdirSync(media).filter((f) => /^scene-\d+\.jpg$/.test(f)).map((f) => fs.readFileSync(path.join(media, f))) : [];
+    const browser = await chromium.launch({executablePath: BROWSER});
+    try {
+      log('screenshots:\n' + (await dashboardScreenshots(browser, thumbs)).map((f) => '  ' + f).join('\n'));
+    } finally {
+      await browser.close();
+    }
+    return;
+  }
   log(FAST ? 'fast mode: no real renders' : 'rendering for real (a few minutes)');
   const {chat, marks, dryDir} = await runChat();
   fs.writeFileSync(path.join(OUT, 'chat-transcript.json'), JSON.stringify(chat.map(({media, ...m}) => ({...m, media: media?.map((x) => (x.startsWith('data:') ? 'data:…' : path.basename(x)))})), null, 1));
