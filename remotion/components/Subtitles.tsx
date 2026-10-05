@@ -1,5 +1,5 @@
 import React, {useMemo} from 'react';
-import {useCurrentFrame, useVideoConfig} from 'remotion';
+import {spring, useCurrentFrame, useVideoConfig} from 'remotion';
 import type {Word} from '../../src/schema';
 import {FONT, useTheme} from '../theme';
 
@@ -37,6 +37,9 @@ export const Subtitles: React.FC<{words: Word[]; top?: number}> = ({words, top =
     <div style={{position: 'absolute', top, left: 40, width: 1000, display: 'flex', justifyContent: 'center', flexWrap: 'wrap', columnGap: 34, transform: `scale(${pop})`}}>
       {g.words.map((w, i) => {
         const active = t >= w.start - 0.03 && (t < (g.words[i + 1]?.start ?? Infinity));
+        // Each word gets a small spring "hit" the moment it is spoken.
+        const hit = spring({frame: frame - Math.round((w.start - 0.03) * fps), fps, config: {damping: 10, mass: 0.4, stiffness: 220}});
+        const lift = active ? 1 + 0.1 * (1 - hit) + 0.04 : 1;
         return (
           <span
             key={i}
@@ -51,6 +54,8 @@ export const Subtitles: React.FC<{words: Word[]; top?: number}> = ({words, top =
               padding: '0 14px',
               margin: '0 -14px',
               display: 'inline-block',
+              scale: `${lift}`,
+              rotate: active ? `${(1 - hit) * -3}deg` : '0deg',
             }}
           >
             {w.text}

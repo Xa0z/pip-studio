@@ -159,4 +159,6 @@ export type VideoProps = {
   ctaLabel?: string;
   /** Full colour palette from the user's video theme (src/themes.ts). Default: Sage. */
   theme?: VideoTheme;
+  /** Play the cut whooshes and the button pop. Set by the renderer when assets/sfx is copied in. */
+  sfx?: boolean;
 };

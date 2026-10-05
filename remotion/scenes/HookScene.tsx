@@ -1,35 +1,51 @@
 import React from 'react';
-import {interpolate} from 'remotion';
+import {interpolate, useCurrentFrame, useVideoConfig} from 'remotion';
 import type {Scene} from '../../src/schema';
+import {pop} from '../motion';
 import {FONT, useTheme} from '../theme';
-import {Highlighted, useIn} from './common';
+import {KineticText} from './common';
 
 export const HookScene: React.FC<{scene: Scene; title: string}> = ({scene, title}) => {
   const th = useTheme();
-  const badge = useIn(0, 12);
-  const text = useIn(3, 12);
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  const badge = pop(frame, fps, 0, 9);
   return (
     <>
-      <div style={{position: 'absolute', top: 230, width: 1080, display: 'flex', justifyContent: 'center', opacity: badge, transform: `scale(${0.7 + 0.3 * badge})`}}>
-        <div style={{fontFamily: FONT, fontWeight: 700, fontSize: 46, color: th.onAccent, background: th.accent, borderRadius: 12, padding: '10px 34px'}}>{title}</div>
+      <div style={{position: 'absolute', top: 230, width: 1080, display: 'flex', justifyContent: 'center'}}>
+        <div
+          style={{
+            fontFamily: FONT,
+            fontWeight: 700,
+            fontSize: 46,
+            color: th.onAccent,
+            background: th.accent,
+            borderRadius: 12,
+            padding: '10px 34px',
+            translate: `0 ${(1 - badge) * -160}px`,
+            rotate: `${interpolate(badge, [0, 1], [-14, -2])}deg`,
+            opacity: Math.min(1, badge * 2),
+          }}
+        >
+          {title}
+        </div>
       </div>
       <div
         style={{
           position: 'absolute',
-          top: 340,
+          top: 350,
           left: 60,
           width: 960,
           textAlign: 'center',
           fontFamily: FONT,
-          fontWeight: 700,
-          fontSize: scene.headline.length > 30 ? 84 : 100,
-          lineHeight: 1.05,
+          fontWeight: 800,
+          fontSize: scene.headline.length > 30 ? 86 : 104,
+          lineHeight: 1.08,
+          letterSpacing: -1.5,
           color: th.ink,
-          opacity: text,
-          transform: `scale(${interpolate(text, [0, 1], [1.25, 1])})`,
         }}
       >
-        <Highlighted text={scene.headline} highlight={scene.highlight} />
+        <KineticText text={scene.headline} highlight={scene.highlight} delay={6} stagger={4} />
       </div>
     </>
   );
