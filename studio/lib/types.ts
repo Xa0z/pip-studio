@@ -1,3 +1,4 @@
+import type {ThemeChoice} from '../../src/themes.js';
 /** Row types, matching supabase/migrations. */
 import type {Goal} from './goals.js';
 import type {VideoFeatures} from './patterns.js';
@@ -9,7 +10,7 @@ export type JobKind = 'render' | 'dry_run' | 'character_preview' | 'voice_sample
 export type JobStatus = 'queued' | 'running' | 'done' | 'failed';
 
 /** What the bot waits for when the user types text instead of tapping. */
-export type Awaiting = 'claude_secret' | 'custom_niche' | 'link_url' | 'description' | 'timezone' | 'times' | null;
+export type Awaiting = 'claude_secret' | 'custom_niche' | 'link_url' | 'description' | 'timezone' | 'times' | 'theme_colors' | null;
 
 export type OnboardingData = {
   awaiting?: Awaiting;
@@ -27,8 +28,10 @@ export type OnboardingData = {
   posts_per_day?: number;
   post_times?: string[];
   mode?: Mode;
+  /** The look of this user's videos. Missing = Sage. */
+  video_theme?: ThemeChoice;
   /** Set when a change comes from /settings instead of first-time onboarding. */
-  editing?: 'niche' | 'goal' | 'schedule' | 'mode' | 'character' | null;
+  editing?: 'niche' | 'goal' | 'schedule' | 'mode' | 'character' | 'theme' | null;
   /** Job we are waiting on (character previews, voice samples, Claude check). */
   pending_job?: string | null;
 };

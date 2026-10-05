@@ -150,6 +150,7 @@ describe('onboarding (other users)', () => {
     await h.press('ch:no');
     await h.runJobs();
     await h.press(/^v:/);
+    await h.press('th:sage');
     await h.press('tz:0');
     await h.press('ppd:1');
     await h.press('tm:edit');

@@ -1,10 +1,11 @@
 import React from 'react';
 import {interpolate, useCurrentFrame} from 'remotion';
 import type {Scene} from '../../src/schema';
-import {COLORS, FONT} from '../theme';
+import {FONT, useTheme} from '../theme';
 import {Card, Headline, Stage} from './common';
 
 export const RecapScene: React.FC<{scene: Scene}> = ({scene}) => {
+  const th = useTheme();
   const frame = useCurrentFrame();
   const bullets = scene.bullets ?? [];
   return (
@@ -18,10 +19,10 @@ export const RecapScene: React.FC<{scene: Scene}> = ({scene}) => {
             return (
               <Card key={i} style={{width: 860, padding: '24px 34px', display: 'flex', alignItems: 'center', gap: 26, opacity: p, transform: `translateY(${(1 - p) * 30}px)`}}>
                 <svg width={64} height={64} viewBox="0 0 64 64" style={{flexShrink: 0}}>
-                  <circle cx={32} cy={32} r={30} fill={COLORS.sage} />
+                  <circle cx={32} cy={32} r={30} fill={th.accent} />
                   <path d="M18,33 L28,43 L47,22" stroke="#fff" strokeWidth={7} fill="none" strokeLinecap="round" strokeLinejoin="round" strokeDasharray={50} strokeDashoffset={50 * (1 - p)} />
                 </svg>
-                <div style={{fontFamily: FONT, fontWeight: 600, fontSize: 48, color: COLORS.ink}}>{b}</div>
+                <div style={{fontFamily: FONT, fontWeight: 600, fontSize: 48, color: th.ink}}>{b}</div>
               </Card>
             );
           })}

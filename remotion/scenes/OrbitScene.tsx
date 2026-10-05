@@ -2,12 +2,13 @@ import React from 'react';
 import {useCurrentFrame} from 'remotion';
 import type {Visual} from '../../src/schema';
 import {Icon} from '../components/Icons';
-import {COLORS, FONT} from '../theme';
+import {FONT, useTheme} from '../theme';
 import {Stage, useIn} from './common';
 
 type V = Extract<Visual, {layout: 'orbit'}>;
 
 export const OrbitScene: React.FC<{visual: V}> = ({visual}) => {
+  const th = useTheme();
   const frame = useCurrentFrame();
   const p = useIn(2);
   const a = frame / 22;
@@ -21,14 +22,14 @@ export const OrbitScene: React.FC<{visual: V}> = ({visual}) => {
     <Stage>
       <div style={{position: 'relative', width: 1080, height: 560, opacity: p, transform: `scale(${0.8 + 0.2 * p})`}}>
         <svg width={1080} height={460} style={{position: 'absolute', top: 0, left: 0}}>
-          <ellipse cx={540} cy={230} rx={rx} ry={ry} fill="none" stroke={COLORS.sage2} strokeOpacity={0.7} strokeWidth={4} strokeDasharray="14 14" />
+          <ellipse cx={540} cy={230} rx={rx} ry={ry} fill="none" stroke={th.accent2} strokeOpacity={0.7} strokeWidth={4} strokeDasharray="14 14" />
         </svg>
         {behind ? sat : null}
         <div style={{position: 'absolute', left: 540 - 130, top: 230 - 130}}>
           <Icon name={visual.center} size={260} />
         </div>
         {behind ? null : sat}
-        <div style={{position: 'absolute', top: 440, width: 1080, textAlign: 'center', fontFamily: FONT, fontWeight: 700, fontSize: 52, color: COLORS.ink}}>{visual.label}</div>
+        <div style={{position: 'absolute', top: 440, width: 1080, textAlign: 'center', fontFamily: FONT, fontWeight: 700, fontSize: 52, color: th.ink}}>{visual.label}</div>
       </div>
     </Stage>
   );

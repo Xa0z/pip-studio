@@ -83,6 +83,7 @@ export type HarnessOptions = {
 };
 
 export class Harness {
+  readonly now: () => Date;
   store = new MemoryStore();
   chat: ChatItem[] = [];
   queue: string[] = [];
@@ -103,6 +104,7 @@ export class Harness {
     fs.mkdirSync(this.mediaDir, {recursive: true});
     if ((opts.renderer ?? fakeRenderer) === fakeRenderer) process.env.STUDIO_REGISTRY_DIR = path.join(workDir, '_registry');
     const now = opts.now ?? (() => new Date());
+    this.now = now;
     setMemoryStoreClock(now);
 
     this.bot = createBot({
@@ -274,7 +276,7 @@ export class Harness {
     if (!found?.url) throw new Error('No Connect TikTok button');
     const state = new URL(found.url).searchParams.get('state')!;
     this.chat.push({id: this.nextId++, from: 'user', kind: 'system', text: 'Logs in on TikTok and taps Authorize'});
-    const res = await tiktokCallback(new Request(`${process.env.PUBLIC_BASE_URL}/api/tiktok/callback?code=${code}&state=${encodeURIComponent(state)}&scopes=all`), this.store, this.bot.api);
+    const res = await tiktokCallback(new Request(`${process.env.PUBLIC_BASE_URL}/api/tiktok/callback?code=${code}&state=${encodeURIComponent(state)}&scopes=all`), this.store, this.bot.api, this.now);
     return {status: res.status, html: await res.text()};
   }
 
@@ -319,6 +321,9 @@ export type OnboardChoices = {
   goal?: 'followers' | 'views' | 'creator_rewards' | 'traffic';
   character?: string | null;
   pick?: 1 | 2 | 3;
+  /** A preset id, or custom colours typed as "#bg #accent" (theme wins). */
+  preset?: string;
+  theme?: string;
   timezone?: number;
   postsPerDay?: 1 | 2 | 3;
   mode?: 'approval' | 'auto';
@@ -345,6 +350,12 @@ export async function runOnboarding(h: Harness, c: OnboardChoices = {}) {
     await h.press(`ch:pick:${c.pick ?? 1}`);
   }
   await h.press(/^v:/);
+  if (c.theme) {
+    await h.press('th:custom');
+    await h.say(c.theme);
+  } else {
+    await h.press(`th:${c.preset ?? 'sage'}`);
+  }
   await h.press(`tz:${c.timezone ?? 0}`);
   await h.press(`ppd:${c.postsPerDay ?? 2}`);
   await h.press('tm:ok');

@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import type {VideoTheme} from './themes';
 
 export const CATEGORIES = ['space', 'human_body', 'animals', 'nature', 'physics'] as const;
 export type Category = (typeof CATEGORIES)[number];
@@ -156,4 +157,6 @@ export type VideoProps = {
   character?: string | null;
   /** Button text on the last scene. Default "+ Follow Pip". */
   ctaLabel?: string;
+  /** Full colour palette from the user's video theme (src/themes.ts). Default: Sage. */
+  theme?: VideoTheme;
 };

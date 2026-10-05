@@ -1,6 +1,6 @@
 import React from 'react';
 import {interpolate, spring, useCurrentFrame, useVideoConfig} from 'remotion';
-import {COLORS, FONT} from '../theme';
+import {FONT, useTheme} from '../theme';
 
 export const useIn = (delay = 0, damping = 14) => {
   const frame = useCurrentFrame();
@@ -10,6 +10,7 @@ export const useIn = (delay = 0, damping = 14) => {
 
 /** Splits the headline and marks the highlight words like a highlighter pen. */
 export const Highlighted: React.FC<{text: string; highlight: string[]}> = ({text, highlight}) => {
+  const th = useTheme();
   if (!highlight.length) return <>{text}</>;
   const escaped = highlight.map((h) => h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
   const parts = text.split(new RegExp(`(${escaped.join('|')})`, 'gi'));
@@ -17,7 +18,7 @@ export const Highlighted: React.FC<{text: string; highlight: string[]}> = ({text
     <>
       {parts.map((p, i) =>
         highlight.some((h) => h.toLowerCase() === p.toLowerCase()) ? (
-          <span key={i} style={{color: COLORS.sage, background: `linear-gradient(transparent 58%, ${COLORS.marker} 58%, ${COLORS.marker} 92%, transparent 92%)`, padding: '0 6px', margin: '0 -6px'}}>
+          <span key={i} style={{color: th.accent, background: `linear-gradient(transparent 58%, ${th.marker} 58%, ${th.marker} 92%, transparent 92%)`, padding: '0 6px', margin: '0 -6px'}}>
             {p}
           </span>
         ) : (
@@ -35,6 +36,7 @@ export const Headline: React.FC<{text: string; highlight: string[]; size?: numbe
   top = 340,
   width = 760,
 }) => {
+  const th = useTheme();
   const p = useIn(2);
   return (
     <div
@@ -48,7 +50,7 @@ export const Headline: React.FC<{text: string; highlight: string[]; size?: numbe
         fontSize: size,
         lineHeight: 1.1,
         letterSpacing: -1,
-        color: COLORS.ink,
+        color: th.ink,
         opacity: p,
         transform: `translateY(${interpolate(p, [0, 1], [40, 0])}px)`,
       }}
@@ -65,18 +67,21 @@ export const Stage: React.FC<{children: React.ReactNode; top?: number; height?: 
   </div>
 );
 
-export const Card: React.FC<{children: React.ReactNode; style?: React.CSSProperties}> = ({children, style}) => (
+export const Card: React.FC<{children: React.ReactNode; style?: React.CSSProperties}> = ({children, style}) => {
+  const th = useTheme();
+  return (
   <div
     style={{
-      background: COLORS.surface,
-      border: `3px solid ${COLORS.line}`,
+      background: th.surface,
+      border: `3px solid ${th.line}`,
       borderRadius: 28,
       ...style,
     }}
   >
     {children}
   </div>
-);
+  );
+};
 
 export const formatNumber = (v: number, decimals = 0) =>
   v.toLocaleString('en-US', {minimumFractionDigits: decimals, maximumFractionDigits: decimals});

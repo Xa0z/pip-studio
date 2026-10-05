@@ -1,7 +1,7 @@
 import React, {useMemo} from 'react';
 import {useCurrentFrame, useVideoConfig} from 'remotion';
 import type {Word} from '../../src/schema';
-import {COLORS, FONT} from '../theme';
+import {FONT, useTheme} from '../theme';
 
 type Group = {words: Word[]; start: number; end: number};
 
@@ -23,6 +23,7 @@ export const groupWords = (words: Word[]): Group[] => {
 };
 
 export const Subtitles: React.FC<{words: Word[]; top?: number}> = ({words, top = 1330}) => {
+  const th = useTheme();
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const t = frame / fps;
@@ -44,8 +45,8 @@ export const Subtitles: React.FC<{words: Word[]; top?: number}> = ({words, top =
               fontWeight: 800,
               fontSize: 80,
               letterSpacing: -0.5,
-              color: active ? COLORS.onSage : COLORS.ink,
-              background: active ? COLORS.sage : 'transparent',
+              color: active ? th.onAccent : th.ink,
+              background: active ? th.accent : 'transparent',
               borderRadius: 14,
               padding: '0 14px',
               margin: '0 -14px',

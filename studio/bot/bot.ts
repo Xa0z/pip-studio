@@ -24,6 +24,7 @@ import type {TikTokUser} from '../lib/tiktok.js';
 import type {JobKind, OnboardingData, SettingsRow, UserRow} from '../lib/types.js';
 import {K} from './keyboards.js';
 import {esc, T} from './texts.js';
+import {parseCustomTheme, PRESETS, themeLabel, type PresetId, type ThemeChoice} from '../../src/themes.js';
 
 export type BotDeps = {
   token: string;
@@ -110,6 +111,7 @@ export function createBot(deps: BotDeps) {
         goal: d.goal ?? 'views',
         character: d.has_character ? d.character_name ?? 'your character' : null,
         voice: voiceName(voice),
+        theme: themeLabel(d.video_theme),
         times: d.post_times ?? [],
         tz: d.timezone ?? 'UTC',
         mode: d.mode ?? 'approval',
@@ -165,12 +167,12 @@ export function createBot(deps: BotDeps) {
   };
 
   /** Called when one question is answered: go to the next one, or finish an edit. */
-  const advance = async (ctx: Context, u: UserRow, after: 'niche' | 'goal' | 'character' | 'tz' | 'ppd' | 'times' | 'mode') => {
+  const advance = async (ctx: Context, u: UserRow, after: 'niche' | 'goal' | 'character' | 'theme' | 'tz' | 'ppd' | 'times' | 'mode') => {
     const d = data(u);
     const editing = d.editing;
     const chain: Record<string, string | null> = editing
-      ? {niche: null, goal: null, character: null, mode: null, tz: 'ppd', ppd: 'times', times: null}
-      : {niche: 'goal', goal: 'character', character: 'tz', tz: 'ppd', ppd: 'times', times: 'mode', mode: 'summary'};
+      ? {niche: null, goal: null, character: null, theme: null, mode: null, tz: 'ppd', ppd: 'times', times: null}
+      : {niche: 'goal', goal: 'character', character: 'theme', theme: 'tz', tz: 'ppd', ppd: 'times', times: 'mode', mode: 'summary'};
     const nextScreen = chain[after];
     if (!editing) {
       const stepFor: Record<string, number> = {goal: 4, character: 5, tz: 6};
@@ -178,6 +180,7 @@ export function createBot(deps: BotDeps) {
     }
     if (nextScreen === 'goal') return showGoal(ctx);
     if (nextScreen === 'character') return showCharacter(ctx);
+    if (nextScreen === 'theme') return showTheme(ctx, u);
     if (nextScreen === 'tz') return showTimezone(ctx);
     if (nextScreen === 'ppd') return showPpd(ctx);
     if (nextScreen === 'times') return showTimes(ctx, u);
@@ -500,12 +503,43 @@ export function createBot(deps: BotDeps) {
     await advance(ctx, u, 'mode');
   });
 
+  // ---------- video theme (part of step 5) ----------
+  const showTheme = async (ctx: Context, u: UserRow) => {
+    const current = data(u).video_theme?.preset;
+    const caption = T.askTheme();
+    await ctx
+      .replyWithPhoto(`${deps.baseUrl}/themes/presets.png`, {caption, parse_mode: 'HTML', ...kb(K.themes(current))})
+      .catch(() => ctx.reply(caption, html(K.themes(current))));
+  };
+  bot.callbackQuery(/^th:([a-z]+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    let u = await getOrCreate(ctx);
+    const id = ctx.match[1];
+    if (id === 'custom') {
+      await patch(u, {awaiting: 'theme_colors'});
+      return ctx.reply(T.typeTheme(), html());
+    }
+    if (!(id in PRESETS)) return;
+    await ctx.editMessageReplyMarkup({reply_markup: {inline_keyboard: []}}).catch(() => undefined);
+    const choice: ThemeChoice = {preset: id as PresetId};
+    await ctx.reply(T.themeSaved(themeLabel(choice)), html());
+    u = await patch(u, {video_theme: choice, awaiting: null});
+    await advance(ctx, u, 'theme');
+  });
+  const onThemeColors = async (ctx: Context, u: UserRow, text: string) => {
+    const r = parseCustomTheme(text);
+    if (!r.ok) return ctx.reply(T.themeBad(r.error), html());
+    await ctx.reply(T.themeSaved(themeLabel(r.choice)), html());
+    u = await patch(u, {video_theme: r.choice, awaiting: null});
+    await advance(ctx, u, 'theme');
+  };
+
   // ---------- summary ----------
   bot.callbackQuery('sum:edit', async (ctx) => {
     await ctx.answerCallbackQuery();
     await ctx.reply('What do you want to change?', html(K.editPick()));
   });
-  bot.callbackQuery(/^ed:(niche|goal|character|schedule|mode|back)$/, async (ctx) => {
+  bot.callbackQuery(/^ed:(niche|goal|character|theme|schedule|mode|back)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
     let u = await getOrCreate(ctx);
     const what = ctx.match[1];
@@ -514,6 +548,7 @@ export function createBot(deps: BotDeps) {
     if (what === 'niche') return showNiche(ctx, u);
     if (what === 'goal') return showGoal(ctx);
     if (what === 'character') return showCharacter(ctx);
+    if (what === 'theme') return showTheme(ctx, u);
     if (what === 'schedule') return showTimezone(ctx);
     return showMode(ctx);
   });
@@ -711,7 +746,7 @@ export function createBot(deps: BotDeps) {
     if (!u) return;
     await ctx.reply(T.settingsMenu(), html(K.settings()));
   });
-  bot.callbackQuery(/^st:(niche|goal|schedule|mode|ppd|newchar|newchar:yes|cancel)$/, async (ctx) => {
+  bot.callbackQuery(/^st:(niche|goal|schedule|mode|ppd|theme|newchar|newchar:yes|cancel)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
     let u = await requireReady(ctx);
     if (!u) return;
@@ -730,6 +765,7 @@ export function createBot(deps: BotDeps) {
     if (what === 'schedule') return showTimezone(ctx);
     if (what === 'ppd') return showPpd(ctx);
     if (what === 'mode') return showMode(ctx);
+    if (what === 'theme') return showTheme(ctx, u);
     return showCharacter(ctx);
   });
 
@@ -789,6 +825,8 @@ export function createBot(deps: BotDeps) {
         return onTimezone(ctx, u, text);
       case 'times':
         return onTimes(ctx, u, text);
+      case 'theme_colors':
+        return onThemeColors(ctx, u, text);
     }
     if (!onboarded(u)) return showStep(ctx, u);
     return ctx.reply(T.help(), html());

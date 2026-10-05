@@ -3,6 +3,7 @@ import {GOALS, type Goal} from '../lib/goals.js';
 import {NICHES} from '../lib/niches.js';
 import {COMMON_TIMEZONES} from '../lib/schedule.js';
 import type {Keyboard} from '../lib/telegram.js';
+import {PRESET_IDS, PRESETS} from '../../src/themes.js';
 
 const b = (text: string, data: string) => ({text, callback_data: data});
 
@@ -51,11 +52,19 @@ export const K = {
   postsPerDay: (): Keyboard => [[b('1', 'ppd:1'), b('2', 'ppd:2'), b('3', 'ppd:3')]],
   times: (): Keyboard => [[b('👍 Use these', 'tm:ok'), b('✏️ Change times', 'tm:edit')]],
   mode: (): Keyboard => [[b('✋ Approval mode', 'm:approval')], [b('⚡ Full auto', 'm:auto')]],
+  themes: (current?: string): Keyboard => {
+    const rows: Keyboard = [];
+    for (let i = 0; i < PRESET_IDS.length; i += 3)
+      rows.push(PRESET_IDS.slice(i, i + 3).map((id, j) => b(`${current === id ? '✅ ' : ''}${i + j + 1}. ${PRESETS[id].label}`, `th:${id}`)));
+    rows.push([b(`${current === 'custom' ? '✅ ' : ''}🎨 My own colours`, 'th:custom')]);
+    return rows;
+  },
   summary: (): Keyboard => [[b('🚀 Start my channel', 'sum:start')], [b('✏️ Change something', 'sum:edit')]],
   editPick: (): Keyboard => [
     [b('Niche', 'ed:niche'), b('Goal', 'ed:goal')],
     [b('Character', 'ed:character'), b('Schedule', 'ed:schedule')],
-    [b('Mode', 'ed:mode'), b('⬅️ Back to summary', 'ed:back')],
+    [b('Mode', 'ed:mode'), b('Video theme', 'ed:theme')],
+    [b('⬅️ Back to summary', 'ed:back')],
   ],
   preview: (): Keyboard => [[b('👍 Looks good', 'pv:ok'), b('🔄 Make another test', 'pv:again')]],
   approval: (videoId: string, options: string[], chosen: string | null): Keyboard => [
@@ -67,7 +76,8 @@ export const K = {
   settings: (): Keyboard => [
     [b('🎯 Niche', 'st:niche'), b('🏁 Goal', 'st:goal')],
     [b('🕘 Schedule', 'st:schedule'), b('🔢 Posts per day', 'st:ppd')],
-    [b('✋/⚡ Mode', 'st:mode'), b('🧑‍🎨 Create new character', 'st:newchar')],
+    [b('✋/⚡ Mode', 'st:mode'), b('🎨 Video theme', 'st:theme')],
+    [b('🧑‍🎨 Create new character', 'st:newchar')],
   ],
   confirmNewCharacter: (): Keyboard => [[b('Yes, new character', 'st:newchar:yes'), b('Cancel', 'st:cancel')]],
   disconnect: (): Keyboard => [[b('Yes, delete everything', 'dc:yes')], [b('No, keep it', 'dc:no')]],

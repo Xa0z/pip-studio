@@ -8,7 +8,8 @@ import {CtaScene} from './scenes/CtaScene';
 import {FactScene} from './scenes/FactScene';
 import {HookScene} from './scenes/HookScene';
 import {RecapScene} from './scenes/RecapScene';
-import {COLORS, FONT, TOTAL_FRAMES} from './theme';
+import {resolveTheme} from '../src/themes';
+import {FONT, ThemeContext, TOTAL_FRAMES} from './theme';
 
 type Box = {left: number; top: number; width: number};
 const PIP_BIG: Box = {left: 300, top: 720, width: 480};
@@ -31,7 +32,8 @@ const SceneBody: React.FC<{scene: TimedScene; title: string; ctaLabel: string}> 
   );
 };
 
-export const Video: React.FC<VideoProps> = ({title, scenes, words, voiceFile, musicFile, totalFrames = TOTAL_FRAMES, character = 'pip', ctaLabel = '+ Follow Pip'}) => {
+export const Video: React.FC<VideoProps> = ({title, scenes, words, voiceFile, musicFile, totalFrames = TOTAL_FRAMES, character = 'pip', ctaLabel = '+ Follow Pip', theme}) => {
+  const th = theme ?? resolveTheme(null);
   const Character = character ? CHARACTERS[character] ?? null : null;
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
@@ -49,7 +51,8 @@ export const Video: React.FC<VideoProps> = ({title, scenes, words, voiceFile, mu
   const showBadge = scene.role === 'fact' || scene.role === 'recap';
 
   return (
-    <AbsoluteFill style={{backgroundColor: COLORS.bg}}>
+    <ThemeContext.Provider value={th}>
+    <AbsoluteFill style={{backgroundColor: th.bg}}>
       <Background />
 
       {scenes.map((s, i) => (
@@ -59,7 +62,7 @@ export const Video: React.FC<VideoProps> = ({title, scenes, words, voiceFile, mu
       ))}
 
       {showBadge ? (
-        <div style={{position: 'absolute', top: 236, left: 70, fontFamily: FONT, fontWeight: 700, fontSize: 36, color: COLORS.onSage, background: COLORS.sage, borderRadius: 10, padding: '6px 24px'}}>{title}</div>
+        <div style={{position: 'absolute', top: 236, left: 70, fontFamily: FONT, fontWeight: 700, fontSize: 36, color: th.onAccent, background: th.accent, borderRadius: 10, padding: '6px 24px'}}>{title}</div>
       ) : null}
 
       {Character ? (
@@ -79,5 +82,6 @@ export const Video: React.FC<VideoProps> = ({title, scenes, words, voiceFile, mu
         />
       ) : null}
     </AbsoluteFill>
+    </ThemeContext.Provider>
   );
 };

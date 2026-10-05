@@ -88,8 +88,17 @@ export const T = {
     `How should posting work?\n\n✋ <b>Approval mode</b>: I send each video here first with Post / Skip / Regenerate.\n⚡ <b>Full auto</b>: I post by myself and tell you after.`,
   autoNotAllowed: () =>
     `⚡ Full auto is only for the owner until TikTok approves this app (their rules say each post needs your OK). I set <b>Approval mode</b> for now.`,
-  summary: (s: {username: string; niches: string[]; goal: Goal; character: string | null; voice: string; times: string[]; tz: string; mode: Mode; link?: string}) =>
-    `📋 <b>Here's your channel:</b>\nTikTok: @${esc(s.username)}\nNiche: ${s.niches.map(nicheLabel).join(', ')}\nGoal: ${GOALS[s.goal].emoji} ${GOALS[s.goal].label}${s.link ? ` (${esc(s.link)})` : ''}\nCharacter: ${s.character ? esc(s.character) : 'none'} · Voice: ${esc(s.voice)}\nPosts: ${s.times.length}/day at ${s.times.join(', ')} (${esc(s.tz)})\nMode: ${s.mode === 'approval' ? '✋ Approval' : '⚡ Full auto'}`,
+  summary: (s: {username: string; niches: string[]; goal: Goal; character: string | null; voice: string; theme: string; times: string[]; tz: string; mode: Mode; link?: string}) =>
+    `📋 <b>Here's your channel:</b>\nTikTok: @${esc(s.username)}\nNiche: ${s.niches.map(nicheLabel).join(', ')}\nGoal: ${GOALS[s.goal].emoji} ${GOALS[s.goal].label}${s.link ? ` (${esc(s.link)})` : ''}\nCharacter: ${s.character ? esc(s.character) : 'none'} · Voice: ${esc(s.voice)}\nTheme: ${esc(s.theme)}\nPosts: ${s.times.length}/day at ${s.times.join(', ')} (${esc(s.tz)})\nMode: ${s.mode === 'approval' ? '✋ Approval' : '⚡ Full auto'}`,
+  askTheme: () =>
+    `🎨 <b>Pick a look for your videos.</b>\nThis sets the background, text and highlight colours. You can change it any time in /settings.`,
+  typeTheme: () =>
+    `✏️ Send two colours: the <b>background</b> first, then the <b>highlight</b>. Like this:\n<code>#F2E8DC #A84F2C</code>`,
+  themeBad: (why: string) =>
+    why === 'contrast'
+      ? `Those two colours are too close, so highlights would be hard to see. Pick a darker or lighter highlight and send both again.`
+      : `I need two colours like <code>#F2E8DC #A84F2C</code> (background first, then highlight). Try again.`,
+  themeSaved: (label: string) => `🎨 Video theme: <b>${esc(label)}</b>`,
   starting: () => `🎬 Making your first test video. It won't be posted. I'll send it here in a few minutes.`,
   dryRunReady: (firstPost: string) => `Here's your first video! This is a test, it was <b>not</b> posted.\nYour first real post is <b>${esc(firstPost)}</b>.`,
   allSet: () => `🎉 Your channel is running! Use /stats, /top, /report and /dashboard to follow how it goes, and /settings to change things.`,
@@ -108,7 +117,7 @@ export const T = {
 
   // Commands
   help: () =>
-    `<b>Commands</b>\n/stats today's numbers and a 30-day chart\n/top your best videos\n/report weekly report\n/dashboard full analytics\n/settings change niche, goal, schedule, mode\n/pause and /resume posting\n/disconnect remove your tokens and delete your data`,
+    `<b>Commands</b>\n/stats today's numbers and a 30-day chart\n/top your best videos\n/report weekly report\n/dashboard full analytics\n/settings change niche, goal, schedule, mode, video theme\n/pause and /resume posting\n/disconnect remove your tokens and delete your data`,
   notReady: () => `Finish setup first with /start.`,
   paused: () => `⏸ Paused. No videos will be made or posted until you send /resume.`,
   resumed: () => `▶️ Resumed. Your next video is on the way.`,

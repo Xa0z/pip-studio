@@ -2,12 +2,13 @@ import React from 'react';
 import {spring, useCurrentFrame, useVideoConfig} from 'remotion';
 import type {Visual} from '../../src/schema';
 import {Icon} from '../components/Icons';
-import {COLORS, FONT} from '../theme';
+import {FONT, useTheme} from '../theme';
 import {Stage} from './common';
 
 type V = Extract<Visual, {layout: 'iconGrid'}>;
 
 export const IconGridScene: React.FC<{visual: V}> = ({visual}) => {
+  const th = useTheme();
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const n = visual.count;
@@ -23,8 +24,8 @@ export const IconGridScene: React.FC<{visual: V}> = ({visual}) => {
             return <Icon key={i} name={visual.icon} size={size} style={{transform: `scale(${s})`}} />;
           })}
         </div>
-        <div style={{fontFamily: FONT, fontWeight: 700, fontSize: 52, color: COLORS.ink, textAlign: 'center', maxWidth: 900}}>
-          <span style={{color: COLORS.sage}}>{n}</span> {visual.label}
+        <div style={{fontFamily: FONT, fontWeight: 700, fontSize: 52, color: th.ink, textAlign: 'center', maxWidth: 900}}>
+          <span style={{color: th.accent}}>{n}</span> {visual.label}
         </div>
       </div>
     </Stage>

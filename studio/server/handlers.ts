@@ -24,10 +24,10 @@ const backLink = () => {
   return name ? `<a href="https://t.me/${name}">Back to Telegram</a>` : '';
 };
 
-export async function tiktokCallback(req: Request, store: Store, api: Api): Promise<Response> {
+export async function tiktokCallback(req: Request, store: Store, api: Api, now: () => Date = () => new Date()): Promise<Response> {
   const url = new URL(req.url);
   const q = url.searchParams;
-  const state = verifyState(q.get('state') ?? '');
+  const state = verifyState(q.get('state') ?? '', now().getTime());
   if (!state.ok) {
     return page('Link expired', `<h2>This link ${state.reason === 'expired' ? 'expired' : 'is not valid'}</h2><p>Go back to Telegram and tap <b>Connect TikTok</b> again.</p>${backLink()}`, 400);
   }
