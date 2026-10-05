@@ -2,6 +2,7 @@ import React from 'react';
 import {interpolate, useCurrentFrame, useVideoConfig} from 'remotion';
 import type {Scene} from '../../src/schema';
 import {EASE_OUT, pop, prog} from '../motion';
+import {Cursor} from '../components/Cursor';
 import {FONT, useTheme} from '../theme';
 import {KineticText} from './common';
 
@@ -20,7 +21,11 @@ export const CtaScene: React.FC<{scene: Scene; label?: string}> = ({scene, label
   const breathe = frame > TAP + 6 ? 1 + Math.sin((frame - TAP) / 7) * 0.025 : 1;
   const tapped = frame >= TAP;
   const finger = prog(frame, 18, 14);
-  const fingerOut = prog(frame, TAP + 6, 10);
+  const fingerOut = prog(frame, TAP + 14, 12);
+  // Pointer comes in from the lower right and lands in the middle of the button.
+  const cursorX = 330 + (1 - finger) * 420 + fingerOut * 160;
+  const cursorY = 46 + (1 - finger) * 380 + fingerOut * 200;
+  const pressDown = interpolate(frame, [TAP - 3, TAP, TAP + 5], [0, 1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
   return (
     <>
       <div style={{position: 'absolute', top: 330, left: 60, width: 960, textAlign: 'center', fontFamily: FONT, fontWeight: 800, fontSize: 90, lineHeight: 1.06, letterSpacing: -1, color: th.ink}}>
@@ -46,20 +51,7 @@ export const CtaScene: React.FC<{scene: Scene; label?: string}> = ({scene, label
           <div style={{fontFamily: FONT, fontWeight: 700, fontSize: 54, color: tapped ? th.accent : th.onAccent, background: tapped ? th.surface : th.accent, border: `4px solid ${th.accent}`, borderRadius: 16, padding: '16px 48px'}}>
             {tapped ? doneLabel(label) : label}
           </div>
-          <div
-            style={{
-              position: 'absolute',
-              right: -30,
-              bottom: -70,
-              width: 70,
-              height: 70,
-              borderRadius: 35,
-              background: th.ink,
-              opacity: 0.18 * finger * (1 - fingerOut),
-              translate: `${(1 - finger) * 160}px ${(1 - finger) * 120 + fingerOut * 60}px`,
-              scale: `${frame >= TAP - 2 && frame < TAP + 4 ? 0.8 : 1}`,
-            }}
-          />
+          <Cursor x={cursorX} y={cursorY} press={pressDown} opacity={finger * (1 - fingerOut)} />
         </div>
       </div>
     </>

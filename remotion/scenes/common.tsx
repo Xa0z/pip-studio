@@ -23,8 +23,19 @@ export const tokenize = (text: string, highlight: string[]): Token[] => {
   return out;
 };
 
+/** Accent text with a marker band drawn behind it, `p` 0..1 from left to right. */
+export const markerStyle = (accent: string, marker: string, p: number): React.CSSProperties => ({
+  color: accent,
+  backgroundImage: `linear-gradient(${marker}, ${marker})`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: '0 88%',
+  backgroundSize: `${p * 100}% 36%`,
+  padding: '0 6px',
+  margin: '0 -6px',
+});
+
 /**
- * Kinetic headline: each word rises out of a mask one after another, then the highlight
+ * Kinetic headline: each word sharpens out of a blur one after another, then the highlight
  * words get a marker stroke drawn left to right, like an editor's title card.
  */
 export const KineticText: React.FC<{text: string; highlight: string[]; delay?: number; stagger?: number}> = ({text, highlight, delay = 0, stagger = 3}) => {
@@ -37,27 +48,21 @@ export const KineticText: React.FC<{text: string; highlight: string[]; delay?: n
   return (
     <>
       {tokens.map((tk, i) => {
-        const rise = spring({frame: frame - delay - i * stagger, fps, config: {damping: 15, mass: 0.6, stiffness: 140}});
+        const rise = spring({frame: frame - delay - i * stagger, fps, config: {damping: 18, mass: 0.6, stiffness: 120}});
         const mark = tk.hi ? prog(frame, markerStart + hiSeen++ * 4, 12) : 0;
+        // Alternate words start a little higher or lower, so the line "settles" together.
+        const off = i % 3 === 1 ? -0.5 : 1;
         return (
           <React.Fragment key={i}>
-            <span style={{display: 'inline-block', overflow: 'hidden', verticalAlign: 'top', padding: '0 0.06em 0.12em', margin: '0 -0.06em -0.12em'}}>
+            <span style={{display: 'inline-block'}}>
               <span
                 style={{
                   display: 'inline-block',
-                  translate: `0 ${(1 - rise) * 105}%`,
-                  rotate: `${(1 - rise) * 6}deg`,
-                  ...(tk.hi
-                    ? {
-                        color: th.accent,
-                        backgroundImage: `linear-gradient(${th.marker}, ${th.marker})`,
-                        backgroundRepeat: 'no-repeat',
-                        backgroundPosition: '0 88%',
-                        backgroundSize: `${mark * 100}% 36%`,
-                        padding: '0 6px',
-                        margin: '0 -6px',
-                      }
-                    : null),
+                  opacity: Math.min(1, rise * 1.4),
+                  filter: rise < 0.98 ? `blur(${(1 - rise) * 16}px)` : undefined,
+                  translate: `0 ${(1 - rise) * 0.6 * off}em`,
+                  scale: `${1 + (1 - rise) * 0.15}`,
+                  ...(tk.hi ? markerStyle(th.accent, th.marker, mark) : null),
                 }}
               >
                 {tk.text}
@@ -178,3 +183,40 @@ export const Burst: React.FC<{at: number; x: number; y: number; radius?: number;
 
 export const formatNumber = (v: number, decimals = 0) =>
   v.toLocaleString('en-US', {minimumFractionDigits: decimals, maximumFractionDigits: decimals});
+
+/** Characters typed per frame, and when typing of `text` (starting at `start`) is done. */
+export const TYPE_SPEED = 1.1;
+export const typedEnd = (text: string, start: number) => start + Math.ceil(text.length / TYPE_SPEED);
+
+/**
+ * Text that types itself out with a blinking caret, like someone searching.
+ * Highlight words turn accent as they are typed; their marker draws from `markAt`.
+ */
+export const TypeText: React.FC<{text: string; highlight: string[]; start: number; markAt?: number; caret?: boolean}> = ({text, highlight, start, markAt = 100000, caret = true}) => {
+  const th = useTheme();
+  const frame = useCurrentFrame();
+  const n = Math.max(0, Math.floor((frame - start) * TYPE_SPEED));
+  const done = n >= text.length;
+  const tokens = tokenize(text, highlight);
+  let used = 0;
+  let hiSeen = 0;
+  const blinkOn = !done || Math.floor(frame / 12) % 2 === 0;
+  return (
+    <>
+      {tokens.map((tk, i) => {
+        const begin = used;
+        used += tk.text.length + 1;
+        const shown = tk.text.slice(0, Math.max(0, n - begin));
+        if (!shown) return null;
+        const mark = tk.hi ? prog(frame, markAt + hiSeen++ * 4, 12) : 0;
+        return (
+          <React.Fragment key={i}>
+            <span style={tk.hi ? markerStyle(th.accent, th.marker, mark) : undefined}>{shown}</span>
+            {i < tokens.length - 1 && n > begin + tk.text.length ? ' ' : null}
+          </React.Fragment>
+        );
+      })}
+      {caret && frame < markAt + 30 ? <span style={{display: 'inline-block', width: '0.07em', height: '0.95em', marginLeft: '0.06em', verticalAlign: '-0.12em', background: th.accent, opacity: blinkOn ? 1 : 0}} /> : null}
+    </>
+  );
+};

@@ -1,5 +1,6 @@
 import React from 'react';
 import {AbsoluteFill, useCurrentFrame, useVideoConfig} from 'remotion';
+import {luminance} from '../../src/themes';
 import {push} from '../motion';
 import {useTheme} from '../theme';
 
@@ -15,7 +16,7 @@ const LAYOUTS: {circle: P; square: P; ring: P; dots: P}[] = [
 
 const lerp = (a: P, b: P, t: number): P => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
 
-/** Flat backdrop with a thin frame line, plus a few large, quiet shapes that drift. No gradients, no glow. */
+/** Backdrop: soft blurred light in the theme colours that drifts and moves to a new spot on every cut. */
 export const Background: React.FC<{sceneIndex?: number; sceneFrom?: number}> = ({sceneIndex = 0, sceneFrom = 0}) => {
   const th = useTheme();
   const frame = useCurrentFrame();
@@ -29,17 +30,17 @@ export const Background: React.FC<{sceneIndex?: number; sceneFrom?: number}> = (
     const d = drift(k);
     return {left: p[0] + d[0], top: p[1] + d[1]};
   };
+  const dark = luminance(th.bg) < 0.18;
+  const blob = (key: keyof (typeof LAYOUTS)[number], k: number, size: number, color: string, opacity: number) => {
+    const p = at(key, k);
+    return <div style={{position: 'absolute', left: p.left - size / 4, top: p.top - size / 4, width: size, height: size, borderRadius: size / 2, background: color, opacity, filter: 'blur(130px)'}} />;
+  };
   return (
     <AbsoluteFill style={{background: th.bg, overflow: 'hidden'}}>
-      <div style={{position: 'absolute', ...at('circle', 0), width: 560, height: 560, borderRadius: 280, background: th.marker, opacity: 0.45}} />
-      <div style={{position: 'absolute', ...at('square', 1.7), width: 300, height: 300, borderRadius: 60, background: th.track, rotate: `${frame * 0.12 + t * 30}deg`}} />
-      <div style={{position: 'absolute', ...at('ring', 3.1), width: 200, height: 200, borderRadius: 100, border: `16px solid ${th.accentSoft}`, opacity: 0.4}} />
-      <div style={{position: 'absolute', ...at('dots', 4.2), display: 'grid', gridTemplateColumns: 'repeat(4, 14px)', gap: 22, opacity: 0.35}}>
-        {new Array(16).fill(0).map((_, i) => (
-          <div key={i} style={{width: 14, height: 14, borderRadius: 7, background: th.inkMuted}} />
-        ))}
-      </div>
-      <div style={{position: 'absolute', inset: 28, border: `3px solid ${th.line}`, borderRadius: 36}} />
+      {/* Soft ambient light in the theme colours, drifting and re-framing on every cut. */}
+      {blob('circle', 0, 760, th.accent, dark ? 0.45 : 0.28)}
+      {blob('square', 1.7, 620, th.accentSoft, dark ? 0.3 : 0.55)}
+      {blob('ring', 3.1, 520, th.accent2, dark ? 0.35 : 0.22)}
     </AbsoluteFill>
   );
 };

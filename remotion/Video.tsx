@@ -6,14 +6,15 @@ import {Background} from './components/Background';
 import {isTalking, Subtitles} from './components/Subtitles';
 import {CTA_TAP, CtaScene} from './scenes/CtaScene';
 import {FactScene} from './scenes/FactScene';
-import {HookScene} from './scenes/HookScene';
+import {hookClick, HookScene, TYPE_START} from './scenes/HookScene';
+import {typedEnd} from './scenes/common';
 import {RecapScene} from './scenes/RecapScene';
 import {resolveTheme} from '../src/themes';
 import {FONT, ThemeContext, TOTAL_FRAMES} from './theme';
 import {EASE_IN, EASE_IN_OUT, ENTER_FRAMES, EXIT_FRAMES, prog, transitionFor, WIPE_FRAMES} from './motion';
 
 type Box = {left: number; top: number; width: number};
-const PIP_BIG: Box = {left: 300, top: 720, width: 480};
+const PIP_BIG: Box = {left: 320, top: 770, width: 440};
 const PIP_CTA: Box = {left: 300, top: 700, width: 480};
 const PIP_CORNER: Box = {left: 840, top: 180, width: 200};
 
@@ -36,8 +37,11 @@ const SceneBody: React.FC<{scene: TimedScene; index: number; last: boolean; titl
   if (exit === 'push') x -= o * 260;
   if (exit === 'zoom') scale *= 1 + o * 0.12;
   if (exit && exit !== 'wipe') opacity *= 1 - o;
+  let blur = 0;
+  if (enter !== 'wipe' && index > 0) blur += (1 - i) * 18;
+  if (exit && exit !== 'wipe') blur += o * 22;
   return (
-    <AbsoluteFill style={{opacity, scale: `${scale}`, translate: `${x}px 0`}}>
+    <AbsoluteFill style={{opacity, scale: `${scale}`, translate: `${x}px 0`, filter: blur > 0.3 ? `blur(${blur}px)` : undefined}}>
       {scene.role === 'hook' ? <HookScene scene={scene} title={title} /> : null}
       {scene.role === 'fact' ? <FactScene scene={scene} /> : null}
       {scene.role === 'recap' ? <RecapScene scene={scene} /> : null}
@@ -100,6 +104,7 @@ export const Video: React.FC<VideoProps> = ({title, scenes, words, voiceFile, mu
   const pipBox = {left: lerp(from.left, target.left), top: lerp(from.top, target.top), width: lerp(from.width, target.width)};
 
   const cta = scenes.find((s) => s.role === 'cta');
+  const hook = scenes.find((s) => s.role === 'hook');
   const showBadge = scene.role === 'fact' || scene.role === 'recap';
 
   return (
@@ -138,9 +143,20 @@ export const Video: React.FC<VideoProps> = ({title, scenes, words, voiceFile, mu
             ) : null,
           )
         : null}
+      {sfx && hook ? (
+        <>
+          <Sequence from={hook.from + TYPE_START} durationInFrames={typedEnd(hook.headline, TYPE_START) - TYPE_START} layout="none">
+            <Audio src={staticFile('sfx/typing.wav')} volume={0.3} />
+          </Sequence>
+          <Sequence from={hook.from + hookClick(hook.headline)} durationInFrames={10} layout="none">
+            <Audio src={staticFile('sfx/click.wav')} volume={0.45} />
+          </Sequence>
+        </>
+      ) : null}
       {sfx && cta ? (
         <Sequence from={cta.from + CTA_TAP} durationInFrames={10} layout="none">
-          <Audio src={staticFile('sfx/pop.wav')} volume={0.35} />
+          <Audio src={staticFile('sfx/click.wav')} volume={0.45} />
+          <Audio src={staticFile('sfx/pop.wav')} volume={0.3} />
         </Sequence>
       ) : null}
 

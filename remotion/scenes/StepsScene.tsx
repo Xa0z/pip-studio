@@ -24,7 +24,7 @@ export const StepsScene: React.FC<{visual: V; durationInFrames: number}> = ({vis
           const p = push(frame, fps, start);
           const badge = pop(frame, fps, start + 4, 8);
           // The newest step wears the accent border until the next one arrives.
-          const next = i < n - 1 ? 4 + (i + 1) * gap : Infinity;
+          const next = i < n - 1 ? 4 + (i + 1) * gap : durationInFrames + 100;
           const active = interpolate(frame, [start, start + 4, next, next + 6], [0, 1, 1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
           const link = i > 0 ? prog(frame, start - 6, 10) : 0;
           return (
