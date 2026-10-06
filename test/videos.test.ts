@@ -73,6 +73,29 @@ describe('my videos and posting mode', () => {
     expect((await h.user())!.onboarding_data.mode).toBe('approval');
   });
 
+  it('shows a short home menu with buttons on /start once set up', async () => {
+    h = new Harness({userId: OWNER, ownerId: OWNER, now: () => new Date('2026-10-05T07:00:00Z')});
+    await runOnboarding(h);
+    await h.say('/start');
+    const home = h.lastBot()!;
+    expect(home.text).toMatch(/Pip Studio.*@nova\.facts/);
+    expect(home.text).toMatch(/Next post: Mon 12:00/);
+    expect(home.text!.split('\n').length).toBeLessThan(8);
+    const data = home.buttons!.flat().map((b) => b.callback_data ?? b.web_app?.url);
+    expect(data).toEqual(expect.arrayContaining(['vd:list:0', 'md:menu', 'hm:stats', 'hm:top', 'hm:settings', 'mk:menu', 'hm:pause', 'hm:help']));
+
+    await h.press('hm:pause');
+    expect((await h.user())!.status).toBe('paused');
+    await h.press('hm:home');
+    expect(h.lastBot()!.text).toMatch(/Paused/);
+    await h.press('hm:resume');
+    expect((await h.user())!.status).toBe('active');
+    await h.say('/nonsense');
+    expect(h.lastBot()!.text).toMatch(/don't know that command/);
+    await h.say('hello');
+    expect(h.lastBot()!.text).toMatch(/🏠/);
+  });
+
   it('keeps full auto for the owner until it is allowed for everyone', async () => {
     h = new Harness({userId: USER, ownerId: OWNER, now: () => new Date('2026-10-05T07:00:00Z')});
     await runOnboarding(h, {claudeSecret: 'sk-ant-api03-' + 'k'.repeat(80)});

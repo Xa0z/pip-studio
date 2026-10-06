@@ -1,18 +1,19 @@
 /** Registers the webhook, the command list and the Dashboard menu button with Telegram. Never returns the token. */
 export const COMMANDS = [
+  {command: 'menu', description: '🏠 Main menu'},
+  {command: 'videos', description: '🎬 My videos'},
+  {command: 'mode', description: '✋ Full auto or review first'},
+  {command: 'stats', description: '📈 Today and 30 days'},
+  {command: 'top', description: '🏆 Best videos'},
+  {command: 'report', description: '🗒 Weekly report'},
+  {command: 'dashboard', description: '📊 Full analytics'},
+  {command: 'settings', description: '⚙️ Niche, goal, schedule, theme'},
+  {command: 'marketing', description: '📣 Videos for your business'},
+  {command: 'pause', description: '⏸ Stop posting'},
+  {command: 'resume', description: '▶️ Start posting again'},
   {command: 'start', description: 'Set up or continue'},
-  {command: 'stats', description: 'Today and the last 30 days'},
-  {command: 'top', description: 'Best videos'},
-  {command: 'report', description: 'Weekly report'},
-  {command: 'videos', description: 'Watch the videos I made'},
-  {command: 'mode', description: 'Full auto or review and approve'},
-  {command: 'dashboard', description: 'Open the dashboard'},
-  {command: 'marketing', description: 'Marketing videos from your reference videos'},
-  {command: 'settings', description: 'Change niche, goal, schedule, mode'},
-  {command: 'pause', description: 'Stop posting'},
-  {command: 'resume', description: 'Start posting again'},
+  {command: 'help', description: 'All commands'},
   {command: 'disconnect', description: 'Delete my data'},
-  {command: 'help', description: 'Help'},
 ];
 
 export type SetupResult = Record<string, string>;

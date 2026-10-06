@@ -117,7 +117,31 @@ export const T = {
 
   // Commands
   help: () =>
-    `<b>Commands</b>\n/stats today's numbers and a 30-day chart\n/top your best videos\n/report weekly report\n/dashboard full analytics\n/videos watch the videos I made\n/mode switch between full auto and review and approve\n/settings change niche, goal, schedule, mode, video theme\n/marketing marketing videos for your business (3 a day from your reference videos)\n/pause and /resume posting\n/disconnect remove your tokens and delete your data`,
+    [
+      '<b>Commands</b>',
+      '',
+      '🎬 /videos  watch your videos',
+      '✋ /mode  full auto or review first',
+      '📈 /stats  today and the last 30 days',
+      '🏆 /top  your best videos',
+      '🗒 /report  weekly report',
+      '📊 /dashboard  full analytics',
+      '⚙️ /settings  niche, goal, schedule, theme',
+      '📣 /marketing  videos for your business',
+      '⏸ /pause  and  ▶️ /resume  posting',
+      '🗑 /disconnect  delete your data',
+      '',
+      'Tap /menu any time for the buttons.',
+    ].join('\n'),
+  unknownCommand: () => `I don't know that command. Tap /menu for the buttons, or /help for the list.`,
+  home: (h: {username: string | null; mode: Mode; paused: boolean; next: string | null; marketing: boolean}) =>
+    [
+      `🏠 <b>Pip Studio</b>${h.username ? `  ·  @${esc(h.username)}` : ''}`,
+      '',
+      `Posting: ${h.mode === 'auto' ? '⚡ Full auto' : '✋ Review and approve'}`,
+      h.paused ? 'Status: ⏸ Paused' : `Next post: ${h.next ? esc(h.next) : 'not planned yet'}`,
+      `Videos: ${h.marketing ? '📣 Marketing' : '🎓 Explainers'}`,
+    ].join('\n'),
   notReady: () => `Finish setup first with /start.`,
   paused: () => `⏸ Paused. No videos will be made or posted until you send /resume.`,
   resumed: () => `▶️ Resumed. Your next video is on the way.`,

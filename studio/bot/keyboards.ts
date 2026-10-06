@@ -74,6 +74,15 @@ export const K = {
   ],
   openTikTok: (url: string | null): Keyboard => (url ? [[{text: 'Open on TikTok', url}]] : []),
   retry: (data: string): Keyboard => [[b('🔁 Retry', data)]],
+  /** The home menu (/start and /menu once setup is done). */
+  home: (mode: 'approval' | 'auto', paused: boolean, dashboardUrl: string): Keyboard => [
+    [b('🎬 My videos', 'vd:list:0'), b(mode === 'auto' ? '⚡ Mode: Full auto' : '✋ Mode: Review', 'md:menu')],
+    [b('📈 Stats', 'hm:stats'), b('🏆 Top videos', 'hm:top')],
+    [{text: '📊 Dashboard', web_app: {url: dashboardUrl}}, b('⚙️ Settings', 'hm:settings')],
+    [b('📣 Marketing', 'mk:menu'), paused ? b('▶️ Resume posting', 'hm:resume') : b('⏸ Pause posting', 'hm:pause')],
+    [b('❓ All commands', 'hm:help')],
+  ],
+  backHome: (): Keyboard => [[b('🏠 Menu', 'hm:home')]],
   /** The "My videos" list: one button per video, page arrows, the mode switch and the dashboard. */
   videos: (items: {id: string; label: string}[], page: number, pages: number, mode: 'approval' | 'auto', dashboardUrl: string): Keyboard => [
     ...items.map((x) => [b(x.label, `vd:show:${x.id}`)]),

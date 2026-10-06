@@ -141,7 +141,7 @@ export function createBot(deps: BotDeps) {
       if (!d.mode) return showMode(ctx);
       return showSummary(ctx, u);
     }
-    return ctx.reply(T.help(), html());
+    return showHome(ctx, u);
   };
 
   const showTimes = async (ctx: Context, u: UserRow) => {
@@ -206,7 +206,7 @@ export function createBot(deps: BotDeps) {
     const existing = await store.getUser(ctx.from!.id);
     const u = existing ?? (await getOrCreate(ctx));
     if (!existing) return ctx.reply(T.welcome(ctx.from!.first_name ?? 'there'), html(K.letsGo()));
-    if (onboarded(u)) return ctx.reply(T.help(), html());
+    if (onboarded(u)) return showHome(ctx, u);
     await ctx.reply(T.welcomeBack(u.onboarding_step));
     return showStep(ctx, u);
   });
@@ -665,9 +665,9 @@ export function createBot(deps: BotDeps) {
     return u;
   };
 
-  bot.command('help', (ctx) => ctx.reply(T.help(), html()));
+  bot.command('help', (ctx) => ctx.reply(T.help(), html(K.backHome())));
 
-  bot.command('stats', async (ctx) => {
+  const statsCmd = async (ctx: Context) => {
     const u = await requireReady(ctx);
     if (!u) return;
     const a = await loadAnalytics(store, u.id);
@@ -703,9 +703,10 @@ export function createBot(deps: BotDeps) {
     } catch {
       await ctx.reply(text, html());
     }
-  });
+  };
+  bot.command('stats', statsCmd);
 
-  bot.command('top', async (ctx) => {
+  const topCmd = async (ctx: Context) => {
     const u = await requireReady(ctx);
     if (!u) return;
     const a = await loadAnalytics(store, u.id);
@@ -719,9 +720,10 @@ export function createBot(deps: BotDeps) {
       `🏆 <b>Top 5 by views</b>\n${byViews.map((s, i) => line(s, i, 'views')).join('\n')}\n\n💬 <b>Top 5 by engagement</b>\n${byEng.length ? byEng.map((s, i) => line(s, i, 'eng')).join('\n') : '<i>Needs videos with 50+ views.</i>'}${stats.length < MIN_VIDEOS_FOR_PATTERNS ? `\n\n<i>Only ${stats.length} videos so far, so this list will change a lot.</i>` : ''}`,
       html(),
     );
-  });
+  };
+  bot.command('top', topCmd);
 
-  bot.command('report', async (ctx) => {
+  const reportCmd = async (ctx: Context) => {
     const u = await requireReady(ctx);
     if (!u) return;
     const a = await loadAnalytics(store, u.id);
@@ -739,7 +741,8 @@ export function createBot(deps: BotDeps) {
       `📝 <b>Weekly report</b> (week of ${esc(p.week_start)}, ${p.sample_size} videos)\n${p.too_small ? '\n⚠️ <i>Fewer than 15 videos: the data is too small, so these are early guesses, not rules.</i>\n' : ''}\n${p.summary ? `${esc(p.summary)}\n` : ''}\n✅ <b>What worked</b>\n${good.length ? good.map((i) => `• ${esc(i.text)} (${i.n} videos)`).join('\n') : '• Nothing clear yet'}\n\n❌ <b>What didn't</b>\n${bad.length ? bad.map((i) => `• ${esc(i.text)} (${i.n} videos)`).join('\n') : '• Nothing clear yet'}\n\n🔧 <b>What I'll change</b>\n${(p.changes ?? []).length ? p.changes.map((c) => `• ${esc(c)}`).join('\n') : '• Keep the current mix'}\n• 1 in 5 videos stays an experiment so I keep learning`,
       html(),
     );
-  });
+  };
+  bot.command('report', reportCmd);
 
   bot.command('dashboard', async (ctx) => {
     const u = await requireReady(ctx);
@@ -891,6 +894,46 @@ export function createBot(deps: BotDeps) {
     } else {
       await ctx.editMessageText(T.modeNow(want), html(K.modeSwitch(want))).catch(() => undefined);
     }
+  });
+
+  // ---------- home menu ----------
+  const showHome = async (ctx: Context, u: UserRow) => {
+    const s = await store.getSettings(u.id);
+    const tt = await store.getTikTok(u.id);
+    const mode = s?.mode ?? data(u).mode ?? 'approval';
+    const paused = u.status !== 'active';
+    const next = !paused && s ? slotsBetween(s.post_times, s.timezone, now(), new Date(now().getTime() + 2 * 86400000)).find((d) => d > now()) : undefined;
+    const text = T.home({
+      username: tt?.username ?? null,
+      mode,
+      paused,
+      next: next && s ? fmtLocal(next, s.timezone) : null,
+      marketing: data(u).content_mode === 'marketing',
+    });
+    await ctx.reply(text, html(K.home(mode, paused, `${deps.baseUrl}/app/`)));
+  };
+  bot.callbackQuery(/^hm:(home|stats|top|report|settings|help|pause|resume)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const u = await requireReady(ctx);
+    if (!u) return;
+    const what = ctx.match[1];
+    if (what === 'home') return showHome(ctx, u);
+    if (what === 'stats') return statsCmd(ctx);
+    if (what === 'top') return topCmd(ctx);
+    if (what === 'report') return reportCmd(ctx);
+    if (what === 'settings') return ctx.reply(T.settingsMenu(), html(K.settings()));
+    if (what === 'help') return ctx.reply(T.help(), html(K.backHome()));
+    if (what === 'pause') {
+      await store.updateUser(u.id, {status: 'paused'});
+      return ctx.reply(T.paused(), html(K.backHome()));
+    }
+    if (u.status === 'paused_quota') return ctx.reply(T.pausedQuota());
+    await store.updateUser(u.id, {status: 'active'});
+    return ctx.reply(T.resumed(), html(K.backHome()));
+  });
+  bot.command('menu', async (ctx) => {
+    const u = await requireReady(ctx);
+    if (u) await showHome(ctx, u);
   });
 
   bot.command('settings', async (ctx) => {
@@ -1077,7 +1120,7 @@ export function createBot(deps: BotDeps) {
 
   // ---------- typed text ----------
   bot.on('message:text', async (ctx) => {
-    if (ctx.message.text.startsWith('/')) return ctx.reply(T.help(), html());
+    if (ctx.message.text.startsWith('/')) return ctx.reply(T.unknownCommand(), html(K.backHome()));
     const u = await getOrCreate(ctx);
     const text = ctx.message.text;
     // Anything that looks like a secret is deleted even if we didn't ask for it.
@@ -1108,7 +1151,7 @@ export function createBot(deps: BotDeps) {
         return saveBrief(ctx, u, text);
     }
     if (!onboarded(u)) return showStep(ctx, u);
-    return ctx.reply(T.help(), html());
+    return showHome(ctx, u);
   });
 
   bot.catch(async (err) => {
