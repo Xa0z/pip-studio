@@ -561,6 +561,7 @@ function Library({d, tg}: {d: Data; tg?: TelegramWebApp}) {
   const [sort, setSort] = useState<SortKey>('newest');
   const [show, setShow] = useState<Show>('all');
   const [toast, setToast] = useState<string | null>(null);
+  const [playing, setPlaying] = useState<{id: string; title: string; label: string; shareUrl: string | null; unposted: Unposted | null} | null>(null);
   const unposted = d.unposted ?? [];
   const posted = useMemo(() => {
     const by: Record<SortKey, (v: Video) => number> = {
@@ -581,6 +582,12 @@ function Library({d, tg}: {d: Data; tg?: TelegramWebApp}) {
     return [...p, ...u].sort((a, b) => b.at.localeCompare(a.at));
   }, [posted, unposted, show]);
   const open = (url: string | null) => url && (tg?.openLink ? tg.openLink(url) : window.open(url, '_blank'));
+  const playPosted = (v: Video) =>
+    v.playable ? setPlaying({id: v.id, title: v.topic || v.caption, label: `${postedDate(v.postedAt, d.timezone)} · ${fmtNum(v.views)} views`, shareUrl: v.shareUrl, unposted: null}) : open(v.shareUrl);
+  const playUnposted = (v: Unposted) =>
+    v.playable
+      ? setPlaying({id: v.id, title: v.topic || v.caption || 'Video', label: `${postedDate(v.at, d.timezone)} · ${v.test ? 'Test video' : UNPOSTED_LABEL[v.status] ?? v.status}`, shareUrl: null, unposted: v})
+      : sendToChat(v);
   const sendToChat = async (v: Unposted) => {
     if (v.status === 'rendering') return setToast('This video is still being made.');
     setToast('Sending it to your chat…');
@@ -631,7 +638,7 @@ function Library({d, tg}: {d: Data; tg?: TelegramWebApp}) {
       <div className="library">
         {items.map((it) =>
           it.kind === 'posted' ? (
-            <button key={it.v.id} className="clip" onClick={() => open(it.v.shareUrl)} aria-label={`${it.v.topic || it.v.caption}, ${fmtNum(it.v.views)} views. Open on TikTok`}>
+            <button key={it.v.id} className="clip" onClick={() => playPosted(it.v)} aria-label={`${it.v.topic || it.v.caption}, ${fmtNum(it.v.views)} views. Play`}>
               <div className="frame">
                 {it.v.thumb ? <img src={it.v.thumb} alt="" loading="lazy" /> : null}
                 <div className="frame-tags">
@@ -650,13 +657,13 @@ function Library({d, tg}: {d: Data; tg?: TelegramWebApp}) {
               </div>
             </button>
           ) : (
-            <button key={it.v.id} className="clip clip-unposted" onClick={() => sendToChat(it.v)} aria-label={`${it.v.topic || it.v.caption || 'Video'}, ${it.v.test ? 'test video' : UNPOSTED_LABEL[it.v.status] ?? it.v.status}. Send to chat`}>
+            <button key={it.v.id} className="clip clip-unposted" onClick={() => playUnposted(it.v)} aria-label={`${it.v.topic || it.v.caption || 'Video'}, ${it.v.test ? 'test video' : UNPOSTED_LABEL[it.v.status] ?? it.v.status}. Play`}>
               <div className="frame">
                 {it.v.thumb ? <img src={it.v.thumb} alt="" loading="lazy" /> : null}
                 <div className="frame-tags">
                   <span className={`tag tag-status tag-${it.v.test ? 'test' : it.v.status}`}>{it.v.test ? 'Test video' : UNPOSTED_LABEL[it.v.status] ?? it.v.status}</span>
                 </div>
-                <span className="frame-views">{Icon.send}Watch in chat</span>
+                <span className="frame-views">{it.v.playable ? <>{Icon.play}Play</> : <>{Icon.send}Watch in chat</>}</span>
               </div>
               <div className="clip-body">
                 <span className="clip-title">{it.v.topic || it.v.caption || 'Video'}</span>
@@ -669,8 +676,56 @@ function Library({d, tg}: {d: Data; tg?: TelegramWebApp}) {
           ),
         )}
       </div>
+      {playing ? (
+        <Player
+          src={`/api/video?id=${encodeURIComponent(playing.id)}&t=${encodeURIComponent(d.playToken ?? '')}`}
+          title={playing.title}
+          label={playing.label}
+          onClose={() => setPlaying(null)}
+          actions={
+            <>
+              {playing.shareUrl ? <button className="btn" onClick={() => open(playing.shareUrl)}>Open on TikTok</button> : null}
+              {playing.unposted ? <button className="btn" onClick={() => (sendToChat(playing.unposted!), setPlaying(null))}>Send to chat</button> : null}
+            </>
+          }
+        />
+      ) : null}
       {toast ? <div className="toast" role="status">{toast}</div> : null}
     </>
+  );
+}
+
+/** Full-screen player for one video, closed with the X, the backdrop or Escape. */
+function Player({src, title, label, actions, onClose}: {src: string; title: string; label: string; actions: ReactNode; onClose: () => void}) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose]);
+  return (
+    <div className="player" role="dialog" aria-modal="true" aria-label={title} onClick={onClose}>
+      <div className="player-box" onClick={(e) => e.stopPropagation()}>
+        <div className="player-head">
+          <div className="player-title">
+            <b>{title}</b>
+            <span>{label}</span>
+          </div>
+          <button className="player-close" onClick={onClose} aria-label="Close">{Icon.close}</button>
+        </div>
+        {failed ? (
+          <div className="player-error">This video could not be loaded. Try sending it to the chat instead.</div>
+        ) : (
+          <video src={src} controls autoPlay playsInline preload="metadata" onError={() => setFailed(true)} />
+        )}
+        <div className="player-actions">{actions}</div>
+      </div>
+    </div>
   );
 }
 

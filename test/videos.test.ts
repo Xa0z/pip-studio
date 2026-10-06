@@ -1,7 +1,7 @@
-import {afterEach, describe, expect, it} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import {Harness, runOnboarding} from '../studio/dev/harness';
 import {signInitData} from '../studio/lib/initdata';
-import {dashboardApi, dashboardSend} from '../studio/server/handlers';
+import {dashboardApi, dashboardSend, videoStream} from '../studio/server/handlers';
 
 const OWNER = 5550001;
 const USER = 5550002;
@@ -78,7 +78,45 @@ describe('my videos and posting mode', () => {
         ['skipped', true],
       ]),
     );
-    // Tapping a video that is not on TikTok sends it to the chat.
+    // Playing in the dashboard: the posted video is gone from storage, so it streams from Telegram's copy in pieces.
+    expect(d.videos[0].playable).toBe(true);
+    const play = (id: string, t = d.playToken, range?: string) =>
+      videoStream(new Request(`https://x/api/video?id=${id}&t=${encodeURIComponent(t)}`, {headers: range ? {range} : {}}), h.store, process.env.TELEGRAM_BOT_TOKEN!, c.now().getTime());
+    expect((await play(auto.id, 'bad.token')).status).toBe(401);
+    const file = new Uint8Array(5 * 1024 * 1024).map((_, i) => i % 251);
+    const realFetch = globalThis.fetch;
+    const tg = vi.fn(async (input: any, init?: any) => {
+      const url = String(input);
+      if (url.includes('/getFile')) return new Response(JSON.stringify({ok: true, result: {file_path: 'videos/file_1.mp4'}}));
+      if (url.includes('/file/bot')) {
+        const [, a, b] = /bytes=(\d+)-(\d+)/.exec(init?.headers?.Range ?? '')!;
+        return new Response(file.slice(+a, +b + 1), {status: 206, headers: {'Content-Range': `bytes ${a}-${b}/${file.length}`}});
+      }
+      return realFetch(input, init);
+    });
+    globalThis.fetch = tg as any;
+    try {
+      const first = await play(auto.id, d.playToken, 'bytes=0-');
+      expect(first.status).toBe(206);
+      expect(first.headers.get('content-range')).toBe(`bytes 0-${3 * 1024 * 1024 - 1}/${file.length}`);
+      const rest = await play(auto.id, d.playToken, `bytes=${3 * 1024 * 1024}-`);
+      expect(rest.headers.get('content-range')).toBe(`bytes ${3 * 1024 * 1024}-${file.length - 1}/${file.length}`);
+      expect(new Uint8Array(await rest.arrayBuffer())[0]).toBe(file[3 * 1024 * 1024]);
+      expect(tg.mock.calls.filter((x) => String(x[0]).includes('/getFile'))).toHaveLength(1); // file path is cached
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+    // A video still in storage redirects to a signed link; someone else's token gets nothing.
+    const stored = [...h.store.videos.values()].find((x) => x.video_path)!;
+    if (stored) {
+      const r = await play(stored.id);
+      expect(r.status).toBe(302);
+      expect(r.headers.get('location')).toMatch(/^memory:\/\//);
+    }
+    const otherToken = (await (await dashboardApi(new Request('https://x/api/dashboard', {headers: {'x-telegram-init-data': signInitData({auth_date: String(Math.floor(Date.now() / 1000)), user: JSON.stringify({id: 42})}, process.env.TELEGRAM_BOT_TOKEN!)}}), h.store, process.env.TELEGRAM_BOT_TOKEN!)).json()).playToken;
+    expect(otherToken).toBeUndefined(); // user 42 has no account, so no token either
+
+    // Tapping "Send to chat" on a video that is not on TikTok sends it to the chat.
     const before = h.chat.length;
     const sent = await dashboardSend(new Request('https://x/api/dashboard', {method: 'POST', headers: {'x-telegram-init-data': init}, body: JSON.stringify({send: v.id})}), h.store, process.env.TELEGRAM_BOT_TOKEN!, h.bot.api);
     expect(await sent.json()).toEqual({ok: true, sent: 'video'});

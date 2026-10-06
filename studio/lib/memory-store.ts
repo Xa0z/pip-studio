@@ -234,6 +234,7 @@ export class MemoryStore implements Store {
     return f.data;
   }
   async signedUrl(path: string) {
+    if (!this.files.has(path)) throw new Error(`Object not found: ${path}`); // like Supabase
     return `memory://${path}`;
   }
   async removeFiles(paths: string[]) {

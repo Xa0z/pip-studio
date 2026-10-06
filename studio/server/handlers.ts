@@ -11,6 +11,7 @@ import {encryptTokens, exchangeCode, fetchUser} from '../lib/tiktok.js';
 import {addSecret} from '../lib/redact.js';
 import type {createBot} from '../bot/bot.js';
 import {sendVideoCard} from '../bot/show-video.js';
+import {signPlayToken, verifyPlayToken} from '../lib/play-token.js';
 import type {VideoRow} from '../lib/types.js';
 
 const page = (title: string, body: string, status = 200) =>
@@ -101,7 +102,64 @@ export async function dashboardApi(req: Request, store: Store, botToken: string,
       .map(async (v) => thumbs.set(v.id, await store.signedUrl(v.thumb_path!, 3600).catch(() => ''))),
   );
   const thumb = (v: VideoRow) => thumbs.get(v.id) || null;
-  return json({...buildDashboard(a, range, now, thumb), schedule: buildSchedule(a.settings, upcoming, now), unposted: buildUnposted(notPosted, thumb)});
+  return json({...buildDashboard(a, range, now, thumb), schedule: buildSchedule(a.settings, upcoming, now), unposted: buildUnposted(notPosted, thumb), playToken: signPlayToken(user.id, now.getTime())});
+}
+
+/** Largest piece of a video sent per request (Vercel caps response bodies; the player asks for the next piece itself). */
+const PLAY_CHUNK = 3 * 1024 * 1024;
+const tgPaths = new Map<string, {path: string; at: number}>();
+
+/**
+ * GET /api/video?id=<videoId>&t=<playToken>: plays one of the user's videos in the dashboard.
+ * From storage while the file is there (redirect to a signed URL), else streamed from Telegram's copy
+ * in range pieces, so the bot token never reaches the browser.
+ */
+export async function videoStream(req: Request, store: Store, botToken: string, now = Date.now()): Promise<Response> {
+  const url = new URL(req.url);
+  const uid = verifyPlayToken(url.searchParams.get('t') ?? '', now);
+  if (!uid) return new Response('Open the video from the dashboard again.', {status: 401});
+  const id = url.searchParams.get('id') ?? '';
+  const v = /^[0-9a-f-]{36}$/.test(id) ? await store.getVideo(id) : null;
+  if (!v || v.user_id !== uid) return new Response('Video not found', {status: 404});
+  if (v.video_path) {
+    const signed = await store.signedUrl(v.video_path, 3600).catch(() => null);
+    if (signed) return new Response(null, {status: 302, headers: {Location: signed, 'Cache-Control': 'no-store'}});
+  }
+  const fileId: string | undefined = v.plan?.tg_file_id;
+  if (!fileId) return new Response('This video is no longer stored', {status: 410});
+  let cached = tgPaths.get(fileId);
+  if (!cached || now - cached.at > 50 * 60000) {
+    const r = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${encodeURIComponent(fileId)}`).then((x) => x.json()).catch(() => null);
+    if (!r?.ok || !r.result?.file_path) return new Response('Telegram could not find this video', {status: 410});
+    cached = {path: r.result.file_path, at: now};
+    tgPaths.set(fileId, cached);
+  }
+  const fileUrl = `https://api.telegram.org/file/bot${botToken}/${cached.path}`;
+  const m = /^bytes=(\d+)-(\d*)$/.exec(req.headers.get('range') ?? '');
+  const start = m ? Number(m[1]) : 0;
+  const askedEnd = m && m[2] ? Number(m[2]) : Infinity;
+  const end = Math.min(askedEnd, start + PLAY_CHUNK - 1);
+  const up = await fetch(fileUrl, {headers: {Range: `bytes=${start}-${end}`}}).catch(() => null);
+  if (!up || (up.status !== 206 && up.status !== 200)) return new Response('Could not load the video', {status: 502});
+  let body = new Uint8Array(await up.arrayBuffer());
+  let total = Number(/\/(\d+)$/.exec(up.headers.get('content-range') ?? '')?.[1] ?? NaN);
+  if (up.status === 200) {
+    // Telegram ignored the range: cut the piece ourselves.
+    total = body.length;
+    body = body.slice(start, Math.min(end + 1, total));
+  }
+  if (!Number.isFinite(total)) total = start + body.length;
+  const last = start + body.length - 1;
+  return new Response(body, {
+    status: 206,
+    headers: {
+      'Content-Type': 'video/mp4',
+      'Accept-Ranges': 'bytes',
+      'Content-Range': `bytes ${start}-${last}/${total}`,
+      'Content-Length': String(body.length),
+      'Cache-Control': 'private, max-age=3600',
+    },
+  });
 }
 
 /** POST /api/dashboard {send: videoId}: the bot sends that video to the user's chat (for videos that are not on TikTok). */

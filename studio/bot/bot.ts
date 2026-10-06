@@ -618,7 +618,7 @@ export function createBot(deps: BotDeps) {
     await ctx.answerCallbackQuery();
     await ctx.editMessageReplyMarkup({reply_markup: {inline_keyboard: []}}).catch(() => undefined);
     if (action === 'skip') {
-      await store.updateVideo(v.id, {status: 'skipped'});
+      await store.updateVideo(v.id, {status: 'skipped', video_path: null});
       if (v.video_path) await store.removeFiles([v.video_path]).catch(() => undefined);
       return ctx.reply(T.skipped());
     }

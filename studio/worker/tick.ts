@@ -196,7 +196,7 @@ export async function publishDue(ctx: WorkerCtx): Promise<{published: number; fa
     if (v.status === 'awaiting_approval') {
       // Nobody answered for 24 h after the slot: drop it.
       if (now.getTime() - new Date(v.slot_at).getTime() > 24 * 3600000) {
-        await ctx.store.updateVideo(v.id, {status: 'skipped', error: 'not approved in time'});
+        await ctx.store.updateVideo(v.id, {status: 'skipped', error: 'not approved in time', video_path: null});
         if (v.video_path) await ctx.store.removeFiles([v.video_path]).catch(() => undefined);
       }
       continue;
@@ -232,6 +232,7 @@ export async function publishOne(ctx: WorkerCtx, u: UserRow, v: VideoRow): Promi
       error: null,
     });
     await store.removeFiles([v.video_path]).catch(() => undefined);
+    await store.updateVideo(v.id, {video_path: null});
     const caption = T.posted((v.caption ?? '').split('\n')[0], pub.privacy);
     // Private posts get no public id from TikTok: link the profile until the metrics step finds the video.
     const link = shareUrl ?? (pub.username || row.username ? `https://www.tiktok.com/@${pub.username || row.username}` : null);

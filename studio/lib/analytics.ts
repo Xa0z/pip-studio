@@ -17,6 +17,7 @@ export type VideoStat = {
   topic: string;
   thumb: string | null;
   shareUrl: string | null;
+  playable: boolean;
   postedAt: string;
   views: number;
   likes: number;
@@ -59,6 +60,9 @@ export async function loadAnalytics(store: Store, userId: number): Promise<Analy
   return {settings, tiktok, posted, snaps, account, pattern, tz: settings?.timezone ?? 'UTC', goal: settings?.goal ?? 'views'};
 }
 
+/** The video can be played in the dashboard: its file is still in storage, or Telegram has a copy. */
+export const isPlayable = (v: VideoRow) => !!(v.video_path || v.plan?.tg_file_id);
+
 export function videoStats(a: Analytics, thumb: (v: VideoRow) => string | null = () => null): VideoStat[] {
   const base = a.posted.map((v) => {
     const s = a.snaps.get(v.id) ?? [];
@@ -72,6 +76,7 @@ export function videoStats(a: Analytics, thumb: (v: VideoRow) => string | null =
     topic: v.plan?.topic ?? '',
     thumb: thumb(v),
     shareUrl: v.share_url,
+    playable: isPlayable(v),
     postedAt: v.posted_at ?? v.slot_at,
     views: l.views,
     likes: l.likes,
@@ -222,9 +227,10 @@ export function buildUnposted(videos: VideoRow[], thumb?: (v: VideoRow) => strin
       status: v.status,
       test: v.is_dry_run,
       thumb: thumb?.(v) ?? null,
+      playable: isPlayable(v),
     }))
     .sort((a, b) => b.at.localeCompare(a.at));
 }
 
 export type Unposted = ReturnType<typeof buildUnposted>;
-export type DashboardResponse = Dashboard & {schedule: Schedule; unposted: Unposted};
+export type DashboardResponse = Dashboard & {schedule: Schedule; unposted: Unposted; playToken: string};
