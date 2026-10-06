@@ -370,7 +370,9 @@ async function finishVideo(ctx: WorkerCtx, job: JobRow, st: VideoState) {
   if (v.is_dry_run) {
     if (st.thumbPath) await store.upload(`thumbs/${u.id}/${v.id}.jpg`, fs.readFileSync(st.thumbPath), 'image/jpeg');
     await store.updateVideo(v.id, {status: 'skipped', thumb_path: st.thumbPath ? `thumbs/${u.id}/${v.id}.jpg` : null});
-    await msg.video(u.id, st.outPath, T.dryRunReady(nextSlotText(s, ctx.now())), K.preview(), st.thumbPath);
+    const sent = await msg.video(u.id, st.outPath, T.dryRunReady(nextSlotText(s, ctx.now())), K.preview(), st.thumbPath);
+    // Keep Telegram's id so the test video plays in the dashboard Library too.
+    if (sent.fileId) await store.updateVideo(v.id, {plan: {...((await store.getVideo(v.id))?.plan ?? {}), tg_file_id: sent.fileId}});
     return;
   }
 
