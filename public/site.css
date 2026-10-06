@@ -1,6 +1,6 @@
-/* Pip Studio site. High-contrast black theme with a mint accent: Plus Jakarta Sans for text, a mono face only for timecodes and specs. */
+/* Pip Studio site. High-contrast black theme with a light blue accent: Plus Jakarta Sans for text, a mono face only for timecodes and specs. */
 :root {
-  /* High-contrast black theme: pure black page, white text, one light mint accent. */
+  /* High-contrast black theme: pure black page, white text, one light light blue accent. */
   --paper: #000000;
   --surface: #0E0E0E;
   --ink: #FFFFFF;
@@ -8,16 +8,16 @@
   --muted: #A8A8A8;
   --line: #2A2A2A;
   --line-strong: #404040;
-  --accent: #C6DCC9;
-  --accent-2: #A7B8A9;
-  --accent-soft: #73847C;
+  --accent: #A8D8FF;
+  --accent-2: #8EC5F5;
+  --accent-soft: #5B8DB8;
   --accent-ink: #000000;
   --monitor: #0A0A0A;
   --monitor-2: #141414;
   --monitor-line: #2A2A2A;
   --monitor-text: #FFFFFF;
   --monitor-muted: #A8A8A8;
-  --ok: #9FD3AE;
+  --ok: #8EC5F5;
   --warn: #E8B85A;
   --err: #FF9E8A;
   --radius: 8px;

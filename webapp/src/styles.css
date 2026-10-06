@@ -1,6 +1,6 @@
 /* Pip Studio dashboard (Telegram Mini App). Sage theme pack; follows Telegram's light/dark setting. */
 :root {
-  /* High-contrast black theme: pure black page, white text, one light mint accent. */
+  /* High-contrast black theme: pure black page, white text, one light blue accent. */
   --bg: #000000;
   --surface: #0E0E0E;
   --surface-2: #1A1A1A;
@@ -10,13 +10,13 @@
   --line: #262626;
   --line-strong: #3A3A3A;
   --grid: #1F1F1F;
-  --accent: #C6DCC9;
-  --accent-2: #A7B8A9;
-  --accent-soft: #73847C;
-  --accent-wash: #17211A;
+  --accent: #A8D8FF;
+  --accent-2: #8EC5F5;
+  --accent-soft: #5B8DB8;
+  --accent-wash: #0F1B26;
   --accent-ink: #000000;
-  --up: #C6DCC9;
-  --up-bg: #15211A;
+  --up: #A8D8FF;
+  --up-bg: #0E1A26;
   --down: #FF9E8A;
   --down-bg: #2A1410;
   --warn-bg: #2A2416;
