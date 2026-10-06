@@ -87,6 +87,9 @@ export class Harness {
   store = new MemoryStore();
   chat: ChatItem[] = [];
   queue: string[] = [];
+  /** File ids the worker downloaded from Telegram, and fake files to hand back for them. */
+  downloads: string[] = [];
+  refFiles = new Map<string, Buffer>();
   tiktok: FakeTikTok;
   bot: ReturnType<typeof createBot>;
   ctx: WorkerCtx;
@@ -135,6 +138,10 @@ export class Harness {
       },
       voice: async (_c, file, caption) => this.botSays({kind: 'voice', text: caption, media: [file]}),
       audio: async (_c, file, _title, caption) => this.botSays({kind: 'voice', text: caption, media: [file]}),
+      download: async (fileId) => {
+        this.downloads.push(fileId);
+        return this.refFiles.get(fileId) ?? Buffer.from('not a real video');
+      },
     };
 
     this.ctx = {
@@ -236,6 +243,26 @@ export class Harness {
     const update = {
       update_id: this.updateId++,
       message: {message_id: id, date: Math.floor(Date.now() / 1000), chat: {id: this.userId, type: 'private', first_name: 'User'}, from: this.from(), text, ...(entities ? {entities} : {})},
+    } as unknown as Update;
+    await this.bot.handleUpdate(update);
+    return id;
+  }
+
+  /** The user sends a video (e.g. a reference for marketing mode). */
+  async sendVideo(fileId: string, opts: {duration?: number; file_size?: number; asDocument?: boolean; caption?: string} = {}) {
+    const id = this.nextId++;
+    this.chat.push({id, from: 'user', kind: 'video', text: opts.caption ?? `(video ${fileId})`});
+    const media = {file_id: fileId, file_unique_id: `u-${fileId}`, duration: opts.duration ?? 20, width: 1080, height: 1920, file_size: opts.file_size ?? 5_000_000, mime_type: 'video/mp4'};
+    const update = {
+      update_id: this.updateId++,
+      message: {
+        message_id: id,
+        date: Math.floor(Date.now() / 1000),
+        chat: {id: this.userId, type: 'private', first_name: 'User'},
+        from: this.from(),
+        ...(opts.asDocument ? {document: {...media, file_name: `${fileId}.mp4`}} : {video: media}),
+        ...(opts.caption ? {caption: opts.caption} : {}),
+      },
     } as unknown as Update;
     await this.bot.handleUpdate(update);
     return id;

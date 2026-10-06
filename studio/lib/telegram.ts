@@ -14,6 +14,8 @@ export interface Messenger {
   album(chatId: number, files: {file: string | Buffer; caption?: string}[]): Promise<number[]>;
   voice(chatId: number, file: string, caption?: string): Promise<number>;
   audio(chatId: number, file: string, title: string, caption?: string): Promise<number>;
+  /** Downloads a file a user sent (by Telegram file id). Bots can only fetch files up to 20 MB. */
+  download(fileId: string): Promise<Buffer>;
 }
 
 const markup = (k?: Keyboard) => (k ? JSON.stringify({inline_keyboard: k}) : undefined);
@@ -96,5 +98,12 @@ export const telegram: Messenger = {
     f.set('title', title);
     if (caption) f.set('caption', caption);
     return (await call('sendAudio', f)).message_id;
+  },
+  async download(fileId) {
+    const file = await call('getFile', {file_id: fileId});
+    if (!file?.file_path) throw new Error('Telegram did not return a file path (the file may be over 20 MB)');
+    const res = await fetch(`https://api.telegram.org/file/bot${need('TELEGRAM_BOT_TOKEN')}/${file.file_path}`);
+    if (!res.ok) throw new Error(`Telegram file download failed: HTTP ${res.status}`);
+    return Buffer.from(await res.arrayBuffer());
   },
 };

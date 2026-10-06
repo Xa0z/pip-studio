@@ -27,10 +27,13 @@ import {addSecret, redact} from '../lib/redact.js';
 import {fmtLocal, localParts} from '../lib/schedule.js';
 import {signState} from '../lib/state.js';
 import {accessTokenFor, authorizeUrl, TikTokReconnectNeeded} from '../lib/tiktok.js';
-import type {CharacterRow, JobRow, SettingsRow, UserRow, VideoRow} from '../lib/types.js';
+import type {CharacterRow, JobRow, MarketingInput, SettingsRow, UserRow, VideoRow} from '../lib/types.js';
 import {CharacterRefused, designCharacters, registryKey, sha256, writeRegistry} from './characters.js';
 import type {WorkerCtx} from './context.js';
 import {makeVoiceSamples} from './voices.js';
+import {analyzeReference, studyReference, type MarketingContext} from './marketing.js';
+import {marketingSeconds} from '../lib/marketing.js';
+import {transcribeMedia} from '../../src/voice.js';
 
 // ---------- state passed between phases ----------
 type VideoState = {
@@ -131,18 +134,47 @@ async function prepareVideo(ctx: WorkerCtx, job: JobRow) {
   const all = await store.listVideos(u.id, {includeDryRun: true, limit: 500});
   const real = all.filter((x) => !x.is_dry_run && ['posted', 'approved', 'awaiting_approval', 'publishing'].includes(x.status));
   const index = real.length;
-  const pastTopics = all.map((x) => x.plan?.topic).filter(Boolean).reverse() as string[];
-  const niche = nextNiche(s.niches, real.map((x) => x.features?.niche ?? '').filter(Boolean).reverse());
-  const seconds = pickLength(s.goal, index + Math.floor(ctx.now().getTime() / 86400000));
-  const experiment = !v.is_dry_run && (v.is_experiment || isExperiment(index));
+  // Marketing videos are based on one of the user's reference videos (saved on the video row).
+  const mk: MarketingInput | undefined = v.plan?.marketing;
+  const niche = mk ? 'marketing' : nextNiche(s.niches, real.map((x) => x.features?.niche ?? '').filter(Boolean).reverse());
+  let seconds = pickLength(s.goal, index + Math.floor(ctx.now().getTime() / 86400000));
+  const experiment = !mk && !v.is_dry_run && (v.is_experiment || isExperiment(index));
   const pattern = await store.latestPattern(u.id);
-  const hints = pattern ? plannerHints(pattern.items as any, pattern.too_small) : [];
-  const cta = GOALS[s.goal].cta;
+  const hints = pattern && !mk ? plannerHints(pattern.items as any, pattern.too_small) : [];
+  const cta = mk ? (s.link_url ? 'link' : 'follow') : GOALS[s.goal].cta;
   const name = character?.name ?? null;
 
   await store.updateVideo(v.id, {status: 'rendering', is_experiment: experiment, attempts: v.attempts + 1});
+  let marketing: MarketingContext | undefined;
+  if (mk) {
+    const refDir = path.join(dirFor(ctx, job), 'reference');
+    fs.mkdirSync(refDir, {recursive: true});
+    const refFile = path.join(refDir, 'reference.mp4');
+    try {
+      fs.writeFileSync(refFile, await ctx.msg.download(mk.ref.file_id));
+    } catch (e) {
+      throw new Error(`Could not download reference video ${mk.index + 1} from Telegram: ${(e as Error).message}`);
+    }
+    const facts = await studyReference(refFile, refDir, process.env.TTS_PROVIDER === 'fake' ? undefined : transcribeMedia);
+    const analysis = await analyzeReference(facts, mk.notes, ask);
+    marketing = {business: mk.business, notes: mk.notes, analysis, index: mk.index};
+    seconds = marketingSeconds(facts.duration || mk.ref.duration);
+  }
   const {writePlan, revise} = await import('./planner.js');
-  const pctx = {niche, goal: s.goal, seconds, cta, characterName: name, linkUrl: s.link_url, pastTopics, hints, experiment, recentHookTypes: real.slice(0, 5).map((x) => x.features?.hook_type ?? '').filter(Boolean)};
+  const topicsFrom = mk ? all.filter((x) => x.plan?.marketing) : all;
+  const pctx = {
+    niche,
+    goal: s.goal,
+    seconds,
+    cta,
+    characterName: name,
+    linkUrl: s.link_url,
+    pastTopics: topicsFrom.map((x) => x.plan?.topic).filter(Boolean).reverse() as string[],
+    hints,
+    experiment,
+    recentHookTypes: real.slice(0, 5).map((x) => x.features?.hook_type ?? '').filter(Boolean),
+    marketing,
+  };
   let plan = await writePlan(pctx, ask);
 
   // Fit the voice: Kokoro speed first (0.9 to 1.1), then rewrites (max 4).
@@ -184,7 +216,7 @@ async function prepareVideo(ctx: WorkerCtx, job: JobRow) {
   const episode = index + 1;
   const props: VideoState['props'] = {
     episode,
-    title: `${nicheById(niche).label} #${episode}`,
+    title: mk ? plan.category.slice(0, 28) : `${nicheById(niche).label} #${episode}`,
     scenes,
     words: voice.words as Word[],
     totalFrames: spec.totalFrames,
@@ -193,7 +225,7 @@ async function prepareVideo(ctx: WorkerCtx, job: JobRow) {
     theme: resolveTheme(isThemeChoice(u.onboarding_data?.video_theme) ? u.onboarding_data.video_theme : null),
   };
   const features = featuresFor(plan, new Date(v.slot_at), s.timezone, seconds, cta, niche);
-  await store.updateVideo(v.id, {plan, features, caption: captionFor(plan), duration_s: seconds, character_id: character?.id ?? null});
+  await store.updateVideo(v.id, {plan: mk ? {...plan, marketing: mk} : plan, features, caption: captionFor(plan), duration_s: seconds, character_id: character?.id ?? null});
   saveState(ctx, job, {kind: 'video', videoId: v.id, props, voicePath: voice.wavPath, seconds});
 }
 
@@ -346,7 +378,7 @@ async function finishVideo(ctx: WorkerCtx, job: JobRow, st: VideoState) {
   let options: string[];
   let username: string;
   try {
-    const {token, row} = await accessTokenFor(store, u.id);
+    const {token, row} = await accessTokenFor(store, u.id, {now: ctx.now()});
     const info = await creatorInfo(token);
     if (info.max_video_post_duration_sec < st.seconds) throw new Error(`TikTok allows only ${info.max_video_post_duration_sec} s videos on this account`);
     options = info.privacy_level_options;

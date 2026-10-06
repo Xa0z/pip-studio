@@ -1,4 +1,6 @@
 import {spawn} from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
 import {config} from './config.js';
 import {isRepeatTopic} from './history.js';
 import {log} from './log.js';
@@ -75,8 +77,11 @@ export const extractJson = (text: string) => {
 export type ClaudeCredential = {kind: 'oauth_token' | 'api_key'; secret: string};
 
 /** Claude Code headless (uses your Claude subscription, no API bill). */
-export async function viaClaudeCode(prompt: string, system = SYSTEM, oauthToken?: string): Promise<string> {
-  const args = ['-p', '--output-format', 'json', '--model', config.CLAUDE_MODEL, '--system-prompt', system, '--tools', '', '--no-session-persistence'];
+export async function viaClaudeCode(prompt: string, system = SYSTEM, oauthToken?: string, images: string[] = []): Promise<string> {
+  // With images, Claude Code may only use its Read tool, and only on the folder that holds them.
+  const tools = images.length ? ['--tools', 'Read', '--allowedTools', 'Read', '--add-dir', ...new Set(images.map((i) => path.dirname(i)))] : ['--tools', ''];
+  const args = ['-p', '--output-format', 'json', '--model', config.CLAUDE_MODEL, '--system-prompt', system, ...tools, '--no-session-persistence'];
+  if (images.length) prompt = `${prompt}\n\nLook at these image files with the Read tool before you answer (they are frames from the video, in order):\n${images.map((i) => `- ${i}`).join('\n')}`;
   const env = {...process.env};
   if (oauthToken) {
     env.CLAUDE_CODE_OAUTH_TOKEN = oauthToken;
@@ -108,7 +113,7 @@ export async function viaClaudeCode(prompt: string, system = SYSTEM, oauthToken?
 }
 
 /** Paid API: used when ANTHROPIC_API_KEY is set, or with a user's own key in Pip Studio. */
-export async function viaApi(prompt: string, system = SYSTEM, apiKey?: string): Promise<string> {
+export async function viaApi(prompt: string, system = SYSTEM, apiKey?: string, images: string[] = []): Promise<string> {
   const {default: Anthropic} = await import('@anthropic-ai/sdk');
   const client = new Anthropic({maxRetries: 3, ...(apiKey ? {apiKey} : {})});
   // Server-side fallback: if the model declines, the API retries on a fallback model in the same call.
@@ -120,7 +125,17 @@ export async function viaApi(prompt: string, system = SYSTEM, apiKey?: string): 
     output_config: {effort: 'high'},
     betas: ['server-side-fallback-2026-07-01'],
     fallbacks: 'default',
-    messages: [{role: 'user', content: prompt}],
+    messages: [
+      {
+        role: 'user',
+        content: images.length
+          ? [
+              ...images.map((file) => ({type: 'image' as const, source: {type: 'base64' as const, media_type: 'image/jpeg' as const, data: fs.readFileSync(file).toString('base64')}})),
+              {type: 'text' as const, text: prompt},
+            ]
+          : prompt,
+      },
+    ],
   });
   const res = await stream.finalMessage();
   if (res.stop_reason === 'refusal') throw new Error('Claude declined to write this script');
@@ -128,8 +143,14 @@ export async function viaApi(prompt: string, system = SYSTEM, apiKey?: string): 
 }
 
 /** Calls Claude with an explicit credential (Pip Studio) or the environment (Pip Explains). */
-export const callClaudeWith = (prompt: string, system: string, cred?: ClaudeCredential) =>
-  cred ? (cred.kind === 'api_key' ? viaApi(prompt, system, cred.secret) : viaClaudeCode(prompt, system, cred.secret)) : process.env.ANTHROPIC_API_KEY ? viaApi(prompt, system) : viaClaudeCode(prompt, system);
+export const callClaudeWith = (prompt: string, system: string, cred?: ClaudeCredential, images: string[] = []) =>
+  cred
+    ? cred.kind === 'api_key'
+      ? viaApi(prompt, system, cred.secret, images)
+      : viaClaudeCode(prompt, system, cred.secret, images)
+    : process.env.ANTHROPIC_API_KEY
+      ? viaApi(prompt, system, undefined, images)
+      : viaClaudeCode(prompt, system, undefined, images);
 
 const callClaude = (prompt: string) => callClaudeWith(prompt, SYSTEM);
 

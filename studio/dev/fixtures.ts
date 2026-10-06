@@ -196,11 +196,24 @@ export const weeklyAnswer = () =>
     changes: ['More space topics', 'Start with a surprising number', 'Keep posting at 20:00'],
   });
 
+export const refAnalysisAnswer = () =>
+  JSON.stringify({
+    summary: 'A fast product promo that opens with a question typed into a search bar.',
+    hook: 'A typed question with a cursor click in the first second.',
+    structure: ['question hook', 'show the problem', 'product as the answer', 'two quick benefits', 'call to action'],
+    pace: 'fast',
+    onScreenText: 'Large bold words that blur in one by one',
+    tone: 'confident and friendly',
+    techniques: ['typing text', 'pointer clicks', 'zoom cuts'],
+    cta: 'Tells viewers to tap the link in bio',
+  });
+
 /** Fake Claude: picks the fixture from what the prompt asks for. */
 export function fakeAsk(characterName: () => string | null = () => 'Nova'): Ask {
   return async (prompt, system) => {
     if (/Reply with the word OK/i.test(prompt)) return 'OK';
     if (/Weekly TikTok analysis/i.test(prompt)) return weeklyAnswer();
+    if (/You study short marketing videos/.test(system)) return refAnalysisAnswer();
     if (/You design ORIGINAL cartoon characters/.test(system)) return /breaks these rules/.test(prompt) ? JSON.stringify({name: 'Nova', code: foxCode(FOX_VARIANTS[0])}) : characterAnswer();
     return planAnswer(characterName(), parsePlanRequest(prompt, system));
   };

@@ -7,6 +7,7 @@ import {GOALS, HOOK_TYPES, type CtaType, type Goal} from '../lib/goals.js';
 import {nicheById} from '../lib/niches.js';
 import {CAPTION_STYLES, sceneRange, studioPlanSchema, type StudioPlan} from '../lib/plan-schema.js';
 import {withRetry} from '../../src/util.js';
+import {marketingSystemPrompt, marketingUserPrompt, type MarketingContext} from './marketing.js';
 
 export type PlanContext = {
   niche: string;
@@ -19,9 +20,12 @@ export type PlanContext = {
   hints: string[];
   experiment: boolean;
   recentHookTypes: string[];
+  /** Set for marketing videos: the business, the owner's notes and the reference analysis. */
+  marketing?: MarketingContext;
 };
 
 export function systemPrompt(c: PlanContext) {
+  if (c.marketing) return marketingSystemPrompt({...c, marketing: c.marketing});
   const n = nicheById(c.niche);
   const g = GOALS[c.goal];
   const words = wordRange(c.seconds);
@@ -71,6 +75,7 @@ hookType, captionStyle, caption, hashtags, scenes: [{role, narration, headline, 
 }
 
 export function userPrompt(c: PlanContext) {
+  if (c.marketing) return marketingUserPrompt({pastTopics: c.pastTopics, marketing: c.marketing});
   const recent = c.pastTopics.slice(-300);
   const lines = [
     `Write the next video. Use "niche": "${nicheById(c.niche).label}".`,
@@ -86,7 +91,8 @@ export function userPrompt(c: PlanContext) {
   return lines.join('\n\n');
 }
 
-export type Ask = (prompt: string, system: string) => Promise<string>;
+/** Asks Claude. `images` are JPEG files Claude should look at (used for reference videos). */
+export type Ask = (prompt: string, system: string, images?: string[]) => Promise<string>;
 
 /** Asks until the JSON passes the schema and checks (3 tries, with the exact errors). */
 export async function writePlan(c: PlanContext, ask: Ask, maxAttempts = 3): Promise<StudioPlan> {
@@ -133,4 +139,4 @@ export async function revise(plan: StudioPlan, c: PlanContext, problems: string[
   throw new Error('Claude could not fix the plan length');
 }
 
-export const claudeAsk = (cred: ClaudeCredential): Ask => (prompt, system) => callClaudeWith(prompt, system, cred);
+export const claudeAsk = (cred: ClaudeCredential): Ask => (prompt, system, images) => callClaudeWith(prompt, system, cred, images);
