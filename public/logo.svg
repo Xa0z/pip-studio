@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Pip Studio">
-  <rect width="1024" height="1024" fill="#465B53"/>
-  <path fill="#F7F6F2" fill-rule="evenodd" d="M284 252a40 40 0 0 1 40-40h236a208 208 0 0 1 0 416H424v164a40 40 0 0 1-40 40h-60a40 40 0 0 1-40-40z M466 342v156c0 13 14 21 25 14l124-78c10-6 10-22 0-28l-124-78c-11-7-25 1-25 14z"/>
-  <circle cx="660" cy="742" r="62" fill="#A7B8A9"/>
+  <rect width="1024" height="1024" fill="#A8D8FF"/>
+  <path fill="#000000" fill-rule="evenodd" d="M284 252a40 40 0 0 1 40-40h236a208 208 0 0 1 0 416H424v164a40 40 0 0 1-40 40h-60a40 40 0 0 1-40-40z M466 342v156c0 13 14 21 25 14l124-78c10-6 10-22 0-28l-124-78c-11-7-25 1-25 14z"/>
+  <circle cx="660" cy="742" r="62" fill="#2C6BA3"/>
 </svg>
