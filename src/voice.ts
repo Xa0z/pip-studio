@@ -166,3 +166,21 @@ export async function voiceSample(text: string, voice: string, file: string, spe
   writeWav(file, trimSilence(samples, rate), rate);
   return samples.length / rate;
 }
+
+/** Spoken words of any audio or video file (used to study marketing reference videos). */
+export async function transcribeMedia(file: string): Promise<string> {
+  const {whisperPath, modelFolder} = await ensureWhisper();
+  const {transcribe, toCaptions} = await import('@remotion/install-whisper-cpp');
+  const wav = path.join(os.tmpdir(), `pip-ref-${process.pid}-${Date.now()}.wav`);
+  const {execFileSync} = await import('node:child_process');
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', file, '-vn', '-ac', '1', '-ar', '16000', '-t', '180', wav]);
+  try {
+    const out = await transcribe({inputPath: wav, whisperPath, whisperCppVersion: WHISPER_VERSION, model: config.WHISPER_MODEL, modelFolder, tokenLevelTimestamps: true, splitOnWord: true, language: 'en', printOutput: false});
+    return toCaptions({whisperCppOutput: out})
+      .captions.map((c) => c.text.trim())
+      .filter((t) => t && !/^\[.*\]$/.test(t))
+      .join(' ');
+  } finally {
+    fs.rmSync(wav, {force: true});
+  }
+}

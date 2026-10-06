@@ -60,11 +60,11 @@ export async function tiktokCallback(req: Request, store: Store, api: Api, now: 
       username: me.username ?? null,
       display_name: me.display_name ?? null,
       avatar_url: me.avatar_url ?? null,
-      ...encryptTokens(uid, t),
+      ...encryptTokens(uid, t, now().getTime()),
     });
     await store.insertAccountMetric({
       user_id: uid,
-      captured_at: new Date().toISOString(),
+      captured_at: now().toISOString(),
       followers: me.follower_count ?? 0,
       following: me.following_count ?? 0,
       likes: me.likes_count ?? 0,

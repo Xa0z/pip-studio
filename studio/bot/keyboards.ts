@@ -30,6 +30,7 @@ export const K = {
     const custom = picked.find((p) => p.startsWith('custom:'));
     rows.push([b(custom ? `✅ ✏️ ${custom.slice(7)}` : '✏️ Custom', 'n:custom')]);
     rows.push([b(`Done (${picked.length}/2)`, 'n:done')]);
+    rows.push([b('📣 Marketing videos for my business instead', 'mk:on')]);
     return rows;
   },
   goals: (): Keyboard => (Object.keys(GOALS) as Goal[]).map((g) => [b(`${GOALS[g].emoji} ${GOALS[g].label}`, `g:${g}`)]),
@@ -77,7 +78,14 @@ export const K = {
     [b('🎯 Niche', 'st:niche'), b('🏁 Goal', 'st:goal')],
     [b('🕘 Schedule', 'st:schedule'), b('🔢 Posts per day', 'st:ppd')],
     [b('✋/⚡ Mode', 'st:mode'), b('🎨 Video theme', 'st:theme')],
-    [b('🧑‍🎨 Create new character', 'st:newchar')],
+    [b('📣 Marketing videos', 'mk:menu'), b('🧑‍🎨 New character', 'st:newchar')],
+  ],
+  refNotes: (): Keyboard => [[b('No changes', 'mk:nonotes')]],
+  dailyRefs: (hasPrevious: boolean): Keyboard => [[b('🎬 Send new references', 'mk:refs')], ...(hasPrevious ? [[b('🔁 Reuse my last ones', 'mk:same')]] : [])],
+  marketingMenu: (): Keyboard => [
+    [b('🎬 Send new references', 'mk:refs')],
+    [b('🏪 Change business info', 'mk:business')],
+    [b('🎓 Switch back to explainer videos', 'mk:off')],
   ],
   confirmNewCharacter: (): Keyboard => [[b('Yes, new character', 'st:newchar:yes'), b('Cancel', 'st:cancel')]],
   disconnect: (): Keyboard => [[b('Yes, delete everything', 'dc:yes')], [b('No, keep it', 'dc:no')]],

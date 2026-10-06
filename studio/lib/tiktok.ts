@@ -107,11 +107,12 @@ export class TikTokReconnectNeeded extends Error {}
  * A working access token for this user. Refreshes when it expires in under 10 minutes
  * (or always, with force) and saves the new encrypted tokens.
  */
-export async function accessTokenFor(store: Store, userId: number, opts: {force?: boolean} = {}): Promise<{token: string; row: TikTokRow}> {
+export async function accessTokenFor(store: Store, userId: number, opts: {force?: boolean; now?: Date} = {}): Promise<{token: string; row: TikTokRow}> {
+  const nowMs = (opts.now ?? new Date()).getTime();
   const row = await store.getTikTok(userId);
   if (!row) throw new TikTokReconnectNeeded('TikTok is not connected');
-  if (new Date(row.refresh_expires_at).getTime() < Date.now()) throw new TikTokReconnectNeeded('TikTok login expired');
-  const fresh = new Date(row.access_expires_at).getTime() - Date.now() > 10 * 60 * 1000;
+  if (new Date(row.refresh_expires_at).getTime() < nowMs) throw new TikTokReconnectNeeded('TikTok login expired');
+  const fresh = new Date(row.access_expires_at).getTime() - nowMs > 10 * 60 * 1000;
   if (fresh && !opts.force) {
     const token = decryptSecret(row.access_token_enc, aadFor.tiktokAccess(userId));
     addSecret(token);
@@ -128,7 +129,7 @@ export async function accessTokenFor(store: Store, userId: number, opts: {force?
   }
   addSecret(t.access_token);
   addSecret(t.refresh_token);
-  const updated: TikTokRow = {...row, ...encryptTokens(userId, t)};
+  const updated: TikTokRow = {...row, ...encryptTokens(userId, t, nowMs)};
   await store.saveTikTok(updated);
   return {token: t.access_token, row: updated};
 }

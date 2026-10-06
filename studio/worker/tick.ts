@@ -15,7 +15,8 @@ import {localParts, localToUtc, slotsBetween} from '../lib/schedule.js';
 import {signState} from '../lib/state.js';
 import {monthKey} from '../lib/store.js';
 import {accessTokenFor, authorizeUrl, fetchUser, listVideos, queryVideos, TikTokReconnectNeeded} from '../lib/tiktok.js';
-import type {UserRow, VideoRow} from '../lib/types.js';
+import type {MarketingInput, UserRow, VideoRow} from '../lib/types.js';
+import {ASK_HOUR, briefFor, dayLabel, localDay, nextDay, refIndexForSlot} from '../lib/marketing.js';
 import {redact} from '../lib/redact.js';
 import type {WorkerCtx} from './context.js';
 import {plainReason} from './jobs.js';
@@ -40,6 +41,9 @@ export async function tick(ctx: WorkerCtx, opts: {actionsMinutes?: () => Promise
   });
   await step('plan', async () => {
     report.planned = await planUpcoming(ctx);
+  });
+  await step('marketing', async () => {
+    await askForReferences(ctx);
   });
   await step('publish', async () => {
     const r = await publishDue(ctx);
@@ -126,13 +130,23 @@ export async function planUpcoming(ctx: WorkerCtx): Promise<number> {
     if (!slots.length) continue;
     const existing = await ctx.store.listVideos(u.id, {limit: 50});
     const realCount = existing.filter((v) => ['posted', 'approved', 'awaiting_approval', 'publishing'].includes(v.status)).length;
+    const marketing = u.onboarding_data?.content_mode === 'marketing';
     for (const slot of slots) {
       const iso = slot.toISOString();
       if (existing.some((v) => v.slot_at === iso)) continue; // already made (or skipped/failed) for this slot
+      // Marketing videos copy one of the day's reference videos; no references yet means nothing to make.
+      let mk: MarketingInput | null = null;
+      if (marketing) {
+        const day = localDay(slot, s.timezone);
+        const found = briefFor(u.onboarding_data.marketing_briefs, day);
+        if (!found || !u.onboarding_data.business) continue;
+        const index = refIndexForSlot(slot, s.post_times, s.timezone, found.brief.refs.length);
+        mk = {business: u.onboarding_data.business, ref: found.brief.refs[index], notes: found.brief.notes, day, index};
+      }
       const character = await ctx.store.getLockedCharacter(u.id);
       let v: VideoRow;
       try {
-        v = await ctx.store.insertVideo({user_id: u.id, slot_at: iso, status: 'planned', character_id: character?.id ?? null, is_experiment: isExperiment(realCount + planned)});
+        v = await ctx.store.insertVideo({user_id: u.id, slot_at: iso, status: 'planned', character_id: character?.id ?? null, is_experiment: !mk && isExperiment(realCount + planned), ...(mk ? {plan: {marketing: mk}} : {})});
       } catch {
         continue; // another tick got there first
       }
@@ -147,6 +161,26 @@ export async function planUpcoming(ctx: WorkerCtx): Promise<number> {
     }
   }
   return planned;
+}
+
+// ---------- marketing: ask for tomorrow's references once a day ----------
+export async function askForReferences(ctx: WorkerCtx): Promise<number> {
+  let asked = 0;
+  for (const u of await ctx.store.listUsers(['active'])) {
+    const d = u.onboarding_data ?? {};
+    if (d.content_mode !== 'marketing' || u.onboarding_step < 7) continue;
+    const s = await ctx.store.getSettings(u.id);
+    if (!s) continue;
+    const now = ctx.now();
+    const today = localDay(now, s.timezone);
+    if (localParts(now, s.timezone).hour < ASK_HOUR || d.marketing_asked === today) continue;
+    const tomorrow = nextDay(today);
+    if ((d.marketing_briefs ?? []).some((b) => b.day === tomorrow)) continue;
+    await ctx.store.updateUser(u.id, {onboarding_data: {...d, marketing_asked: today}});
+    await ctx.msg.text(u.id, T.dailyRefs(dayLabel(tomorrow)), K.dailyRefs(!!(d.marketing_briefs ?? []).length)).catch(() => undefined);
+    asked++;
+  }
+  return asked;
 }
 
 // ---------- publishing ----------
@@ -184,7 +218,7 @@ export async function publishOne(ctx: WorkerCtx, u: UserRow, v: VideoRow): Promi
     const file = path.join(tmp, 'video.mp4');
     fs.writeFileSync(file, await store.download(v.video_path));
     // Refresh the token before every post (creator_info is checked inside publishVideo).
-    const {token, row} = await accessTokenFor(store, u.id, {force: true});
+    const {token, row} = await accessTokenFor(store, u.id, {force: true, now: ctx.now()});
     const pub = await publishVideo(file, v.caption ?? '', token, {privacy: v.privacy ?? 'SELF_ONLY', durationSec: v.duration_s ?? 62, mode: 'direct'});
     const postId = pub.postIds[0] ?? null;
     const shareUrl = postId ? `https://www.tiktok.com/@${pub.username || row.username}/video/${postId}` : null;
@@ -239,7 +273,7 @@ export async function collectMetrics(ctx: WorkerCtx): Promise<{videos: number; a
     if (!tt) continue;
     let token: string;
     try {
-      ({token} = await accessTokenFor(ctx.store, u.id));
+      ({token} = await accessTokenFor(ctx.store, u.id, {now: ctx.now()}));
     } catch {
       continue; // reconnect message is sent when they next try to post
     }

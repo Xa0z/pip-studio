@@ -117,7 +117,7 @@ export const T = {
 
   // Commands
   help: () =>
-    `<b>Commands</b>\n/stats today's numbers and a 30-day chart\n/top your best videos\n/report weekly report\n/dashboard full analytics\n/settings change niche, goal, schedule, mode, video theme\n/pause and /resume posting\n/disconnect remove your tokens and delete your data`,
+    `<b>Commands</b>\n/stats today's numbers and a 30-day chart\n/top your best videos\n/report weekly report\n/dashboard full analytics\n/settings change niche, goal, schedule, mode, video theme\n/marketing marketing videos for your business (3 a day from your reference videos)\n/pause and /resume posting\n/disconnect remove your tokens and delete your data`,
   notReady: () => `Finish setup first with /start.`,
   paused: () => `⏸ Paused. No videos will be made or posted until you send /resume.`,
   resumed: () => `▶️ Resumed. Your next video is on the way.`,
@@ -131,4 +131,27 @@ export const T = {
   stats: (s: {followers: number; dFollowers: number; views: number; likes: number; engagement: number; videosToday: number; tooSmall: boolean}) =>
     `📊 <b>Today</b>\nFollowers: <b>${fmtNum(s.followers)}</b> (${s.dFollowers >= 0 ? '+' : ''}${fmtNum(s.dFollowers)})\nViews: <b>${fmtNum(s.views)}</b> · Likes: <b>${fmtNum(s.likes)}</b>\nEngagement: <b>${fmtPct(s.engagement)}</b>\nVideos posted today: ${s.videosToday}${s.tooSmall ? '\n\n<i>Still early: numbers get more useful after 15+ videos.</i>' : ''}`,
   noData: () => `No numbers yet. They show up a few hours after your first post.`,
+
+  // Marketing videos
+  askBusiness: () =>
+    `📣 <b>Marketing videos</b>\n\nEvery day you send me 3 TikToks you like, and the next day I make 3 videos in the same style for your business and post them.\n\nFirst, tell me about your business in one message:\n• name\n• what you sell\n• who it's for\n• your offer or price (only real ones)\n• your link (optional)\n\n<i>Example: "Bloom Bakery, fresh sourdough and birthday cakes for families and offices. Free delivery on orders over 30 dollars. bloombakery.com"</i>`,
+  businessTooShort: () => `Tell me a bit more (at least a sentence): the name, what you sell and who it's for.`,
+  businessSaved: (link: string | null) => `✅ Saved your business info.${link ? `\nVideos will point viewers to the link in your bio (${esc(link)}).` : ''}`,
+  askRefs: (day: string, times: string[]) =>
+    `🎬 <b>Send 3 reference videos</b> for ${esc(day)}\n\nUpload 3 TikToks or Reels you like (save them on TikTok, then send them here as videos). I'll copy their style and pacing, never their words or brand.\n\nThey post at ${times.map(esc).join(', ')}.\n<i>Max 20 MB and 3 minutes each.</i>`,
+  refGot: (n: number) => `✅ Got reference ${n} of 3.${n < 3 ? ' Send the next one.' : ''}`,
+  refBad: (why: 'too_big' | 'too_long' | 'not_video') =>
+    why === 'too_big' ? `That file is over 20 MB, which Telegram won't let me download. Send a shorter or smaller version.` : why === 'too_long' ? `That one is longer than 3 minutes. Send a short video (under 3 minutes).` : `That isn't a video. Send the reference as a video file.`,
+  refNeedVideo: (n: number) => `Send the reference as a video file (${n} of 3 so far).`,
+  refDuplicate: () => `You already sent that one. Send a different video.`,
+  notMarketing: () => `Got a video, but marketing videos are off. Send /marketing to turn them on.`,
+  refLink: () => `I can't open TikTok links. Save the video on TikTok (Share → Save video), then send the file here.`,
+  askNotes: () => `✏️ <b>What should I change?</b>\nTell me what to say or show, e.g. "mention our 20% weekend offer, make it funny, show how to order on WhatsApp".\n\nOr tap No changes.`,
+  briefSaved: (day: string, times: string[]) => `✅ <b>All set for ${esc(day)}.</b>\nI'll make 3 videos like your references and post them at ${times.map(esc).join(', ')}. You'll get each one to approve first if you're in approval mode.`,
+  dailyRefs: (day: string) => `📣 Time for tomorrow's references (${esc(day)}). Send 3 videos you like, or reuse today's.`,
+  reusedRefs: (day: string) => `👍 I'll reuse your last references for ${esc(day)}.`,
+  noRefsYet: () => `I need your 3 reference videos before I can make marketing videos. Send /marketing to add them.`,
+  marketingOff: () => `✅ Back to explainer videos. Pick your niche:`,
+  marketingMenu: (business: string, lastDay: string | null) =>
+    `📣 <b>Marketing videos are on</b>\n\nBusiness: ${esc(business.slice(0, 200))}${business.length > 200 ? '…' : ''}\n${lastDay ? `Latest references: for ${esc(lastDay)}` : 'No references yet.'}`,
 };

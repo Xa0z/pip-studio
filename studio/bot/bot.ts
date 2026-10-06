@@ -16,6 +16,7 @@ import {NICHES} from '../lib/niches.js';
 import {redact} from '../lib/redact.js';
 import {MIN_VIDEOS_FOR_PATTERNS} from '../lib/patterns.js';
 import {COMMON_TIMEZONES, fmtLocal, localParts, parseTimes, parseTimezone, slotsBetween, suggestTimes} from '../lib/schedule.js';
+import {addBrief, checkRef, dayLabel, linkFrom, localDay, nextDay, REFS_PER_DAY} from '../lib/marketing.js';
 import {signState} from '../lib/state.js';
 import type {Store} from '../lib/store.js';
 import type {ChartInput} from '../lib/charts.js';
@@ -173,7 +174,11 @@ export function createBot(deps: BotDeps) {
     const chain: Record<string, string | null> = editing
       ? {niche: null, goal: null, character: null, theme: null, mode: null, tz: 'ppd', ppd: 'times', times: null}
       : {niche: 'goal', goal: 'character', character: 'theme', theme: 'tz', tz: 'ppd', ppd: 'times', times: 'mode', mode: 'summary'};
-    const nextScreen = chain[after];
+    let nextScreen = chain[after];
+    if (nextScreen === 'ppd' && d.content_mode === 'marketing') {
+      u = await patch(u, {posts_per_day: 3});
+      nextScreen = 'times';
+    }
     if (!editing) {
       const stepFor: Record<string, number> = {goal: 4, character: 5, tz: 6};
       if (nextScreen && stepFor[nextScreen] && u.onboarding_step < stepFor[nextScreen]) u = await store.updateUser(u.id, {onboarding_step: stepFor[nextScreen]});
@@ -561,6 +566,7 @@ export function createBot(deps: BotDeps) {
     await ctx.editMessageReplyMarkup({reply_markup: {inline_keyboard: []}}).catch(() => undefined);
     await store.saveSettings(settingsFromData(u, null));
     u = await store.updateUser(u.id, {status: 'active', onboarding_step: 7, onboarding_data: {...d, awaiting: null, editing: null}});
+    if (d.content_mode === 'marketing') return askForRefs(ctx, u);
     await ctx.reply(T.starting());
     await makeDryRun(ctx, u);
   });
@@ -619,7 +625,7 @@ export function createBot(deps: BotDeps) {
     if (sameSlot.length > 3) return ctx.reply(T.regenLimit());
     await store.updateVideo(v.id, {status: 'skipped'});
     const u = await getOrCreate(ctx);
-    const fresh = await store.insertVideo({user_id: v.user_id, slot_at: v.slot_at, character_id: v.character_id, is_experiment: v.is_experiment, status: 'planned'});
+    const fresh = await store.insertVideo({user_id: v.user_id, slot_at: v.slot_at, character_id: v.character_id, is_experiment: v.is_experiment, status: 'planned', ...(v.plan?.marketing ? {plan: {marketing: v.plan.marketing}} : {})});
     await ctx.reply(T.regenerating());
     await startJob(ctx, u, 'render', {regenerate: true}, fresh.id);
   });
@@ -802,6 +808,127 @@ export function createBot(deps: BotDeps) {
     await ctx.reply(T.disconnected());
   });
 
+  // ---------- marketing videos ----------
+  const postTimes = async (u: UserRow) => (await store.getSettings(u.id))?.post_times ?? data(u).post_times ?? suggestTimes(3);
+  const tzOf = async (u: UserRow) => (await store.getSettings(u.id))?.timezone ?? data(u).timezone ?? 'UTC';
+  const tomorrow = async (u: UserRow) => nextDay(localDay(now(), await tzOf(u)));
+
+  const askForRefs = async (ctx: Context, u: UserRow) => {
+    u = await patch(u, {awaiting: 'ref_videos', ref_draft: []});
+    await ctx.reply(T.askRefs(dayLabel(await tomorrow(u)), await postTimes(u)), html());
+  };
+  const showBusiness = async (ctx: Context, u: UserRow) => {
+    await patch(u, {content_mode: 'marketing', awaiting: 'business_info', editing: onboarded(u) ? 'business' : data(u).editing ?? null});
+    await ctx.reply(T.askBusiness(), html());
+  };
+  const onBusiness = async (ctx: Context, u: UserRow, text: string) => {
+    const t = text.trim().replace(/\s+/g, ' ').slice(0, 1200);
+    if (t.length < 20) return ctx.reply(T.businessTooShort());
+    const d = data(u);
+    const link = linkFrom(t);
+    u = await patch(u, {
+      business: t,
+      content_mode: 'marketing',
+      awaiting: null,
+      link_url: link ?? undefined,
+      goal: link ? 'traffic' : 'followers',
+      niches: d.niches?.length ? d.niches : ['custom:Marketing'],
+    });
+    await ctx.reply(T.businessSaved(link), html());
+    if (!onboarded(u)) return advance(ctx, u, 'goal');
+    // Already set up: switch to 3 posts a day and ask for the first references.
+    const cur = await store.getSettings(u.id);
+    const times = cur && cur.post_times.length === 3 ? cur.post_times : suggestTimes(3);
+    u = await patch(u, {editing: null, posts_per_day: 3, post_times: times});
+    await store.saveSettings({...settingsFromData(u, cur), posts_per_day: 3, post_times: times, goal: link ? 'traffic' : cur?.goal ?? 'followers', link_url: link ?? cur?.link_url ?? null});
+    if (!(data(u).marketing_briefs ?? []).length) return askForRefs(ctx, u);
+    return ctx.reply(T.saved(), html(K.marketingMenu()));
+  };
+  const saveBrief = async (ctx: Context, u: UserRow, notes: string) => {
+    const d = data(u);
+    const refs = d.ref_draft ?? [];
+    if (refs.length < REFS_PER_DAY) return askForRefs(ctx, u);
+    const day = await tomorrow(u);
+    const briefs = addBrief(d.marketing_briefs, {day, refs: refs.slice(0, REFS_PER_DAY), notes: notes.trim().slice(0, 800), created_at: now().toISOString()});
+    const first = !(d.marketing_briefs ?? []).length;
+    u = await patch(u, {marketing_briefs: briefs, ref_draft: [], awaiting: null});
+    await ctx.reply(T.briefSaved(dayLabel(day), await postTimes(u)), html());
+    if (first) {
+      await ctx.reply(T.allSet(), html());
+      await ctx.reply(T.dashboard(), html(K.dashboard(`${deps.baseUrl}/app/`)));
+    }
+  };
+  const onRefVideo = async (ctx: Context, media: {file_id: string; duration?: number; width?: number; height?: number; file_size?: number; mime_type?: string; file_name?: string}) => {
+    let u = await getOrCreate(ctx);
+    const d = data(u);
+    if (!onboarded(u)) return showStep(ctx, u);
+    if (d.content_mode !== 'marketing') return ctx.reply(T.notMarketing(), html());
+    const check = checkRef(media);
+    if (!check.ok) return ctx.reply(T.refBad(check.why));
+    // A video sent any time starts a new set of references.
+    const draft = d.awaiting === 'ref_videos' ? [...(d.ref_draft ?? [])] : [];
+    if (draft.some((r) => r.file_id === check.ref.file_id)) return ctx.reply(T.refDuplicate());
+    draft.push(check.ref);
+    if (draft.length < REFS_PER_DAY) {
+      await patch(u, {awaiting: 'ref_videos', ref_draft: draft});
+      return ctx.reply(T.refGot(draft.length));
+    }
+    u = await patch(u, {awaiting: 'ref_notes', ref_draft: draft.slice(0, REFS_PER_DAY)});
+    await ctx.reply(T.refGot(REFS_PER_DAY));
+    await ctx.reply(T.askNotes(), html(K.refNotes()));
+  };
+  bot.on('message:video', (ctx) => onRefVideo(ctx, ctx.message.video));
+  bot.on('message:document', async (ctx) => {
+    const doc = ctx.message.document;
+    if (!doc.mime_type?.startsWith('video/')) return ctx.reply(T.refBad('not_video'));
+    return onRefVideo(ctx, {...doc, duration: 0});
+  });
+  bot.on('message:animation', (ctx) => onRefVideo(ctx, ctx.message.animation));
+
+  bot.command('marketing', async (ctx) => {
+    const u = await requireReady(ctx);
+    if (!u) return;
+    if (data(u).content_mode !== 'marketing' || !data(u).business) return showBusiness(ctx, u);
+    const last = (data(u).marketing_briefs ?? []).at(-1);
+    await ctx.reply(T.marketingMenu(data(u).business!, last ? dayLabel(last.day) : null), html(K.marketingMenu()));
+  });
+  bot.callbackQuery(/^mk:(on|menu|business|refs|same|nonotes|off)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    let u = await getOrCreate(ctx);
+    const d = data(u);
+    const what = ctx.match[1];
+    if (what === 'on' || what === 'business') {
+      await ctx.editMessageReplyMarkup({reply_markup: {inline_keyboard: []}}).catch(() => undefined);
+      return showBusiness(ctx, u);
+    }
+    if (!onboarded(u)) return showStep(ctx, u);
+    if (what === 'menu') {
+      if (d.content_mode !== 'marketing' || !d.business) return showBusiness(ctx, u);
+      const last = (d.marketing_briefs ?? []).at(-1);
+      return ctx.reply(T.marketingMenu(d.business, last ? dayLabel(last.day) : null), html(K.marketingMenu()));
+    }
+    if (d.content_mode !== 'marketing') return ctx.reply(T.notMarketing(), html());
+    if (what === 'refs') return askForRefs(ctx, u);
+    if (what === 'nonotes') {
+      await ctx.editMessageReplyMarkup({reply_markup: {inline_keyboard: []}}).catch(() => undefined);
+      if (d.awaiting !== 'ref_notes') return;
+      return saveBrief(ctx, u, '');
+    }
+    if (what === 'same') {
+      const last = (d.marketing_briefs ?? []).at(-1);
+      if (!last) return askForRefs(ctx, u);
+      const day = await tomorrow(u);
+      await ctx.editMessageReplyMarkup({reply_markup: {inline_keyboard: []}}).catch(() => undefined);
+      u = await patch(u, {marketing_briefs: addBrief(d.marketing_briefs, {...last, day, created_at: now().toISOString()})});
+      return ctx.reply(T.reusedRefs(dayLabel(day)));
+    }
+    // off: back to explainer videos, pick niches again.
+    const s = await store.getSettings(u.id);
+    u = await patch(u, {content_mode: 'explainer', awaiting: null, niches: (d.niches ?? []).filter((n) => n !== 'custom:Marketing'), editing: 'niche', ...(s ? {timezone: s.timezone, posts_per_day: s.posts_per_day, post_times: s.post_times, mode: s.mode, goal: s.goal} : {})});
+    await ctx.reply(T.marketingOff());
+    return showNiche(ctx, u);
+  });
+
   // ---------- typed text ----------
   bot.on('message:text', async (ctx) => {
     if (ctx.message.text.startsWith('/')) return ctx.reply(T.help(), html());
@@ -827,6 +954,12 @@ export function createBot(deps: BotDeps) {
         return onTimes(ctx, u, text);
       case 'theme_colors':
         return onThemeColors(ctx, u, text);
+      case 'business_info':
+        return onBusiness(ctx, u, text);
+      case 'ref_videos':
+        return ctx.reply(/tiktok\.com|instagram\.com|youtu/i.test(text) ? T.refLink() : T.refNeedVideo((data(u).ref_draft ?? []).length), html());
+      case 'ref_notes':
+        return saveBrief(ctx, u, text);
     }
     if (!onboarded(u)) return showStep(ctx, u);
     return ctx.reply(T.help(), html());
