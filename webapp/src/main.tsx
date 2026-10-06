@@ -6,10 +6,9 @@ const tg = (window as unknown as {Telegram?: {WebApp?: TelegramWebApp}}).Telegra
 tg?.ready();
 tg?.expand();
 
-/** Follow Telegram's light/dark setting (or the system one outside Telegram) and paint Telegram's own header to match. */
+/** Always the high-contrast black theme; paint Telegram's own header and background black to match. */
 function applyTheme() {
-  const dark = tg?.colorScheme ? tg.colorScheme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
-  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  document.documentElement.dataset.theme = 'dark';
   const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
   if (bg && tg?.isVersionAtLeast?.('6.1')) {
     try {
@@ -22,7 +21,6 @@ function applyTheme() {
 }
 applyTheme();
 tg?.onEvent?.('themeChanged', applyTheme);
-if (!tg?.colorScheme) window.matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', applyTheme);
 
 export type TelegramWebApp = {
   initData: string;

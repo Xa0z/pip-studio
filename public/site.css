@@ -1,36 +1,29 @@
-/* Pip Studio site. Sage theme pack: Plus Jakarta Sans for text, a mono face only for timecodes and specs. */
+/* Pip Studio site. High-contrast black theme with a mint accent: Plus Jakarta Sans for text, a mono face only for timecodes and specs. */
 :root {
-  /* Sage theme: stone background, porcelain surfaces, sage primary, charcoal text. */
-  --paper: #EBE5DF;
-  --surface: #F7F6F2;
-  --ink: #24272A;
-  --ink-2: #3A3F42;
-  --muted: #5B6B68;
-  --line: #D1D5DB;
-  --line-strong: #B9BFC4;
-  --accent: #465B53;
-  --accent-2: #73847C;
-  --accent-soft: #A7B8A9;
-  --accent-ink: #F7F6F2;
-  --monitor: #24272A;
-  --monitor-2: #2F3336;
-  --monitor-line: #3E4346;
-  --monitor-text: #F7F6F2;
-  --monitor-muted: #A9B1AE;
-  --ok: #4F7A62;
-  --warn: #B07A2E;
-  --err: #B5523F;
+  /* High-contrast black theme: pure black page, white text, one light mint accent. */
+  --paper: #000000;
+  --surface: #0E0E0E;
+  --ink: #FFFFFF;
+  --ink-2: #E6E6E6;
+  --muted: #A8A8A8;
+  --line: #2A2A2A;
+  --line-strong: #404040;
+  --accent: #C6DCC9;
+  --accent-2: #A7B8A9;
+  --accent-soft: #73847C;
+  --accent-ink: #000000;
+  --monitor: #0A0A0A;
+  --monitor-2: #141414;
+  --monitor-line: #2A2A2A;
+  --monitor-text: #FFFFFF;
+  --monitor-muted: #A8A8A8;
+  --ok: #9FD3AE;
+  --warn: #E8B85A;
+  --err: #FF9E8A;
   --radius: 8px;
   --sans: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  color-scheme: light;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #1E2123; --surface: #24272A; --ink: #EEEDE8; --ink-2: #D5D6D1; --muted: #A2AFAB;
-    --line: #353A3D; --line-strong: #474D50; --accent: #A7B8A9; --accent-2: #8FA196; --accent-soft: #73847C; --accent-ink: #1E2123;
-    --monitor: #171A1B; --monitor-2: #24282A; --monitor-line: #33393B; color-scheme: dark;
-  }
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
