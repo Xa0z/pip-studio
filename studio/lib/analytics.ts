@@ -207,4 +207,24 @@ export function buildSchedule(settings: SettingsRow | null, upcoming: VideoRow[]
 }
 
 export type Schedule = ReturnType<typeof buildSchedule>;
-export type DashboardResponse = Dashboard & {schedule: Schedule};
+
+/** Made videos that are not on TikTok (waiting, skipped, failed, test videos). The Library shows them next to the posted ones. */
+export const UNPOSTED_STATUSES = ['rendering', 'awaiting_approval', 'approved', 'publishing', 'skipped', 'failed'] as const;
+
+export function buildUnposted(videos: VideoRow[], thumb?: (v: VideoRow) => string | null) {
+  return videos
+    .filter((v) => (UNPOSTED_STATUSES as readonly string[]).includes(v.status) && (v.status === 'rendering' || v.plan?.topic || v.thumb_path || v.video_path))
+    .map((v) => ({
+      id: v.id,
+      topic: (v.plan?.topic as string | undefined) ?? null,
+      caption: (v.caption ?? '').split('\n')[0],
+      at: v.is_dry_run ? v.created_at : v.slot_at,
+      status: v.status,
+      test: v.is_dry_run,
+      thumb: thumb?.(v) ?? null,
+    }))
+    .sort((a, b) => b.at.localeCompare(a.at));
+}
+
+export type Unposted = ReturnType<typeof buildUnposted>;
+export type DashboardResponse = Dashboard & {schedule: Schedule; unposted: Unposted};

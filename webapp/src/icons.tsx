@@ -15,6 +15,7 @@ export const Icon = {
   users: <I><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.9" /><path d="M16 3.1a4 4 0 0 1 0 7.8" /></I>,
   pulse: <I><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></I>,
   film: <I><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M7 3v18M17 3v18M3 7.5h4M3 12h18M3 16.5h4M17 7.5h4M17 16.5h4" /></I>,
+  send: <I><path d="M22 2 11 13" /><path d="M22 2 15 22l-4-9-9-4 20-7z" /></I>,
   calendar: <I><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></I>,
   clock: <I><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></I>,
   check: <I><path d="M20 6 9 17l-5-5" /></I>,

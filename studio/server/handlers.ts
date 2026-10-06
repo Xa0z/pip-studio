@@ -1,7 +1,7 @@
 /** HTTP handlers (Web Request/Response), shared by Vercel functions and the local dev server. */
 import {Api, webhookCallback} from 'grammy';
 import {onTikTokConnected} from '../bot/bot.js';
-import {buildDashboard, buildSchedule, loadAnalytics, UPCOMING_STATUSES, type Range} from '../lib/analytics.js';
+import {buildDashboard, buildSchedule, buildUnposted, loadAnalytics, UNPOSTED_STATUSES, UPCOMING_STATUSES, type Range} from '../lib/analytics.js';
 import {opt} from '../lib/env.js';
 import {initDataUser} from './initdata-auth.js';
 import {redact} from '../lib/redact.js';
@@ -10,6 +10,8 @@ import type {Store} from '../lib/store.js';
 import {encryptTokens, exchangeCode, fetchUser} from '../lib/tiktok.js';
 import {addSecret} from '../lib/redact.js';
 import type {createBot} from '../bot/bot.js';
+import {sendVideoCard} from '../bot/show-video.js';
+import type {VideoRow} from '../lib/types.js';
 
 const page = (title: string, body: string, status = 200) =>
   new Response(
@@ -87,12 +89,36 @@ export async function dashboardApi(req: Request, store: Store, botToken: string,
   if (!user || user.onboarding_step < 7) return json({error: 'Finish setup in the bot first'}, 404);
   const r = new URL(req.url).searchParams.get('range') ?? '30';
   const range: Range = r === 'all' ? 'all' : ([7, 30, 90].includes(Number(r)) ? (Number(r) as Range) : 30);
-  const [a, upcoming] = await Promise.all([loadAnalytics(store, user.id), store.listVideos(user.id, {status: [...UPCOMING_STATUSES]})]);
+  const [a, upcoming, notPosted] = await Promise.all([
+    loadAnalytics(store, user.id),
+    store.listVideos(user.id, {status: [...UPCOMING_STATUSES]}),
+    store.listVideos(user.id, {status: [...UNPOSTED_STATUSES], includeDryRun: true, limit: 120}),
+  ]);
   const thumbs = new Map<string, string>();
   await Promise.all(
-    a.posted.filter((v) => v.thumb_path).slice(0, 200).map(async (v) => thumbs.set(v.id, await store.signedUrl(v.thumb_path!, 3600).catch(() => ''))),
+    [...a.posted.slice(0, 200), ...notPosted]
+      .filter((v) => v.thumb_path)
+      .map(async (v) => thumbs.set(v.id, await store.signedUrl(v.thumb_path!, 3600).catch(() => ''))),
   );
-  return json({...buildDashboard(a, range, now, (v) => thumbs.get(v.id) || null), schedule: buildSchedule(a.settings, upcoming, now)});
+  const thumb = (v: VideoRow) => thumbs.get(v.id) || null;
+  return json({...buildDashboard(a, range, now, thumb), schedule: buildSchedule(a.settings, upcoming, now), unposted: buildUnposted(notPosted, thumb)});
+}
+
+/** POST /api/dashboard {send: videoId}: the bot sends that video to the user's chat (for videos that are not on TikTok). */
+export async function dashboardSend(req: Request, store: Store, botToken: string, api: Api = new Api(botToken)): Promise<Response> {
+  const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {status, headers: {'Content-Type': 'application/json', 'Cache-Control': 'no-store'}});
+  const auth = initDataUser(req, botToken);
+  if (!auth.ok) return json({error: auth.reason}, 401);
+  const body = (await req.json().catch(() => ({}))) as {send?: unknown};
+  const id = typeof body.send === 'string' ? body.send : '';
+  const v = /^[0-9a-f-]{36}$/.test(id) ? await store.getVideo(id) : null;
+  if (!v || v.user_id !== auth.user.id) return json({error: 'Video not found'}, 404);
+  try {
+    const sent = await sendVideoCard(api, auth.user.id, store, v);
+    return json({ok: true, sent});
+  } catch {
+    return json({error: 'Could not send it to the chat. Try /videos in the bot.'}, 502);
+  }
 }
 
 export function telegramWebhook(bot: ReturnType<typeof createBot>) {

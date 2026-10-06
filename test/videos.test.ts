@@ -1,5 +1,7 @@
 import {afterEach, describe, expect, it} from 'vitest';
 import {Harness, runOnboarding} from '../studio/dev/harness';
+import {signInitData} from '../studio/lib/initdata';
+import {dashboardApi, dashboardSend} from '../studio/server/handlers';
 
 const OWNER = 5550001;
 const USER = 5550002;
@@ -19,7 +21,7 @@ describe('my videos and posting mode', () => {
     await runOnboarding(h);
 
     await h.say('/videos');
-    expect(h.lastBot()!.text).toMatch(/No videos yet/);
+    expect(h.lastBot()!.text).toMatch(/Your videos<\/b> \(1\)/); // the test video from setup
 
     // One video made and waiting for approval: Telegram's id for it is kept.
     c.set('2026-10-05T07:50:00Z');
@@ -31,7 +33,7 @@ describe('my videos and posting mode', () => {
 
     await h.say('/videos');
     const list = h.lastBot()!;
-    expect(list.text).toMatch(/Your videos<\/b> \(1\)/);
+    expect(list.text).toMatch(/Your videos<\/b> \(2\)/);
     expect(list.text).toMatch(/Review and approve/);
     expect(list.buttons!.flat().map((b) => b.text)).toContain('⚡ Switch to full auto');
 
@@ -64,6 +66,30 @@ describe('my videos and posting mode', () => {
     expect(posted.plan.tg_file_id).toMatch(/^tgvid-/);
     expect(h.lastBot()!.kind).toBe('video');
     expect(h.lastBot()!.text).toMatch(/Posted/);
+
+    // The dashboard Library has every video: the posted one, plus the skipped one and the test video.
+    const init = signInitData({auth_date: String(Math.floor(Date.now() / 1000)), user: JSON.stringify({id: OWNER, first_name: 'Ahmad'})}, process.env.TELEGRAM_BOT_TOKEN!);
+    const res = await dashboardApi(new Request('https://x/api/dashboard?range=30', {headers: {'x-telegram-init-data': init}}), h.store, process.env.TELEGRAM_BOT_TOKEN!, c.now());
+    const d = await res.json();
+    expect(d.videos.map((x: any) => x.id)).toEqual([auto.id]);
+    expect(d.unposted.map((x: any) => [x.status, x.test])).toEqual(
+      expect.arrayContaining([
+        ['skipped', false],
+        ['skipped', true],
+      ]),
+    );
+    // Tapping a video that is not on TikTok sends it to the chat.
+    const before = h.chat.length;
+    const sent = await dashboardSend(new Request('https://x/api/dashboard', {method: 'POST', headers: {'x-telegram-init-data': init}, body: JSON.stringify({send: v.id})}), h.store, process.env.TELEGRAM_BOT_TOKEN!, h.bot.api);
+    expect(await sent.json()).toEqual({ok: true, sent: 'video'});
+    expect(h.chat.slice(before).find((m) => m.kind === 'video')!.text).toMatch(/Not posted/);
+    const other = signInitData({auth_date: String(Math.floor(Date.now() / 1000)), user: JSON.stringify({id: 42})}, process.env.TELEGRAM_BOT_TOKEN!);
+    expect((await dashboardSend(new Request('https://x/api/dashboard', {method: 'POST', headers: {'x-telegram-init-data': other}, body: JSON.stringify({send: v.id})}), h.store, process.env.TELEGRAM_BOT_TOKEN!, h.bot.api)).status).toBe(404);
+
+    // The bot's /videos list has them all too.
+    await h.say('/videos');
+    expect(h.lastBot()!.text).toMatch(/Your videos<\/b> \(3\)/);
+    expect(h.lastBot()!.buttons!.flat().map((b) => b.text).join('\n')).toMatch(/🧪/);
 
     // /mode switches back.
     await h.say('/mode');

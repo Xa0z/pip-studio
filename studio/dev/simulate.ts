@@ -309,6 +309,12 @@ export async function seedDemo(store: DemoStore, now: Date, thumbs: Buffer[]) {
   await store.updateVideo(q1.id, {plan: {topic: 'Why the sky on Mars is pink', category: 'planets'} as any});
   const q2 = await store.insertVideo({user_id: uid, slot_at: tomorrowNoon, status: 'planned', character_id: null, is_experiment: false});
   await store.updateVideo(q2.id, {plan: {topic: 'The library of Alexandria did not burn in a day', category: 'ancient egypt'} as any});
+  // one skipped and one failed video (shown as "Not posted" in the Library)
+  const yesterday = (h: number) => new Date(Math.floor(now.getTime() / 86400000) * 86400000 - 86400000 + h * 3600000).toISOString();
+  const s1 = await store.insertVideo({user_id: uid, slot_at: yesterday(17), status: 'skipped', character_id: null, is_experiment: false});
+  await store.updateVideo(s1.id, {plan: {topic: 'Jupiter has the shortest day', category: 'planets'} as any});
+  const f1 = await store.insertVideo({user_id: uid, slot_at: yesterday(9), status: 'failed', character_id: null, is_experiment: false});
+  await store.updateVideo(f1.id, {plan: {topic: 'Cleopatra and the pyramids', category: 'ancient egypt'} as any, error: 'TikTok login expired'});
 
   // weekly report from the real pattern finder
   const scored = await Promise.all(
@@ -385,7 +391,6 @@ async function dashboardScreenshots(browser: Awaited<ReturnType<typeof chromium.
       await shot('1-overview');
       if (theme === 'dark') {
         await page.click('[role=tab]:has-text("Library")');
-        await page.selectOption('select', 'views');
         await page.waitForTimeout(400);
         await shot('2-library');
         await page.click('[role=tab]:has-text("Insights")');

@@ -546,9 +546,23 @@ function Overview({d, range, tg}: {d: Data; range: Range; tg?: TelegramWebApp}) 
 }
 
 // ---------------------------------------------------------------- library
+type Unposted = Data['unposted'][number];
+type Show = 'all' | 'posted' | 'unposted';
+const UNPOSTED_LABEL: Record<string, string> = {
+  rendering: 'Being made',
+  awaiting_approval: 'Needs your OK',
+  approved: 'Ready to post',
+  publishing: 'Posting now',
+  skipped: 'Not posted',
+  failed: 'Did not post',
+};
+
 function Library({d, tg}: {d: Data; tg?: TelegramWebApp}) {
   const [sort, setSort] = useState<SortKey>('newest');
-  const list = useMemo(() => {
+  const [show, setShow] = useState<Show>('all');
+  const [toast, setToast] = useState<string | null>(null);
+  const unposted = d.unposted ?? [];
+  const posted = useMemo(() => {
     const by: Record<SortKey, (v: Video) => number> = {
       newest: (v) => new Date(v.postedAt).getTime(),
       views: (v) => v.views,
@@ -558,13 +572,41 @@ function Library({d, tg}: {d: Data; tg?: TelegramWebApp}) {
     };
     return [...d.videos].sort((a, b) => by[sort](b) - by[sort](a));
   }, [d.videos, sort]);
+  // "All" mixes both kinds, newest first; "Posted" keeps the chosen sort.
+  const items = useMemo(() => {
+    const p = posted.map((v) => ({kind: 'posted' as const, at: v.postedAt, v}));
+    const u = unposted.map((v) => ({kind: 'unposted' as const, at: v.at, v}));
+    if (show === 'posted') return p;
+    if (show === 'unposted') return u;
+    return [...p, ...u].sort((a, b) => b.at.localeCompare(a.at));
+  }, [posted, unposted, show]);
   const open = (url: string | null) => url && (tg?.openLink ? tg.openLink(url) : window.open(url, '_blank'));
+  const sendToChat = async (v: Unposted) => {
+    if (v.status === 'rendering') return setToast('This video is still being made.');
+    setToast('Sending it to your chat…');
+    const r = await fetch('/api/dashboard', {method: 'POST', headers: {'Content-Type': 'application/json', 'x-telegram-init-data': tg?.initData ?? ''}, body: JSON.stringify({send: v.id})}).catch(() => null);
+    setToast(r?.ok ? 'Sent to your chat with Pip.' : 'Could not send it. Try /videos in the chat.');
+  };
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3200);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  const total = d.videos.length + unposted.length;
   return (
     <>
       <Upcoming d={d} />
-      {list.length > 0 && (
+      {total > 0 && (
+        <div className="seg seg-filter" role="tablist" aria-label="Which videos">
+          {([['all', `All ${total}`], ['posted', `Posted ${d.videos.length}`], ['unposted', `Not posted ${unposted.length}`]] as [Show, string][]).map(([id, label]) => (
+            <button key={id} role="tab" aria-selected={show === id} onClick={() => setShow(id)}>{label}</button>
+          ))}
+        </div>
+      )}
+      {show === 'posted' && posted.length > 1 && (
         <div className="library-bar">
-          <span className="count">{list.length} posted video{list.length === 1 ? '' : 's'}</span>
+          <span className="count">{posted.length} posted video{posted.length === 1 ? '' : 's'}</span>
           <label className="select">
             {Icon.sort}
             <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} aria-label="Sort videos">
@@ -573,35 +615,61 @@ function Library({d, tg}: {d: Data; tg?: TelegramWebApp}) {
           </label>
         </div>
       )}
-      {!list.length && (
+      {!items.length && (
         <div className="card empty">
           <div className="state-icon">{Icon.film}</div>
-          <h3>{d.insights.n ? 'No videos posted in this period' : 'No videos posted yet'}</h3>
-          <p>{d.insights.n ? 'Pick a longer range above to see older videos.' : 'Each video shows up here once it is live on TikTok, with its views and likes.'}</p>
+          <h3>{show === 'unposted' ? 'Every video was posted' : show === 'posted' && d.insights.n ? 'No videos posted in this period' : 'No videos yet'}</h3>
+          <p>
+            {show === 'unposted'
+              ? 'Videos you skip, that fail, or that wait for your OK show up here.'
+              : show === 'posted' && d.insights.n
+                ? 'Pick a longer range above to see older videos.'
+                : 'Each video shows up here once Pip makes it, posted or not.'}
+          </p>
         </div>
       )}
       <div className="library">
-        {list.map((v) => (
-          <button key={v.id} className="clip" onClick={() => open(v.shareUrl)} aria-label={`${v.topic || v.caption}, ${fmtNum(v.views)} views. Open on TikTok`}>
-            <div className="frame">
-              {v.thumb ? <img src={v.thumb} alt="" loading="lazy" /> : null}
-              <div className="frame-tags">
-                {v.viral ? <span className="tag tag-accent">{v.ratio ? `${v.ratio.toFixed(1)}×` : 'Top'}</span> : null}
-                {v.experiment ? <span className="tag">Test</span> : null}
+        {items.map((it) =>
+          it.kind === 'posted' ? (
+            <button key={it.v.id} className="clip" onClick={() => open(it.v.shareUrl)} aria-label={`${it.v.topic || it.v.caption}, ${fmtNum(it.v.views)} views. Open on TikTok`}>
+              <div className="frame">
+                {it.v.thumb ? <img src={it.v.thumb} alt="" loading="lazy" /> : null}
+                <div className="frame-tags">
+                  {it.v.viral ? <span className="tag tag-accent">{it.v.ratio ? `${it.v.ratio.toFixed(1)}×` : 'Top'}</span> : null}
+                  {it.v.experiment ? <span className="tag">Test</span> : null}
+                </div>
+                <span className="frame-views">{Icon.eye}{fmtNum(it.v.views)}</span>
               </div>
-              <span className="frame-views">{Icon.eye}{fmtNum(v.views)}</span>
-            </div>
-            <div className="clip-body">
-              <span className="clip-title">{v.topic || v.caption}</span>
-              <span className="clip-meta">
-                <span>{postedDate(v.postedAt, d.timezone)}</span>
-                <span className="clip-stat">{Icon.heart}{fmtNum(v.likes)}</span>
-                <span className="clip-stat">{Icon.comment}{fmtNum(v.comments)}</span>
-              </span>
-            </div>
-          </button>
-        ))}
+              <div className="clip-body">
+                <span className="clip-title">{it.v.topic || it.v.caption}</span>
+                <span className="clip-meta">
+                  <span>{postedDate(it.v.postedAt, d.timezone)}</span>
+                  <span className="clip-stat">{Icon.heart}{fmtNum(it.v.likes)}</span>
+                  <span className="clip-stat">{Icon.comment}{fmtNum(it.v.comments)}</span>
+                </span>
+              </div>
+            </button>
+          ) : (
+            <button key={it.v.id} className="clip clip-unposted" onClick={() => sendToChat(it.v)} aria-label={`${it.v.topic || it.v.caption || 'Video'}, ${it.v.test ? 'test video' : UNPOSTED_LABEL[it.v.status] ?? it.v.status}. Send to chat`}>
+              <div className="frame">
+                {it.v.thumb ? <img src={it.v.thumb} alt="" loading="lazy" /> : null}
+                <div className="frame-tags">
+                  <span className={`tag tag-status tag-${it.v.test ? 'test' : it.v.status}`}>{it.v.test ? 'Test video' : UNPOSTED_LABEL[it.v.status] ?? it.v.status}</span>
+                </div>
+                <span className="frame-views">{Icon.send}Watch in chat</span>
+              </div>
+              <div className="clip-body">
+                <span className="clip-title">{it.v.topic || it.v.caption || 'Video'}</span>
+                <span className="clip-meta">
+                  <span>{postedDate(it.v.at, d.timezone)}</span>
+                  <span>Not on TikTok</span>
+                </span>
+              </div>
+            </button>
+          ),
+        )}
       </div>
+      {toast ? <div className="toast" role="status">{toast}</div> : null}
     </>
   );
 }

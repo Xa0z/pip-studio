@@ -16,6 +16,7 @@ import {NICHES} from '../lib/niches.js';
 import {redact} from '../lib/redact.js';
 import {MIN_VIDEOS_FOR_PATTERNS} from '../lib/patterns.js';
 import {COMMON_TIMEZONES, fmtLocal, localParts, parseTimes, parseTimezone, slotsBetween, suggestTimes} from '../lib/schedule.js';
+import {sendVideoCard, shortDay, STATUS_ICON, videoTitle} from './show-video.js';
 import {addBrief, checkRef, dayLabel, linkFrom, localDay, nextDay, REFS_PER_DAY} from '../lib/marketing.js';
 import {signState} from '../lib/state.js';
 import type {Store} from '../lib/store.js';
@@ -752,37 +753,20 @@ export function createBot(deps: BotDeps) {
 
   // ---------- my videos and posting mode ----------
   const VIDEOS_PER_PAGE = 6;
-  const STATUS_LABEL: Record<string, string> = {
-    planned: '🗓 Planned',
-    rendering: '⏳ Being made',
-    awaiting_approval: '✋ Waiting for your OK',
-    approved: '⏰ Ready to post',
-    publishing: '📤 Posting',
-    posted: '✅ Posted',
-    skipped: '⏭ Skipped',
-    failed: '⚠️ Did not post',
-  };
-  const STATUS_ICON: Record<string, string> = {planned: '🗓', rendering: '⏳', awaiting_approval: '✋', approved: '⏰', publishing: '📤', posted: '✅', skipped: '⏭', failed: '⚠️'};
-  const videoTitle = (v: VideoRow) => String(v.plan?.topic || (v.caption ?? '').split('\n')[0] || 'Video').trim();
-  const shortDay = (at: Date, tz: string) => {
-    const p = localParts(at, tz);
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return `${p.d} ${months[p.m]}`;
-  };
   const currentMode = async (u: UserRow) => (await store.getSettings(u.id))?.mode ?? data(u).mode ?? 'approval';
 
   const videosView = async (u: UserRow, page: number) => {
     const s = await store.getSettings(u.id);
     const tz = s?.timezone ?? 'UTC';
     const mode = s?.mode ?? 'approval';
-    // Skipped videos with nothing left to show only clutter the list.
-    const all = (await store.listVideos(u.id, {limit: 120})).filter((v) => v.status !== 'skipped' || v.video_path || v.plan?.tg_file_id);
+    // Every video made, posted or not (test videos too). Slots that were never made are left out.
+    const all = (await store.listVideos(u.id, {limit: 120, includeDryRun: true})).filter((v) => v.status !== 'planned' || v.video_path);
     if (!all.length) return {text: T.noVideos(mode), keyboard: K.modeSwitch(mode)};
     const pages = Math.ceil(all.length / VIDEOS_PER_PAGE);
     const p = Math.min(Math.max(0, page), pages - 1);
     const items = all.slice(p * VIDEOS_PER_PAGE, (p + 1) * VIDEOS_PER_PAGE).map((v) => {
       const title = videoTitle(v);
-      return {id: v.id, label: `${STATUS_ICON[v.status] ?? '🎬'} ${shortDay(new Date(v.slot_at), tz)} · ${title.length > 34 ? `${title.slice(0, 33)}…` : title}`};
+      return {id: v.id, label: `${v.is_dry_run ? '🧪' : STATUS_ICON[v.status] ?? '🎬'} ${shortDay(new Date(v.is_dry_run ? v.created_at : v.slot_at), tz)} · ${title.length > 34 ? `${title.slice(0, 33)}…` : title}`};
     });
     return {text: T.videosList(all.length, mode, p, pages), keyboard: K.videos(items, p, pages, mode, `${deps.baseUrl}/app/`)};
   };
@@ -813,48 +797,7 @@ export function createBot(deps: BotDeps) {
     const v = await ownVideo(ctx, ctx.match[1]);
     if (!v) return ctx.answerCallbackQuery({text: 'That video is gone.'});
     await ctx.answerCallbackQuery();
-    const s = await store.getSettings(v.user_id);
-    const tz = s?.timezone ?? 'UTC';
-    const slot = new Date(v.slot_at);
-    if (['planned', 'rendering'].includes(v.status) && !v.video_path) return ctx.reply(T.videoNotMade(`${shortDay(slot, tz)}, ${fmtLocal(slot, tz)}`), html());
-    let views: number | null = null;
-    if (v.status === 'posted') {
-      const m = await store.listVideoMetrics([v.id]).catch(() => []);
-      if (m.length) views = Math.max(...m.map((x) => x.views));
-    }
-    const when = v.posted_at ? `Posted ${shortDay(new Date(v.posted_at), tz)}, ${fmtLocal(new Date(v.posted_at), tz)}` : `For ${shortDay(slot, tz)}, ${fmtLocal(slot, tz)}`;
-    const caption = T.videoCard({status: STATUS_LABEL[v.status] ?? v.status, title: videoTitle(v), when, views, error: v.status === 'failed' && v.error ? redact(v.error).slice(0, 160) : null});
-    const keyboard: Keyboard =
-      v.status === 'awaiting_approval'
-        ? K.approval(v.id, v.privacy_options ?? [], v.privacy)
-        : v.status === 'failed'
-          ? K.retry(`retry:${v.id}`)
-          : K.openTikTok(v.share_url);
-    const extra = {caption, parse_mode: 'HTML' as const, supports_streaming: true, ...kb(keyboard)};
-    const fileId: string | undefined = v.plan?.tg_file_id;
-    if (fileId) {
-      const ok = await ctx.replyWithVideo(fileId, extra).then(() => true).catch(() => false);
-      if (ok) return;
-    }
-    if (v.video_path) {
-      // First time this video is shown in the chat (or the old id stopped working): send the file and keep Telegram's id.
-      const sent = await ctx
-        .replyWithVideo(await store.signedUrl(v.video_path, 900), extra)
-        .catch(async () => ctx.replyWithVideo(new InputFile(await store.download(v.video_path!), 'video.mp4'), extra))
-        .catch(() => null);
-      if (sent) {
-        if (sent.video?.file_id) await store.updateVideo(v.id, {plan: {...(v.plan ?? {}), tg_file_id: sent.video.file_id}});
-        return;
-      }
-    }
-    if (v.thumb_path) {
-      const ok = await ctx
-        .replyWithPhoto(await store.signedUrl(v.thumb_path, 900), {caption, parse_mode: 'HTML', ...kb(keyboard)})
-        .then(() => true)
-        .catch(() => false);
-      if (ok) return;
-    }
-    await ctx.reply(`${caption}\n\n${T.videoGone()}`, html(keyboard));
+    await sendVideoCard(ctx.api, ctx.chat?.id ?? ctx.from.id, store, v);
   });
 
   const setMode = async (ctx: Context, u: UserRow, want: 'approval' | 'auto') => {

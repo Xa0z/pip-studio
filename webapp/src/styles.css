@@ -291,3 +291,14 @@ tr:last-child td { border-bottom: 0; padding-bottom: 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* Library: all / posted / not posted, and videos that are not on TikTok */
+.seg-filter { margin: 0 0 12px; }
+.seg-filter button { font-size: 13px; }
+.clip-unposted .frame img { opacity: 0.7; }
+.tag-status { background: var(--surface-2); color: var(--text); border: 1px solid var(--line-strong); }
+.tag-awaiting_approval, .tag-approved, .tag-publishing { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.tag-failed { background: var(--down-bg); color: var(--down); border-color: transparent; }
+.tag-test { background: #FFFFFF; color: #000000; border-color: transparent; }
+.frame-views svg { width: 14px; height: 14px; }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); translate: -50% 0; z-index: 20; max-width: calc(100% - 32px); padding: 10px 16px; border-radius: 12px; background: var(--text); color: var(--bg); font-size: 14px; font-weight: 600; text-align: center; }
