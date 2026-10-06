@@ -5,7 +5,7 @@ import {
   type Snapshot,
 } from './metrics.js';
 import {MIN_VIDEOS_FOR_PATTERNS, type PatternItem} from './patterns.js';
-import {localParts} from './schedule.js';
+import {localParts, slotsBetween} from './schedule.js';
 import type {Store} from './store.js';
 import type {AccountMetricRow, PatternRow, SettingsRow, TikTokRow, VideoRow} from './types.js';
 
@@ -171,6 +171,7 @@ export function buildDashboard(a: Analytics, range: Range, now = new Date(), thu
     videos: inRange,
     insights: {
       n: stats.length,
+      minVideos: MIN_VIDEOS_FOR_PATTERNS,
       tooSmall: stats.length < MIN_VIDEOS_FOR_PATTERNS,
       summary: a.pattern?.summary ?? null,
       weekStart: a.pattern?.week_start ?? null,
@@ -189,3 +190,21 @@ export function buildDashboard(a: Analytics, range: Range, now = new Date(), thu
 }
 
 export type Dashboard = ReturnType<typeof buildDashboard>;
+
+/** Videos that are made but not posted yet, plus the next posting slot. Shown on the dashboard. */
+export const UPCOMING_STATUSES = ['planned', 'rendering', 'awaiting_approval', 'approved', 'publishing'] as const;
+
+export function buildSchedule(settings: SettingsRow | null, upcoming: VideoRow[], now = new Date()) {
+  const times = settings?.post_times ?? [];
+  const tz = settings?.timezone ?? 'UTC';
+  const soon = upcoming
+    .filter((v) => (UPCOMING_STATUSES as readonly string[]).includes(v.status) && !v.is_dry_run && new Date(v.slot_at).getTime() > now.getTime() - 3 * 3600000)
+    .sort((a, b) => a.slot_at.localeCompare(b.slot_at))
+    .slice(0, 6)
+    .map((v) => ({id: v.id, slotAt: v.slot_at, status: v.status, topic: (v.plan?.topic as string | undefined) ?? null}));
+  const nextSlot = times.length ? slotsBetween(times, tz, now, new Date(now.getTime() + 8 * 86400000))[0]?.toISOString() ?? null : null;
+  return {times, postsPerDay: settings?.posts_per_day ?? times.length, mode: settings?.mode ?? 'approval', nextSlot, upcoming: soon};
+}
+
+export type Schedule = ReturnType<typeof buildSchedule>;
+export type DashboardResponse = Dashboard & {schedule: Schedule};

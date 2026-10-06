@@ -1,7 +1,7 @@
 /** HTTP handlers (Web Request/Response), shared by Vercel functions and the local dev server. */
 import {Api, webhookCallback} from 'grammy';
 import {onTikTokConnected} from '../bot/bot.js';
-import {buildDashboard, loadAnalytics, type Range} from '../lib/analytics.js';
+import {buildDashboard, buildSchedule, loadAnalytics, UPCOMING_STATUSES, type Range} from '../lib/analytics.js';
 import {opt} from '../lib/env.js';
 import {initDataUser} from './initdata-auth.js';
 import {redact} from '../lib/redact.js';
@@ -87,12 +87,12 @@ export async function dashboardApi(req: Request, store: Store, botToken: string,
   if (!user || user.onboarding_step < 7) return json({error: 'Finish setup in the bot first'}, 404);
   const r = new URL(req.url).searchParams.get('range') ?? '30';
   const range: Range = r === 'all' ? 'all' : ([7, 30, 90].includes(Number(r)) ? (Number(r) as Range) : 30);
-  const a = await loadAnalytics(store, user.id);
+  const [a, upcoming] = await Promise.all([loadAnalytics(store, user.id), store.listVideos(user.id, {status: [...UPCOMING_STATUSES]})]);
   const thumbs = new Map<string, string>();
   await Promise.all(
     a.posted.filter((v) => v.thumb_path).slice(0, 200).map(async (v) => thumbs.set(v.id, await store.signedUrl(v.thumb_path!, 3600).catch(() => ''))),
   );
-  return json(buildDashboard(a, range, now, (v) => thumbs.get(v.id) || null));
+  return json({...buildDashboard(a, range, now, (v) => thumbs.get(v.id) || null), schedule: buildSchedule(a.settings, upcoming, now)});
 }
 
 export function telegramWebhook(bot: ReturnType<typeof createBot>) {
