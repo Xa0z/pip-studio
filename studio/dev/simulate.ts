@@ -227,14 +227,14 @@ async function chatScreenshots(chat: ChatItem[], marks: {title: string; from: nu
 }
 
 // ---------------------------------------------------------------- dashboard
-class DemoStore extends MemoryStore {
+export class DemoStore extends MemoryStore {
   async signedUrl(p: string) {
     return `/media/${p}`;
   }
 }
 
 /** A month of believable numbers for one channel. Deterministic. */
-async function seedDemo(store: DemoStore, now: Date, thumbs: Buffer[]) {
+export async function seedDemo(store: DemoStore, now: Date, thumbs: Buffer[]) {
   let seed = 7;
   const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
   const uid = OWNER;
@@ -303,6 +303,13 @@ async function seedDemo(store: DemoStore, now: Date, thumbs: Buffer[]) {
     account.push({t, f: followers});
     await store.insertAccountMetric({user_id: uid, captured_at: new Date(t).toISOString(), followers, following: 4, likes: Math.round(views * 0.09), video_count: posted.filter((p) => p.at < t).length});
   }
+  // two videos waiting to post (the "Next post" card)
+  const tomorrowNoon = new Date(Math.floor(now.getTime() / 86400000) * 86400000 + 86400000 + 9 * 3600000).toISOString(); // 12:00 Baghdad
+  const q1 = await store.insertVideo({user_id: uid, slot_at: new Date(Math.floor(now.getTime() / 86400000) * 86400000 + 17 * 3600000).toISOString(), status: 'awaiting_approval', character_id: null, is_experiment: false});
+  await store.updateVideo(q1.id, {plan: {topic: 'Why the sky on Mars is pink', category: 'planets'} as any});
+  const q2 = await store.insertVideo({user_id: uid, slot_at: tomorrowNoon, status: 'planned', character_id: null, is_experiment: false});
+  await store.updateVideo(q2.id, {plan: {topic: 'The library of Alexandria did not burn in a day', category: 'ancient egypt'} as any});
+
   // weekly report from the real pattern finder
   const scored = await Promise.all(
     posted.map(async (p) => {
@@ -443,7 +450,9 @@ async function main() {
   }
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+// Run only when started directly (other dev scripts import seedDemo).
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url))
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
