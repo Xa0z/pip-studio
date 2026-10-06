@@ -5,6 +5,7 @@ export const COMMANDS = [
   {command: 'top', description: 'Best videos'},
   {command: 'report', description: 'Weekly report'},
   {command: 'dashboard', description: 'Open the dashboard'},
+  {command: 'marketing', description: 'Marketing videos from your reference videos'},
   {command: 'settings', description: 'Change niche, goal, schedule, mode'},
   {command: 'pause', description: 'Stop posting'},
   {command: 'resume', description: 'Start posting again'},
