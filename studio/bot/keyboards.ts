@@ -74,10 +74,23 @@ export const K = {
   ],
   openTikTok: (url: string | null): Keyboard => (url ? [[{text: 'Open on TikTok', url}]] : []),
   retry: (data: string): Keyboard => [[b('🔁 Retry', data)]],
+  /** The "My videos" list: one button per video, page arrows, the mode switch and the dashboard. */
+  videos: (items: {id: string; label: string}[], page: number, pages: number, mode: 'approval' | 'auto', dashboardUrl: string): Keyboard => [
+    ...items.map((x) => [b(x.label, `vd:show:${x.id}`)]),
+    ...(pages > 1 ? [[...(page > 0 ? [b('⬅️ Newer', `vd:list:${page - 1}`)] : []), ...(page < pages - 1 ? [b('Older ➡️', `vd:list:${page + 1}`)] : [])]] : []),
+    [mode === 'auto' ? b('✋ Switch to review and approve', `md:approval:${page}`) : b('⚡ Switch to full auto', `md:auto:${page}`)],
+    [{text: '📊 Open the full library', web_app: {url: dashboardUrl}}],
+  ],
+  modeSwitch: (mode: 'approval' | 'auto'): Keyboard => [
+    [b(`${mode === 'approval' ? '✅ ' : ''}✋ Review and approve`, 'md:approval')],
+    [b(`${mode === 'auto' ? '✅ ' : ''}⚡ Full auto`, 'md:auto')],
+    [b('🎬 My videos', 'vd:list:0')],
+  ],
   settings: (): Keyboard => [
+    [b('🎬 My videos', 'vd:list:0')],
     [b('🎯 Niche', 'st:niche'), b('🏁 Goal', 'st:goal')],
     [b('🕘 Schedule', 'st:schedule'), b('🔢 Posts per day', 'st:ppd')],
-    [b('✋/⚡ Mode', 'st:mode'), b('🎨 Video theme', 'st:theme')],
+    [b('✋/⚡ Mode', 'md:menu'), b('🎨 Video theme', 'st:theme')],
     [b('📣 Marketing videos', 'mk:menu'), b('🧑‍🎨 New character', 'st:newchar')],
   ],
   refNotes: (): Keyboard => [[b('No changes', 'mk:nonotes')]],

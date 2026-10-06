@@ -10,7 +10,8 @@ export type Keyboard = Button[][];
 export interface Messenger {
   text(chatId: number, text: string, keyboard?: Keyboard): Promise<number>;
   photo(chatId: number, file: string | Buffer, caption?: string, keyboard?: Keyboard): Promise<number>;
-  video(chatId: number, file: string, caption?: string, keyboard?: Keyboard, thumb?: string): Promise<number>;
+  /** Sends a video; `fileId` is Telegram's id for it, so it can be shown again later without re-uploading. */
+  video(chatId: number, file: string, caption?: string, keyboard?: Keyboard, thumb?: string): Promise<{messageId: number; fileId: string | null}>;
   album(chatId: number, files: {file: string | Buffer; caption?: string}[]): Promise<number[]>;
   voice(chatId: number, file: string, caption?: string): Promise<number>;
   audio(chatId: number, file: string, title: string, caption?: string): Promise<number>;
@@ -68,7 +69,8 @@ export const telegram: Messenger = {
     }
     if (caption) f.set('caption', caption), f.set('parse_mode', 'HTML');
     if (keyboard) f.set('reply_markup', markup(keyboard)!);
-    return (await call('sendVideo', f)).message_id;
+    const r = await call('sendVideo', f);
+    return {messageId: r.message_id, fileId: r.video?.file_id ?? r.document?.file_id ?? null};
   },
   async album(chatId, files) {
     const f = new FormData();

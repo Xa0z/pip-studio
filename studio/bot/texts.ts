@@ -117,11 +117,25 @@ export const T = {
 
   // Commands
   help: () =>
-    `<b>Commands</b>\n/stats today's numbers and a 30-day chart\n/top your best videos\n/report weekly report\n/dashboard full analytics\n/settings change niche, goal, schedule, mode, video theme\n/marketing marketing videos for your business (3 a day from your reference videos)\n/pause and /resume posting\n/disconnect remove your tokens and delete your data`,
+    `<b>Commands</b>\n/stats today's numbers and a 30-day chart\n/top your best videos\n/report weekly report\n/dashboard full analytics\n/videos watch the videos I made\n/mode switch between full auto and review and approve\n/settings change niche, goal, schedule, mode, video theme\n/marketing marketing videos for your business (3 a day from your reference videos)\n/pause and /resume posting\n/disconnect remove your tokens and delete your data`,
   notReady: () => `Finish setup first with /start.`,
   paused: () => `⏸ Paused. No videos will be made or posted until you send /resume.`,
   resumed: () => `▶️ Resumed. Your next video is on the way.`,
   pausedQuota: () => `⏸ Pip Studio used most of its free GitHub minutes this month, so posting is paused until the 1st. Sorry!`,
+  videosList: (total: number, mode: Mode, page: number, pages: number) =>
+    `🎬 <b>Your videos</b> (${total})${pages > 1 ? ` · page ${page + 1} of ${pages}` : ''}\nPosting: ${mode === 'auto' ? '⚡ <b>Full auto</b> (I post by myself and send you each video after)' : '✋ <b>Review and approve</b> (nothing posts until you tap Post)'}\n\nTap a video to watch it.`,
+  noVideos: (mode: Mode) =>
+    `🎬 <b>Your videos</b>\nNo videos yet. Your first one will show up here once it is made.\n\nPosting: ${mode === 'auto' ? '⚡ Full auto' : '✋ Review and approve'}`,
+  videoCard: (v: {status: string; title: string; when: string; views: number | null; error: string | null}) =>
+    `${v.status}\n<b>${esc(v.title)}</b>\n${esc(v.when)}${v.views != null ? ` · 👁 ${fmtNum(v.views)} views` : ''}${v.error ? `\n<i>${esc(v.error)}</i>` : ''}`,
+  videoNotMade: (when: string) => `🗓 This video is not made yet. It will be ready before ${esc(when)}.`,
+  videoGone: () => `This video's file was deleted, so there is nothing to play. (Skipped videos are removed after 2 days.)`,
+  modeNow: (mode: Mode) =>
+    `<b>Posting mode</b>\n\n${mode === 'auto' ? '⚡ <b>Full auto</b> is on.' : '✋ <b>Review and approve</b> is on.'}\n\n✋ <b>Review and approve</b>: I send each video here first with Post / Skip / Regenerate.\n⚡ <b>Full auto</b>: I post by myself at your times and send you each video after.`,
+  modeSwitched: (mode: Mode, waiting: number) =>
+    mode === 'auto'
+      ? `⚡ Full auto is on. From now on I post by myself and send you each video after.${waiting ? ` The ${waiting === 1 ? 'video' : `${waiting} videos`} already waiting still ${waiting === 1 ? 'needs' : 'need'} your OK.` : ''}`
+      : `✋ Review and approve is on. Every new video comes here first, and nothing posts until you tap Post.`,
   settingsMenu: () => `⚙️ <b>Settings</b>\nWhat do you want to change? (Your character is locked so it always looks the same.)`,
   saved: () => `✅ Saved.`,
   newCharacterWarn: () => `This makes a new character. Your current one stays saved, but new videos will use the new one. Continue?`,

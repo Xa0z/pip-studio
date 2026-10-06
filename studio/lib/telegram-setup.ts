@@ -4,6 +4,8 @@ export const COMMANDS = [
   {command: 'stats', description: 'Today and the last 30 days'},
   {command: 'top', description: 'Best videos'},
   {command: 'report', description: 'Weekly report'},
+  {command: 'videos', description: 'Watch the videos I made'},
+  {command: 'mode', description: 'Full auto or review and approve'},
   {command: 'dashboard', description: 'Open the dashboard'},
   {command: 'marketing', description: 'Marketing videos from your reference videos'},
   {command: 'settings', description: 'Change niche, goal, schedule, mode'},

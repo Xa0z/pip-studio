@@ -131,7 +131,10 @@ export class Harness {
     const msg: Messenger = {
       text: async (_c, text, keyboard) => this.botSays({kind: 'text', text, buttons: keyboard}),
       photo: async (_c, file, caption, keyboard) => this.botSays({kind: 'photo', text: caption, buttons: keyboard, media: [this.saveMedia(file, 'png')]}),
-      video: async (_c, file, caption, keyboard, thumb) => this.botSays({kind: 'video', text: caption, buttons: keyboard, media: [thumb ?? file]}),
+      video: async (_c, file, caption, keyboard, thumb) => {
+        const messageId = this.botSays({kind: 'video', text: caption, buttons: keyboard, media: [thumb ?? file]});
+        return {messageId, fileId: `tgvid-${messageId}`};
+      },
       album: async (_c, files) => {
         const id = this.botSays({kind: 'album', text: files.map((f) => f.caption ?? '').filter(Boolean).join('\n'), media: files.map((f) => this.saveMedia(f.file, 'png'))});
         return files.map((_, i) => id + i);
@@ -200,8 +203,10 @@ export class Harness {
         return message(this.botSays({kind: 'text', text: p.text, buttons: buttons()}), p.text);
       case 'sendPhoto':
         return message(this.botSays({kind: 'photo', text: p.caption, buttons: buttons(), media: [this.mediaOf(p.photo, 'png')]}));
-      case 'sendVideo':
-        return message(this.botSays({kind: 'video', text: p.caption, buttons: buttons(), media: [this.mediaOf(p.video, 'mp4')]}));
+      case 'sendVideo': {
+        const id = this.botSays({kind: 'video', text: p.caption, buttons: buttons(), media: [this.mediaOf(p.video, 'mp4')]});
+        return {...message(id), video: {file_id: `tgvid-${id}`, file_unique_id: `u-${id}`, width: 1080, height: 1920, duration: 30}};
+      }
       case 'sendVoice':
         return message(this.botSays({kind: 'voice', text: p.caption, media: [this.mediaOf(p.voice, 'ogg')]}));
       case 'sendMediaGroup': {

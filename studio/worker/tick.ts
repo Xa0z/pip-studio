@@ -235,6 +235,17 @@ export async function publishOne(ctx: WorkerCtx, u: UserRow, v: VideoRow): Promi
     const caption = T.posted((v.caption ?? '').split('\n')[0], pub.privacy);
     // Private posts get no public id from TikTok: link the profile until the metrics step finds the video.
     const link = shareUrl ?? (pub.username || row.username ? `https://www.tiktok.com/@${pub.username || row.username}` : null);
+    if (!v.plan?.tg_file_id) {
+      // Full auto: the user has not seen this video yet, so send the video itself (and keep its id for "My videos").
+      const sent = await msg.video(u.id, file, caption, K.openTikTok(link)).catch((e) => {
+        console.warn(`could not send posted video ${v.id}: ${redact((e as Error).message)}`);
+        return null;
+      });
+      if (sent) {
+        if (sent.fileId) await store.updateVideo(v.id, {plan: {...(v.plan ?? {}), tg_file_id: sent.fileId}});
+        return true;
+      }
+    }
     if (v.thumb_path) {
       const thumb = await store.download(v.thumb_path).catch(() => null);
       if (thumb) await msg.photo(u.id, thumb, caption, K.openTikTok(link));

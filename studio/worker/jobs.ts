@@ -404,8 +404,10 @@ async function finishVideo(ctx: WorkerCtx, job: JobRow, st: VideoState) {
     return;
   }
   await store.updateVideo(v.id, {status: 'awaiting_approval', video_path: videoPath, thumb_path: thumbPath, privacy_options: options, privacy: null});
-  const msgId = await msg.video(u.id, st.outPath, T.approval(when, v.caption ?? '', username, false), K.approval(v.id, options, null), st.thumbPath);
-  await store.updateVideo(v.id, {approval_msg_id: msgId});
+  const sent = await msg.video(u.id, st.outPath, T.approval(when, v.caption ?? '', username, false), K.approval(v.id, options, null), st.thumbPath);
+  // Keep Telegram's id for the video so "My videos" can show it again after the file is gone from storage.
+  const fresh = await store.getVideo(v.id);
+  await store.updateVideo(v.id, {approval_msg_id: sent.messageId, ...(sent.fileId ? {plan: {...(fresh?.plan ?? {}), tg_file_id: sent.fileId}} : {})});
 }
 
 async function finishCharacters(ctx: WorkerCtx, job: JobRow, st: CharacterState) {

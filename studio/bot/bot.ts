@@ -22,7 +22,7 @@ import type {Store} from '../lib/store.js';
 import type {ChartInput} from '../lib/charts.js';
 import type {Keyboard} from '../lib/telegram.js';
 import type {TikTokUser} from '../lib/tiktok.js';
-import type {JobKind, OnboardingData, SettingsRow, UserRow} from '../lib/types.js';
+import type {JobKind, OnboardingData, SettingsRow, UserRow, VideoRow} from '../lib/types.js';
 import {K} from './keyboards.js';
 import {esc, T} from './texts.js';
 import {parseCustomTheme, PRESETS, themeLabel, type PresetId, type ThemeChoice} from '../../src/themes.js';
@@ -745,6 +745,152 @@ export function createBot(deps: BotDeps) {
     const u = await requireReady(ctx);
     if (!u) return;
     await ctx.reply(T.dashboard(), html(K.dashboard(`${deps.baseUrl}/app/`)));
+  });
+
+  // ---------- my videos and posting mode ----------
+  const VIDEOS_PER_PAGE = 6;
+  const STATUS_LABEL: Record<string, string> = {
+    planned: '🗓 Planned',
+    rendering: '⏳ Being made',
+    awaiting_approval: '✋ Waiting for your OK',
+    approved: '⏰ Ready to post',
+    publishing: '📤 Posting',
+    posted: '✅ Posted',
+    skipped: '⏭ Skipped',
+    failed: '⚠️ Did not post',
+  };
+  const STATUS_ICON: Record<string, string> = {planned: '🗓', rendering: '⏳', awaiting_approval: '✋', approved: '⏰', publishing: '📤', posted: '✅', skipped: '⏭', failed: '⚠️'};
+  const videoTitle = (v: VideoRow) => String(v.plan?.topic || (v.caption ?? '').split('\n')[0] || 'Video').trim();
+  const shortDay = (at: Date, tz: string) => {
+    const p = localParts(at, tz);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${p.d} ${months[p.m]}`;
+  };
+  const currentMode = async (u: UserRow) => (await store.getSettings(u.id))?.mode ?? data(u).mode ?? 'approval';
+
+  const videosView = async (u: UserRow, page: number) => {
+    const s = await store.getSettings(u.id);
+    const tz = s?.timezone ?? 'UTC';
+    const mode = s?.mode ?? 'approval';
+    // Skipped videos with nothing left to show only clutter the list.
+    const all = (await store.listVideos(u.id, {limit: 120})).filter((v) => v.status !== 'skipped' || v.video_path || v.plan?.tg_file_id);
+    if (!all.length) return {text: T.noVideos(mode), keyboard: K.modeSwitch(mode)};
+    const pages = Math.ceil(all.length / VIDEOS_PER_PAGE);
+    const p = Math.min(Math.max(0, page), pages - 1);
+    const items = all.slice(p * VIDEOS_PER_PAGE, (p + 1) * VIDEOS_PER_PAGE).map((v) => {
+      const title = videoTitle(v);
+      return {id: v.id, label: `${STATUS_ICON[v.status] ?? '🎬'} ${shortDay(new Date(v.slot_at), tz)} · ${title.length > 34 ? `${title.slice(0, 33)}…` : title}`};
+    });
+    return {text: T.videosList(all.length, mode, p, pages), keyboard: K.videos(items, p, pages, mode, `${deps.baseUrl}/app/`)};
+  };
+
+  const sendVideosView = async (ctx: Context, u: UserRow, page: number, edit: boolean) => {
+    const view = await videosView(u, page);
+    if (edit) {
+      const ok = await ctx
+        .editMessageText(view.text, html(view.keyboard))
+        .then(() => true)
+        .catch((e) => String(e).includes('not modified'));
+      if (ok) return;
+    }
+    await ctx.reply(view.text, html(view.keyboard));
+  };
+
+  bot.command('videos', async (ctx) => {
+    const u = await requireReady(ctx);
+    if (u) await sendVideosView(ctx, u, 0, false);
+  });
+  bot.callbackQuery(/^vd:list:(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const u = await requireReady(ctx);
+    if (u) await sendVideosView(ctx, u, Number(ctx.match[1]), ctx.callbackQuery.message?.text !== undefined);
+  });
+
+  bot.callbackQuery(/^vd:show:([0-9a-f-]{36})$/, async (ctx) => {
+    const v = await ownVideo(ctx, ctx.match[1]);
+    if (!v) return ctx.answerCallbackQuery({text: 'That video is gone.'});
+    await ctx.answerCallbackQuery();
+    const s = await store.getSettings(v.user_id);
+    const tz = s?.timezone ?? 'UTC';
+    const slot = new Date(v.slot_at);
+    if (['planned', 'rendering'].includes(v.status) && !v.video_path) return ctx.reply(T.videoNotMade(`${shortDay(slot, tz)}, ${fmtLocal(slot, tz)}`), html());
+    let views: number | null = null;
+    if (v.status === 'posted') {
+      const m = await store.listVideoMetrics([v.id]).catch(() => []);
+      if (m.length) views = Math.max(...m.map((x) => x.views));
+    }
+    const when = v.posted_at ? `Posted ${shortDay(new Date(v.posted_at), tz)}, ${fmtLocal(new Date(v.posted_at), tz)}` : `For ${shortDay(slot, tz)}, ${fmtLocal(slot, tz)}`;
+    const caption = T.videoCard({status: STATUS_LABEL[v.status] ?? v.status, title: videoTitle(v), when, views, error: v.status === 'failed' && v.error ? redact(v.error).slice(0, 160) : null});
+    const keyboard: Keyboard =
+      v.status === 'awaiting_approval'
+        ? K.approval(v.id, v.privacy_options ?? [], v.privacy)
+        : v.status === 'failed'
+          ? K.retry(`retry:${v.id}`)
+          : K.openTikTok(v.share_url);
+    const extra = {caption, parse_mode: 'HTML' as const, supports_streaming: true, ...kb(keyboard)};
+    const fileId: string | undefined = v.plan?.tg_file_id;
+    if (fileId) {
+      const ok = await ctx.replyWithVideo(fileId, extra).then(() => true).catch(() => false);
+      if (ok) return;
+    }
+    if (v.video_path) {
+      // First time this video is shown in the chat (or the old id stopped working): send the file and keep Telegram's id.
+      const sent = await ctx
+        .replyWithVideo(await store.signedUrl(v.video_path, 900), extra)
+        .catch(async () => ctx.replyWithVideo(new InputFile(await store.download(v.video_path!), 'video.mp4'), extra))
+        .catch(() => null);
+      if (sent) {
+        if (sent.video?.file_id) await store.updateVideo(v.id, {plan: {...(v.plan ?? {}), tg_file_id: sent.video.file_id}});
+        return;
+      }
+    }
+    if (v.thumb_path) {
+      const ok = await ctx
+        .replyWithPhoto(await store.signedUrl(v.thumb_path, 900), {caption, parse_mode: 'HTML', ...kb(keyboard)})
+        .then(() => true)
+        .catch(() => false);
+      if (ok) return;
+    }
+    await ctx.reply(`${caption}\n\n${T.videoGone()}`, html(keyboard));
+  });
+
+  const setMode = async (ctx: Context, u: UserRow, want: 'approval' | 'auto') => {
+    if (want === 'auto' && !isOwner(u) && !deps.allowAutoForAll) {
+      await ctx.answerCallbackQuery({text: 'Full auto is not available yet: TikTok needs each post approved until it reviews this app.', show_alert: true});
+      return false;
+    }
+    const s = await store.getSettings(u.id);
+    if (s) await store.saveSettings({...s, mode: want});
+    await patch(u, {mode: want});
+    const waiting = want === 'auto' ? (await store.listVideos(u.id, {status: ['awaiting_approval']})).length : 0;
+    await ctx.answerCallbackQuery({text: want === 'auto' ? '⚡ Full auto is on' : '✋ Review and approve is on'});
+    await ctx.reply(T.modeSwitched(want, waiting), html());
+    return true;
+  };
+
+  bot.command('mode', async (ctx) => {
+    const u = await requireReady(ctx);
+    if (u) await ctx.reply(T.modeNow(await currentMode(u)), html(K.modeSwitch(await currentMode(u))));
+  });
+  bot.callbackQuery('md:menu', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const u = await requireReady(ctx);
+    if (u) await ctx.reply(T.modeNow(await currentMode(u)), html(K.modeSwitch(await currentMode(u))));
+  });
+  bot.callbackQuery(/^md:(approval|auto)(?::(\d+))?$/, async (ctx) => {
+    const u = await requireReady(ctx);
+    if (!u) return ctx.answerCallbackQuery();
+    const want = ctx.match[1] as 'approval' | 'auto';
+    if ((await currentMode(u)) === want) return ctx.answerCallbackQuery({text: want === 'auto' ? 'Full auto is already on.' : 'Review and approve is already on.'});
+    if (!(await setMode(ctx, u, want))) return;
+    const fresh = (await store.getUser(u.id))!;
+    // Refresh the message the switch was on, so its buttons show the new mode.
+    if (ctx.match[2] !== undefined) {
+      const view = await videosView(fresh, Number(ctx.match[2]));
+      await ctx.editMessageText(view.text, html(view.keyboard)).catch(() => undefined);
+    } else {
+      await ctx.editMessageText(T.modeNow(want), html(K.modeSwitch(want))).catch(() => undefined);
+    }
   });
 
   bot.command('settings', async (ctx) => {
