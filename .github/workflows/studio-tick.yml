@@ -1,10 +1,11 @@
 name: Pip Studio tick
 
-# Every 15 minutes: plan upcoming videos, publish due ones, collect metrics, weekly reports.
-# GitHub may start scheduled runs a few minutes late; videos are planned 75 minutes ahead to allow for that.
+# Plans upcoming videos, publishes due ones, collects metrics and sends weekly reports.
+# GitHub often starts scheduled runs hours late, so each run ticks every 5 minutes for about 50 minutes
+# and then starts the next run itself. The schedule only restarts the chain if it ever stops.
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '*/30 * * * *'
   workflow_dispatch:
 
 concurrency:
@@ -13,12 +14,12 @@ concurrency:
 
 permissions:
   contents: read
-  actions: read
+  actions: write
 
 jobs:
   tick:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 70
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -47,4 +48,10 @@ jobs:
           key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - if: steps.nm.outputs.cache-hit != 'true'
         run: npm ci
-      - run: npx tsx studio/worker/cli.ts tick
+      - run: npx tsx studio/worker/cli.ts loop 50
+      # Start the next run (GITHUB_TOKEN may start workflow_dispatch runs). The concurrency group keeps one at a time.
+      - if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run studio-tick.yml -R "$GITHUB_REPOSITORY" --ref "${GITHUB_REF_NAME}" || echo "could not start the next run"
+

@@ -1,6 +1,7 @@
 /**
  * Worker entry point for GitHub Actions.
  *   tsx studio/worker/cli.ts tick
+ *   tsx studio/worker/cli.ts loop [minutes]        (a tick every 5 minutes for that long; GitHub's schedule runs hours late)
  *   tsx studio/worker/cli.ts job prepare <jobId>   (secrets + database)
  *   tsx studio/worker/cli.ts job render <jobId>    (NO secrets, NO database: runs Claude-written character code)
  *   tsx studio/worker/cli.ts job finish <jobId>    (secrets + database)
@@ -43,6 +44,16 @@ function realCtx(): WorkerCtx {
   };
 }
 
+/** Public repos get Actions minutes for free, so the minutes limit only applies to private ones. */
+async function tickCtx(): Promise<WorkerCtx> {
+  const ctx = realCtx();
+  const repo = process.env.GITHUB_REPOSITORY;
+  if (!repo || !process.env.GITHUB_TOKEN || ctx.minutesLimit <= 0) return ctx;
+  const res = await fetch(`https://api.github.com/repos/${repo}`, {headers: {Authorization: `Bearer ${process.env.GITHUB_TOKEN}`, Accept: 'application/vnd.github+json'}}).catch(() => null);
+  const info = res?.ok ? ((await res.json()) as {private?: boolean}) : null;
+  return info && info.private === false ? {...ctx, minutesLimit: 0} : ctx;
+}
+
 /** The render step gets a context with no store, no messenger and no Claude: it only reads work/<job>/state.json. */
 function renderCtx(): WorkerCtx {
   const nothing = new Proxy({}, {get: (_t, p) => unavailable(`store.${String(p)}`)});
@@ -63,9 +74,26 @@ function renderCtx(): WorkerCtx {
 async function main() {
   const [cmd, a, b, ...rest] = process.argv.slice(2);
   if (cmd === 'tick') {
-    const report = await tick(realCtx(), {actionsMinutes: () => actionsMinutesFromGitHub()});
+    const report = await tick(await tickCtx(), {actionsMinutes: () => actionsMinutesFromGitHub()});
     console.log('tick', JSON.stringify(report));
     return;
+  }
+  if (cmd === 'loop') {
+    const until = Date.now() + Number(a || 50) * 60000;
+    const every = Number(process.env.TICK_EVERY_MS || 5 * 60000);
+    const ctx = await tickCtx();
+    for (;;) {
+      const started = Date.now();
+      try {
+        const report = await tick(ctx, {actionsMinutes: () => actionsMinutesFromGitHub()});
+        console.log(new Date().toISOString(), 'tick', JSON.stringify(report));
+      } catch (e) {
+        console.error('tick failed:', redact((e as Error).message));
+      }
+      const next = started + every;
+      if (next >= until) return;
+      await new Promise((r) => setTimeout(r, Math.max(0, next - Date.now())));
+    }
   }
   if (cmd === 'job') {
     if (!b) throw new Error('usage: job prepare|render|finish <jobId>');
