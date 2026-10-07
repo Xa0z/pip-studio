@@ -47,6 +47,8 @@ export type BotDeps = {
 };
 
 const kb = (k: Keyboard | undefined) => (k && k.length ? {reply_markup: {inline_keyboard: k as any}} : {});
+/** Cuts by characters, so an emoji is never split in half (Telegram rejects broken UTF-16). */
+const cut = (s: string, n: number) => [...s].slice(0, n).join('');
 const html = (k?: Keyboard) => ({parse_mode: 'HTML' as const, link_preview_options: {is_disabled: true}, ...kb(k)});
 
 export function createBot(deps: BotDeps) {
@@ -272,7 +274,7 @@ export function createBot(deps: BotDeps) {
       if (!picked.length) return ctx.answerCallbackQuery({text: T.nicheNeedOne(), show_alert: true});
       await ctx.answerCallbackQuery();
       await ctx.editMessageReplyMarkup({reply_markup: {inline_keyboard: []}}).catch(() => undefined);
-      return advance(ctx, u, 'niche');
+      return advance(ctx, data(u).awaiting === 'custom_niche' ? await patch(u, {awaiting: null}) : u, 'niche');
     }
     if (id === 'custom') {
       const existing = picked.findIndex((p) => p.startsWith('custom:'));
@@ -457,7 +459,7 @@ export function createBot(deps: BotDeps) {
     if (!tz) return;
     await ctx.editMessageReplyMarkup({reply_markup: {inline_keyboard: []}}).catch(() => undefined);
     await ctx.reply(`🕘 ${esc(tz)}`);
-    u = await patch(u, {timezone: tz});
+    u = await patch(u, {timezone: tz, awaiting: null});
     await advance(ctx, u, 'tz');
   });
   const onTimezone = async (ctx: Context, u: UserRow, text: string) => {
@@ -720,7 +722,7 @@ export function createBot(deps: BotDeps) {
     const stats = videoStats(a);
     if (!stats.length) return ctx.reply(T.noData());
     const line = (s: (typeof stats)[number], i: number, by: 'views' | 'eng') =>
-      `${i + 1}. ${s.shareUrl ? `<a href="${esc(s.shareUrl)}">${esc(s.topic || s.caption.slice(0, 40))}</a>` : esc(s.topic || s.caption.slice(0, 40))}${s.viral ? ' 🔥' : ''}\n    ${by === 'views' ? `${fmtNum(s.views)} views · ${fmtPct(s.engagement)}` : `${fmtPct(s.engagement)} engagement · ${fmtNum(s.views)} views`}`;
+      `${i + 1}. ${s.shareUrl ? `<a href="${esc(s.shareUrl)}">${esc(s.topic || cut(s.caption, 40))}</a>` : esc(s.topic || cut(s.caption, 40))}${s.viral ? ' 🔥' : ''}\n    ${by === 'views' ? `${fmtNum(s.views)} views · ${fmtPct(s.engagement)}` : `${fmtPct(s.engagement)} engagement · ${fmtNum(s.views)} views`}`;
     const byViews = [...stats].sort((x, y) => y.views - x.views).slice(0, 5);
     const byEng = [...stats].filter((s) => s.views >= 50).sort((x, y) => y.engagement - x.engagement).slice(0, 5);
     await ctx.reply(
@@ -772,7 +774,7 @@ export function createBot(deps: BotDeps) {
     const p = Math.min(Math.max(0, page), pages - 1);
     const items = all.slice(p * VIDEOS_PER_PAGE, (p + 1) * VIDEOS_PER_PAGE).map((v) => {
       const title = videoTitle(v);
-      return {id: v.id, label: `${v.is_dry_run ? '🧪' : STATUS_ICON[v.status] ?? '🎬'} ${shortDay(new Date(v.is_dry_run ? v.created_at : v.slot_at), tz)} · ${title.length > 34 ? `${title.slice(0, 33)}…` : title}`};
+      return {id: v.id, label: `${v.is_dry_run ? '🧪' : STATUS_ICON[v.status] ?? '🎬'} ${shortDay(new Date(v.is_dry_run ? v.created_at : v.slot_at), tz)} · ${[...title].length > 34 ? `${cut(title, 33)}…` : title}`};
     });
     return {text: T.videosList(all.length, mode, p, pages), keyboard: K.videos(items, p, pages, mode, `${deps.baseUrl}/app/`)};
   };
@@ -1073,7 +1075,7 @@ export function createBot(deps: BotDeps) {
     const u = await getOrCreate(ctx);
     const text = ctx.message.text;
     // Anything that looks like a secret is deleted even if we didn't ask for it.
-    if (/sk-ant-|\bact\.|\brft\./.test(text) && data(u).awaiting !== 'claude_secret') {
+    if (/sk-ant-|\b(act|rft)\.[A-Za-z0-9._-]{10,}/.test(text) && data(u).awaiting !== 'claude_secret') {
       await ctx.deleteMessage().catch(() => undefined);
       return ctx.reply('🔒 That looked like a secret, so I deleted it. Use /start to continue setup.');
     }
@@ -1101,12 +1103,6 @@ export function createBot(deps: BotDeps) {
     }
     if (!onboarded(u)) return showStep(ctx, u);
     return showHome(ctx, u);
-  });
-
-  bot.catch(async (err) => {
-    const {redact} = await import('../lib/redact.js');
-    console.error('Bot error:', redact(err.error instanceof Error ? err.error.message : String(err.error)));
-    await err.ctx.reply('😵 Something broke on my side. Please try again in a minute.').catch(() => undefined);
   });
 
   // Log only the redacted message (the grammY error object carries the bot token), tell the user,

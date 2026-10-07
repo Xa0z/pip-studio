@@ -50,7 +50,9 @@ jobs:
         run: npm ci
       - run: npx tsx studio/worker/cli.ts loop 50
       # Start the next run (GITHUB_TOKEN may start workflow_dispatch runs). The concurrency group keeps one at a time.
-      - if: ${{ !cancelled() }}
+      # Only after a good run: a run that fails at once (bad secret, npm outage) would otherwise restart every minute;
+      # the schedule picks the chain up again.
+      - if: ${{ success() }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run studio-tick.yml -R "$GITHUB_REPOSITORY" --ref "${GITHUB_REF_NAME}" || echo "could not start the next run"

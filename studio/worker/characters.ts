@@ -25,7 +25,7 @@ Rules for every character:
 - Export: export const Character: React.FC<{expression?: 'happy'|'surprised'|'thinking'|'excited'|'wink'; pose?: 'idle'|'pointing'|'waving'|'jumping'; talking?: boolean}>
 - Draw inside <svg viewBox="0 0 400 480" width="100%" style={{overflow: 'visible'}}>. Character centered, feet near y=440.
 - Only SVG tags (g, path, circle, ellipse, rect, line, polygon, polyline, defs, linearGradient, radialGradient, stop, clipPath, mask, filter, feGaussianBlur, feOffset, feMerge, feMergeNode, feDropShadow). No <text>, <image>, <foreignObject>, <use>, no href/src attributes, no event handlers, no URLs.
-- No fetch, timers, window, document, eval, "new", while loops, or obj["key"] access. Colors and proportions are constants at the top.
+- No fetch, timers, window, document, eval, "new", while loops, obj[key] access with anything but a number index, or {...spread} attributes. Colors and proportions are constants at the top.
 - Expressions must look clearly different (eyes and mouth). Poses move the arms (pointing: one arm out, waving: one arm waves, jumping: hops with squash and stretch).
 - Always alive: gentle float, eyes blink every few seconds, mouth opens and closes while talking=true. Animate only from useCurrentFrame()/fps.
 - Use useId() for gradient/clip ids so several copies can be on screen.

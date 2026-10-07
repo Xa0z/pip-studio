@@ -130,8 +130,9 @@ export const PlanSchema = z
 
     s.forEach((sc, i) => {
       for (const h of sc.highlight) {
-        if (!sc.headline.toLowerCase().includes(h.toLowerCase())) {
-          issue(`scene ${i + 1}: highlight "${h}" is not in its headline`, ['scenes', i, 'highlight']);
+        const word = new RegExp(`(?<![\\p{L}\\p{N}])${h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\p{L}\\p{N}])`, 'iu');
+        if (!word.test(sc.headline)) {
+          issue(`scene ${i + 1}: highlight "${h}" is not a whole word or phrase in its headline`, ['scenes', i, 'highlight']);
         }
       }
     });

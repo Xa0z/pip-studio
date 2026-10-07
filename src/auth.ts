@@ -132,7 +132,7 @@ async function login() {
       setTimeout(() => {
         server.close();
         reject(new Error('No answer from TikTok after 5 minutes'));
-      }, 5 * 60 * 1000);
+      }, 5 * 60 * 1000).unref(); // unref: a finished login must not keep the process alive for 5 minutes
     });
   }
 

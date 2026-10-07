@@ -123,7 +123,8 @@ export function buildDashboard(a: Analytics, range: Range, now = new Date(), thu
   const stats = videoStats(a, thumb);
   const inRange = stats.filter((s) => range === 'all' || new Date(s.postedAt) >= from);
   const lastAcct = a.account.at(-1);
-  const followersSeries = accountAll.map((x) => x.followers);
+  // Only days with a snapshot: the zeros before it would count every existing follower as new.
+  const followersSeries = accountAll.filter((x) => firstDay !== null && x.day >= firstDay).map((x) => x.followers);
   const views = daily.reduce((n, d) => n + d.views, 0);
   const likes = daily.reduce((n, d) => n + d.likes, 0);
   const inter = daily.reduce((n, d) => n + d.likes + d.comments + d.shares, 0);

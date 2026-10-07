@@ -34,11 +34,10 @@ export function voiceProblems(plan: Pick<Plan, 'scenes'>, v: VoiceResult, spec: 
     p.push(`spoken length is ${v.speechEnd.toFixed(1)} s, it must be ${spec.speechMin} to ${spec.speechMax} s`);
   }
   if (v.sceneEnds[0] > HOOK_MAX_SECONDS) p.push(`the hook takes ${v.sceneEnds[0].toFixed(1)} s to say; it must end by about 3 s, so make it shorter (max 8 short words)`);
-  plan.scenes.forEach((s, i) => {
-    const isLast = i === plan.scenes.length - 1;
-    const end = isLast ? spec.totalFrames / FPS : v.sceneStarts[i + 1];
-    const len = end - (i === 0 ? 0 : v.sceneStarts[i]);
-    if (len > MAX_SCENE_FRAMES / FPS) p.push(`scene ${i + 1} lasts ${len.toFixed(1)} s, max is 8 s: shorten or split it`);
+  // Measure the scenes exactly as buildTimeline will cut them (each starts 3 frames early), so a scene that
+  // passes here can never fail validateTimeline after the voice is already made.
+  buildTimeline(plan, v, spec).forEach((s, i) => {
+    if (s.durationInFrames > MAX_SCENE_FRAMES) p.push(`scene ${i + 1} lasts ${(s.durationInFrames / FPS).toFixed(1)} s, max is 8 s: shorten or split it`);
   });
   return p;
 }
