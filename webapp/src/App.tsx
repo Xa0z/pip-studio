@@ -10,10 +10,10 @@ type Range = 7 | 30 | 90 | 'all';
 type Tab = 'overview' | 'library' | 'insights';
 type SortKey = 'newest' | 'views' | 'likes' | 'engagement' | 'velocity';
 
-const TABS: {id: Tab; label: string}[] = [
-  {id: 'overview', label: 'Overview'},
-  {id: 'library', label: 'Library'},
-  {id: 'insights', label: 'Insights'},
+const TABS: {id: Tab; label: string; icon: ReactNode}[] = [
+  {id: 'overview', label: 'Overview', icon: Icon.grid},
+  {id: 'library', label: 'Library', icon: Icon.film},
+  {id: 'insights', label: 'Insights', icon: Icon.trend},
 ];
 const RANGES: {id: Range; label: string; title: string}[] = [
   {id: 7, label: '7D', title: 'Last 7 days'},
@@ -116,12 +116,14 @@ export function App({tg}: {tg?: TelegramWebApp}) {
   const rangeTitle = RANGES.find((r) => r.id === range)!.title;
   return (
     <div className={`app${loading ? ' is-loading' : ''}`} aria-busy={loading}>
+      <TopBar d={data} />
       <Profile d={data} />
-      <nav className="nav">
-        <div className="seg seg-tabs" role="tablist" aria-label="View">
+      <nav className="tabbar" aria-label="View">
+        <div className="tabbar-in" role="tablist">
           {TABS.map((t) => (
-            <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => pick(setTab, t.id)}>
-              {t.label}
+            <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => (pick(setTab, t.id), window.scrollTo({top: 0}))}>
+              {t.icon}
+              <span>{t.label}</span>
             </button>
           ))}
         </div>
@@ -255,6 +257,20 @@ const yAxis = {
 } as const;
 
 // ---------------------------------------------------------------- header
+function TopBar({d}: {d: Data}) {
+  const s = d.schedule;
+  const live = !!s && s.times.length > 0;
+  return (
+    <div className="topbar">
+      <span className="brand"><img src="/logo.svg" alt="" width="26" height="26" />Pip Studio</span>
+      <span className={`live${live ? '' : ' off'}`}>
+        <i aria-hidden="true" />
+        {live ? (s!.mode === 'auto' ? 'Autopilot on' : 'Running') : 'Paused'}
+      </span>
+    </div>
+  );
+}
+
 function Profile({d}: {d: Data}) {
   const a = d.account;
   const name = a.displayName || a.username || 'Your channel';
@@ -282,6 +298,39 @@ function Profile({d}: {d: Data}) {
   );
 }
 
+/** "13h 42m" until `iso`, ticking every 20 s. */
+function useCountdown(iso: string | undefined) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 20_000);
+    return () => clearInterval(t);
+  }, []);
+  if (!iso) return null;
+  const ms = new Date(iso).getTime() - now;
+  if (ms <= 60_000) return {h: 0, m: 0, soon: true};
+  const min = Math.floor(ms / 60_000);
+  return {h: Math.floor(min / 60), m: min % 60, soon: false};
+}
+
+function Countdown({iso}: {iso: string}) {
+  const c = useCountdown(iso);
+  if (!c) return null;
+  if (c.soon) return <div className="count-big">Any minute</div>;
+  const days = Math.floor(c.h / 24);
+  return (
+    <div className="count-big" aria-label={`in ${c.h} hours ${c.m} minutes`}>
+      {days >= 2 ? (
+        <>{days}<small>days</small></>
+      ) : (
+        <>
+          {c.h > 0 && <>{c.h}<small>h</small></>}
+          {String(c.m).padStart(c.h > 0 ? 2 : 1, '0')}<small>m</small>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------- schedule
 function NextPost({d, big = false}: {d: Data; big?: boolean}) {
   const s = d.schedule;
@@ -301,8 +350,30 @@ function NextPost({d, big = false}: {d: Data; big?: boolean}) {
     );
   const w = when(at, d.timezone, d.generatedAt);
   const first = d.insights.n === 0;
+  if (big)
+    return (
+      <section className="poster" aria-label={`${first ? 'Your first video posts' : 'Next post'} ${w.day} at ${w.time}`}>
+        <div className="poster-top">
+          <span className="poster-eyebrow">{first ? 'Your first video goes live in' : 'Next video goes live in'}</span>
+          {next && <span className={`chip status-${next.status}`}>{STATUS_LABEL[next.status] ?? next.status}</span>}
+        </div>
+        <Countdown iso={at} />
+        <div className="poster-when">
+          {Icon.calendar}
+          <span><b>{w.day}</b> at <b>{w.time}</b></span>
+        </div>
+        {next?.topic && <div className="poster-topic">{next.topic}</div>}
+        {next?.status === 'awaiting_approval' && <p className="poster-hint">{Icon.chat} Approve it in the chat with Pip.</p>}
+        {s.times.length > 0 && (
+          <div className="poster-slots">
+            <span>{s.postsPerDay === 1 ? 'Every day' : `${s.postsPerDay}× a day`}</span>
+            {s.times.map((t) => <span key={t} className="slot">{t}</span>)}
+          </div>
+        )}
+      </section>
+    );
   return (
-    <Card className={`next${big ? ' next-big' : ''}`}>
+    <Card className="next">
       <div className="next-row">
         <span className="next-icon">{Icon.calendar}</span>
         <div className="next-main">
@@ -360,19 +431,18 @@ function Welcome({d}: {d: Data}) {
   return (
     <>
       <NextPost d={d} big />
-      <Card title="What happens next">
-        <ol className="steps">
-          {steps.map((x, i) => (
-            <li key={x.title}>
-              <span className="step-n">{i + 1}</span>
-              <div>
-                <div className="step-title">{x.title}</div>
-                <div className="step-text">{x.text}</div>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </Card>
+      <div className="section-label">What happens next</div>
+      <ol className="steps">
+        {steps.map((x, i) => (
+          <li key={x.title}>
+            <span className="step-n">{String(i + 1).padStart(2, '0')}</span>
+            <div>
+              <div className="step-title">{x.title}</div>
+              <div className="step-text">{x.text}</div>
+            </div>
+          </li>
+        ))}
+      </ol>
       <div className="section-label">Your stats</div>
       <div className="stats stats-ghost">
         <Stat icon={Icon.eye} label="Views" value="—" note="After first post" />
@@ -423,7 +493,7 @@ function Overview({d, range, tg}: {d: Data; range: Range; tg?: TelegramWebApp}) 
         </div>
         {heroData.some((x) => (x[hero.key] ?? 0) > 0) ? (
           <div className="hero-chart">
-            <ResponsiveContainer width="100%" height={128}>
+            <ResponsiveContainer width="100%" height={170}>
               <AreaChart data={heroData} margin={{top: 18, right: 0, left: 0, bottom: 0}}>
                 <defs>
                   <linearGradient id="heroFill" x1="0" y1="0" x2="0" y2="1">
@@ -456,12 +526,12 @@ function Overview({d, range, tg}: {d: Data; range: Range; tg?: TelegramWebApp}) 
         <Stat icon={Icon.film} label="Videos posted" value={String(posted)} note={posted ? `${(posted / Math.max(1, days.length)).toFixed(1)} a day` : 'None in this period'} />
       </div>
 
-      <NextPost d={d} />
+      <NextPost d={d} big />
 
       {top && top.views > 0 && (
         <Card title="Top video" icon={Icon.trend} className="top">
           <button className="top-video" onClick={() => open(top.shareUrl)} aria-label={`${top.topic || top.caption}, ${fmtNum(top.views)} views. Open on TikTok`}>
-            <div className="top-thumb">{top.thumb ? <img src={top.thumb} alt="" loading="lazy" /> : null}</div>
+            <div className="top-thumb">{top.thumb ? <img src={top.thumb} alt="" loading="lazy" /> : null}<span className="top-rank">#1</span></div>
             <div className="top-body">
               <div className="top-title">{top.topic || top.caption}</div>
               <div className="top-meta">
@@ -852,10 +922,10 @@ function Skeleton() {
           </div>
         </div>
       </div>
-      <div className="nav"><div className="sk" style={{height: 44, borderRadius: 12}} /></div>
+
       <div className="range-row"><div className="sk sk-line" style={{width: 110}} /><div className="sk" style={{width: 168, height: 36, borderRadius: 10}} /></div>
       <div className="view">
-      <div className="card hero"><div className="sk sk-line sm" style={{width: 70}} /><div className="sk" style={{width: 150, height: 40, margin: '12px 0'}} /><div className="sk" style={{height: 128}} /></div>
+      <div className="card hero"><div className="sk sk-line sm" style={{width: 70}} /><div className="sk" style={{width: 150, height: 40, margin: '12px 0'}} /><div className="sk" style={{height: 170}} /></div>
       <div className="stats">{[0, 1, 2, 3].map((i) => <div key={i} className="stat"><div className="sk sk-line sm" style={{width: 70}} /><div className="sk" style={{width: 80, height: 26, marginTop: 10}} /><div className="sk" style={{height: 32, marginTop: 16}} /></div>)}</div>
       </div>
     </div>
