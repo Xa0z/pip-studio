@@ -19,7 +19,7 @@ export const K = {
   next: (): Keyboard => [[b('Next ➡️', 'ob:next')]],
   connectTikTok: (url: string): Keyboard => [[{text: '🔗 Connect TikTok', url}]],
   claudeHelp: (owner: boolean): Keyboard => (owner ? [] : [[b('Where do I get this?', 'cl:help')]]),
-  claudeAgain: (): Keyboard => [[b('Paste a new token', 'cl:again')]],
+  claudeAgain: (): Keyboard => [[b('🔑 Connect Claude again', 'cl:again')]],
   niches: (picked: string[]): Keyboard => {
     const rows: Keyboard = [];
     for (let i = 0; i < NICHES.length; i += 2) {

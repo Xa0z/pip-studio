@@ -1,6 +1,6 @@
 /** Shows one of the user's videos in the chat: used by "My videos" in the bot and by the dashboard Library. */
 import {InputFile, type Api} from 'grammy';
-import {redact} from '../lib/redact.js';
+import {claudeAccessProblem, plainReason} from '../lib/reasons.js';
 import {fmtLocal, localParts} from '../lib/schedule.js';
 import type {Store} from '../lib/store.js';
 import type {Keyboard} from '../lib/telegram.js';
@@ -20,7 +20,9 @@ export const STATUS_LABEL: Record<string, string> = {
 };
 export const STATUS_ICON: Record<string, string> = {planned: '🗓', rendering: '⏳', awaiting_approval: '✋', approved: '⏰', publishing: '📤', posted: '✅', skipped: '⏭', failed: '⚠️'};
 
-export const videoTitle = (v: VideoRow) => String(v.plan?.topic || (v.caption ?? '').split('\n')[0] || 'Video').trim();
+/** The topic, else the caption's first line. A video that never got a script (it failed first) says so. */
+export const videoTitle = (v: VideoRow) =>
+  String(v.plan?.topic || (v.caption ?? '').split('\n')[0] || '').trim() || (v.status === 'failed' ? 'Not made (no script)' : v.is_dry_run ? 'Test video' : 'Untitled video');
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 export const shortDay = (at: Date, tz: string) => {
@@ -53,9 +55,9 @@ export async function sendVideoCard(api: Api, chatId: number, store: Store, v: V
       ? `Test video from ${shortDay(new Date(v.created_at), tz)} (never posted)`
       : `For ${shortDay(slot, tz)}, ${fmtLocal(slot, tz)}`;
   const status = v.is_dry_run ? '🧪 Test video' : STATUS_LABEL[v.status] ?? v.status;
-  const caption = T.videoCard({status, title: videoTitle(v), when, views, error: v.status === 'failed' && v.error ? redact(v.error).slice(0, 160) : null});
+  const caption = T.videoCard({status, title: videoTitle(v), when, views, error: v.status === 'failed' && v.error ? `Why: ${plainReason(v.error)}` : null});
   const keyboard: Keyboard =
-    v.status === 'awaiting_approval' ? K.approval(v.id, v.privacy_options ?? [], v.privacy) : v.status === 'failed' && !v.is_dry_run ? K.retry(`retry:${v.id}`) : K.openTikTok(v.share_url);
+    v.status === 'awaiting_approval' ? K.approval(v.id, v.privacy_options ?? [], v.privacy) : v.status === 'failed' ? [...(v.error && claudeAccessProblem(v.error) ? K.claudeAgain() : []), ...(v.is_dry_run ? [] : K.retry(`retry:${v.id}`))] : K.openTikTok(v.share_url);
   const extra = {caption, parse_mode: 'HTML' as const, supports_streaming: true, ...kb(keyboard)};
 
   const fileId: string | undefined = v.plan?.tg_file_id;

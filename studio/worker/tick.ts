@@ -19,7 +19,7 @@ import type {MarketingInput, UserRow, VideoRow} from '../lib/types.js';
 import {ASK_HOUR, briefFor, dayLabel, localDay, nextDay, refIndexForSlot} from '../lib/marketing.js';
 import {redact} from '../lib/redact.js';
 import type {WorkerCtx} from './context.js';
-import {plainReason} from './jobs.js';
+import {claudeAccessProblem, plainReason} from '../lib/reasons.js';
 
 /** Videos are planned this far ahead of their slot, so rendering (10 to 15 min) and approval fit. */
 export const LEAD_MINUTES = 75;
@@ -264,7 +264,7 @@ export async function publishOne(ctx: WorkerCtx, u: UserRow, v: VideoRow): Promi
     const p = localParts(when, s?.timezone ?? 'UTC');
     const label = `${String(p.hour).padStart(2, '0')}:${String(p.minute).padStart(2, '0')}`;
     if (e instanceof TikTokReconnectNeeded) await msg.text(u.id, T.reconnect(), K.connectTikTok(authorizeUrl(signState(u.id))));
-    else await msg.text(u.id, T.failed(label, plainReason(err)), K.retry(`retry:${v.id}`));
+    else await msg.text(u.id, T.failed(label, plainReason(err)), [...(claudeAccessProblem(err) ? K.claudeAgain() : []), ...K.retry(`retry:${v.id}`)]);
     return false;
   } finally {
     fs.rmSync(tmp, {recursive: true, force: true});

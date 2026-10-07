@@ -160,6 +160,27 @@ describe('my videos and posting mode', () => {
     expect(h.lastBot()!.text).toMatch(/🏠/);
   });
 
+  it('explains in plain words why a video was not made', async () => {
+    h = new Harness({userId: OWNER, ownerId: OWNER, now: () => new Date('2026-10-05T07:00:00Z')});
+    await runOnboarding(h);
+    const v = await h.store.insertVideo({
+      user_id: OWNER,
+      slot_at: '2026-10-05T07:00:00Z',
+      is_dry_run: true,
+      status: 'failed',
+      plan: {},
+      error: 'Claude Code error: Your organization has disabled Claude subscription access for Claude Code · Use an Anthropic API key instead, or ask your admin to enable it',
+    });
+    await h.say('/videos');
+    expect(h.lastBot()!.buttons!.flat().map((b) => b.text).join('\n')).toMatch(/Not made \(no script\)/);
+    await h.press(`vd:show:${v.id}`);
+    const card = h.lastBot()!;
+    expect(card.text).toMatch(/Not made \(no script\)/);
+    expect(card.text).toMatch(/Why: Anthropic no longer lets this Claude login run Claude Code/);
+    expect(card.text).not.toMatch(/Claude Code error|organization has disabled/);
+    expect(card.buttons!.flat().map((b) => b.callback_data)).toContain('cl:again');
+  });
+
   it('keeps full auto for the owner until it is allowed for everyone', async () => {
     h = new Harness({userId: USER, ownerId: OWNER, now: () => new Date('2026-10-05T07:00:00Z')});
     await runOnboarding(h, {claudeSecret: 'sk-ant-api03-' + 'k'.repeat(80)});

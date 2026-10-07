@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {afterEach, describe, expect, it} from 'vitest';
 import {FakeTikTok} from '../studio/dev/fake-tiktok';
-import {plainReason} from '../studio/worker/jobs';
+import {claudeAccessProblem, plainReason} from '../studio/lib/reasons';
 import {chunkPlan, publishVideo} from '../src/publish';
 
 const MB = 1024 * 1024;
@@ -53,5 +53,13 @@ describe('TikTok upload', () => {
     expect(plainReason('TikTok publish failed: file_format_check_failed')).toMatch(/could not read the video file/);
     expect(plainReason('TikTok post init: some_new_code oops')).toBe('TikTok refused the upload. (TikTok said: some_new_code) I will try again if you tap Retry.');
     expect(plainReason('TikTok chunk 1 upload: HTTP 400 bad')).toMatch(/^TikTok refused the upload/);
+    expect(plainReason('TikTok post init: HTTP 401 access_token_invalid')).toMatch(/Connect TikTok again/);
+    expect(claudeAccessProblem('TikTok post init: HTTP 401 access_token_invalid')).toBe(false);
+  });
+
+  it('explains a Claude login that Anthropic turned off', () => {
+    const err = 'Claude Code error: Your organization has disabled Claude subscription access for Claude Code · Use an Anthropic API key instead, or ask your admin to enable it';
+    expect(plainReason(err)).toMatch(/personal Pro or Max plan, or with an API key/);
+    expect(claudeAccessProblem(err)).toBe(true);
   });
 });

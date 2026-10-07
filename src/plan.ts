@@ -108,7 +108,7 @@ export async function viaClaudeCode(prompt: string, system = SYSTEM, oauthToken?
   } catch {
     throw new Error(`Claude Code returned non-JSON output: ${out.slice(0, 300)}`);
   }
-  if (res.is_error || typeof res.result !== 'string') throw new Error(`Claude Code error: ${res.subtype ?? ''} ${String(res.result ?? '').slice(0, 300)}`);
+  if (res.is_error || typeof res.result !== 'string') throw new Error(`Claude Code error${res.subtype && res.subtype !== 'success' ? ` (${res.subtype})` : ''}: ${String(res.result ?? '').slice(0, 300)}`);
   return res.result;
 }
 

@@ -586,7 +586,7 @@ function Library({d, tg}: {d: Data; tg?: TelegramWebApp}) {
     v.playable ? setPlaying({id: v.id, title: v.topic || v.caption, label: `${postedDate(v.postedAt, d.timezone)} · ${fmtNum(v.views)} views`, shareUrl: v.shareUrl, unposted: null}) : open(v.shareUrl);
   const playUnposted = (v: Unposted) =>
     v.playable
-      ? setPlaying({id: v.id, title: v.topic || v.caption || 'Video', label: `${postedDate(v.at, d.timezone)} · ${v.test ? 'Test video' : UNPOSTED_LABEL[v.status] ?? v.status}`, shareUrl: null, unposted: v})
+      ? setPlaying({id: v.id, title: v.topic || v.caption || (v.test ? 'Test video' : 'Untitled video'), label: `${postedDate(v.at, d.timezone)} · ${v.test ? 'Test video' : UNPOSTED_LABEL[v.status] ?? v.status}`, shareUrl: null, unposted: v})
       : sendToChat(v);
   const sendToChat = async (v: Unposted) => {
     if (v.status === 'rendering') return setToast('This video is still being made.');
@@ -657,7 +657,7 @@ function Library({d, tg}: {d: Data; tg?: TelegramWebApp}) {
               </div>
             </button>
           ) : (
-            <button key={it.v.id} className="clip clip-unposted" onClick={() => playUnposted(it.v)} aria-label={`${it.v.topic || it.v.caption || 'Video'}, ${it.v.test ? 'test video' : UNPOSTED_LABEL[it.v.status] ?? it.v.status}. Play`}>
+            <button key={it.v.id} className="clip clip-unposted" onClick={() => playUnposted(it.v)} aria-label={`${it.v.topic || it.v.caption || (it.v.test ? 'Test video' : 'Untitled video')}, ${it.v.test ? 'test video' : UNPOSTED_LABEL[it.v.status] ?? it.v.status}. Play`}>
               <div className="frame">
                 {it.v.thumb ? <img src={it.v.thumb} alt="" loading="lazy" /> : null}
                 <div className="frame-tags">
@@ -666,7 +666,7 @@ function Library({d, tg}: {d: Data; tg?: TelegramWebApp}) {
                 <span className="frame-views">{it.v.playable ? <>{Icon.play}Play</> : <>{Icon.send}Watch in chat</>}</span>
               </div>
               <div className="clip-body">
-                <span className="clip-title">{it.v.topic || it.v.caption || 'Video'}</span>
+                <span className="clip-title">{it.v.topic || it.v.caption || (it.v.test ? 'Test video' : 'Untitled video')}</span>
                 <span className="clip-meta">
                   <span>{postedDate(it.v.at, d.timezone)}</span>
                   <span>Not on TikTok</span>

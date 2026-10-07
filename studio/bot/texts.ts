@@ -28,7 +28,7 @@ export const T = {
 
   // Step 2
   connectClaudeOwner: () =>
-    `${progress(2)}\n\nNow connect Claude. It writes your scripts.\n\nOn your computer run:\n<code>claude setup-token</code>\n\nThen paste the token here. I'll delete your message right away.`,
+    `${progress(2)}\n\nNow connect Claude. It writes your scripts.\n\nOn your computer run:\n<code>claude setup-token</code>\n\nThen paste the token here. I'll delete your message right away.\n\nUse a personal Claude Pro or Max login: work or team accounts can have Claude Code turned off. An Anthropic API key (<code>sk-ant-api…</code>) works too.`,
   connectClaudeUser: () =>
     `${progress(2)}\n\nNow connect Claude. It writes your scripts.\n\nYou need your own Anthropic API key:\n1. Go to <b>console.anthropic.com</b> and sign in\n2. Open <b>Settings → API keys → Create key</b>\n3. Paste it here. I'll delete your message right away.\n\nHeads up: API use is billed by Anthropic to you. One video is usually a few cents.`,
   claudeGuide: () =>
