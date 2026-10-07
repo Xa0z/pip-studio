@@ -1,6 +1,7 @@
 /**
  * Renders still frames of one fixture in several video styles, to eyeball the variety.
  *   npx tsx studio/dev/style-stills.ts [outDir] [count] [theme]
+ * theme: a preset id, or auto:<seed> for per-user colours (each style row gets the next seed).
  * Writes <outDir>/style<N>-<scene>.png. Needs Chromium (REMOTION_BROWSER_EXECUTABLE).
  */
 import fs from 'node:fs';
@@ -42,7 +43,7 @@ const browserExecutable = process.env.REMOTION_BROWSER_EXECUTABLE || null;
 const chromiumOptions = {ignoreCertificateErrors: !!process.env.STILLS_IGNORE_CERTS};
 const shots = [0, 1, 2, 3, 4, 5, 8]; // hook, bigNumber, orbit, compare, spotlight, steps, recap
 for (const [k, style] of styles.entries()) {
-  const props: VideoProps = {episode: 1, title: 'Space #1', scenes, words, voiceFile: null, musicFile: null, theme: resolveTheme(PRESET_IDS.includes(themeId) ? {preset: themeId} : null), style};
+  const props: VideoProps = {episode: 1, title: 'Space #1', scenes, words, voiceFile: null, musicFile: null, theme: resolveTheme(themeId.startsWith('auto:') ? {preset: 'auto', seed: Number(themeId.slice(5)) + k} : PRESET_IDS.includes(themeId) ? {preset: themeId} : null), style};
   const composition = await selectComposition({serveUrl, id: 'PipVideo', inputProps: props, browserExecutable, chromiumOptions});
   console.log(`style ${k + 1}: ${styleLabel(style)} ${JSON.stringify(style)}`);
   for (const i of shots) {

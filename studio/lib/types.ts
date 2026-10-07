@@ -45,6 +45,10 @@ export type OnboardingData = {
   mode?: Mode;
   /** The look of this user's videos. Missing = Sage. */
   video_theme?: ThemeChoice;
+  /** Typing brand colours (2 or 3) instead of the plain 2-colour custom theme. */
+  theme_brand?: boolean;
+  /** Colours found in a logo, waiting for the user's OK. */
+  theme_draft?: ThemeChoice | null;
   /** Set when a change comes from /settings instead of first-time onboarding. */
   editing?: 'niche' | 'goal' | 'schedule' | 'mode' | 'character' | 'theme' | 'business' | null;
   /** Explainer (default) or marketing videos. */

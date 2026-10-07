@@ -27,7 +27,8 @@ import type {TikTokUser} from '../lib/tiktok.js';
 import type {JobKind, OnboardingData, SettingsRow, UserRow, VideoRow} from '../lib/types.js';
 import {K} from './keyboards.js';
 import {esc, T} from './texts.js';
-import {parseCustomTheme, PRESETS, themeLabel, type PresetId, type ThemeChoice} from '../../src/themes.js';
+import {autoThemeName, brandFromPixels, defaultThemeFor, parseCustomTheme, PRESETS, themeLabel, type PresetId, type ThemeChoice} from '../../src/themes.js';
+import jpeg from 'jpeg-js';
 
 export type BotDeps = {
   token: string;
@@ -132,7 +133,7 @@ export function createBot(deps: BotDeps) {
         goal: d.goal ?? 'views',
         character: d.has_character ? d.character_name ?? 'your character' : null,
         voice: voiceName(voice),
-        theme: themeLabel(d.video_theme),
+        theme: themeLabel(d.video_theme ?? defaultThemeFor(u.id, isOwner(u))),
         times: d.post_times ?? [],
         tz: d.timezone ?? 'UTC',
         mode: d.mode ?? 'approval',
@@ -530,8 +531,10 @@ export function createBot(deps: BotDeps) {
 
   // ---------- video theme (part of step 5) ----------
   const showTheme = async (ctx: Context, u: UserRow) => {
-    const current = data(u).video_theme?.preset;
-    const caption = T.askTheme();
+    const own = defaultThemeFor(u.id, isOwner(u));
+    const chosen = data(u).video_theme;
+    const current = chosen ? (chosen.preset === 'custom' && chosen.brand ? 'brand' : chosen.preset) : own.preset;
+    const caption = T.askTheme(own.preset === 'auto' ? autoThemeName(own.seed) : null);
     await ctx
       .replyWithPhoto(`${deps.baseUrl}/themes/presets.png`, {caption, parse_mode: 'HTML', ...kb(K.themes(current))})
       .catch(() => ctx.reply(caption, html(K.themes(current))));
@@ -540,23 +543,44 @@ export function createBot(deps: BotDeps) {
     await ctx.answerCallbackQuery();
     let u = await getOrCreate(ctx);
     const id = ctx.match[1];
-    if (id === 'custom') {
-      await patch(u, {awaiting: 'theme_colors'});
-      return ctx.reply(T.typeTheme(), html());
+    if (id === 'custom' || id === 'brand') {
+      await patch(u, {awaiting: 'theme_colors', theme_brand: id === 'brand', theme_draft: null});
+      return ctx.reply(id === 'brand' ? T.askBrand() : T.typeTheme(), html());
     }
-    if (!(id in PRESETS)) return;
+    let choice: ThemeChoice;
+    if (id === 'usebrand') {
+      const draft = data(u).theme_draft;
+      if (!draft) return;
+      choice = draft;
+    } else if (id === 'auto') choice = {preset: 'auto', seed: u.id};
+    else if (id in PRESETS) choice = {preset: id as PresetId};
+    else return;
     await ctx.editMessageReplyMarkup({reply_markup: {inline_keyboard: []}}).catch(() => undefined);
-    const choice: ThemeChoice = {preset: id as PresetId};
     await ctx.reply(T.themeSaved(themeLabel(choice)), html());
-    u = await patch(u, {video_theme: choice, awaiting: null});
+    u = await patch(u, {video_theme: choice, awaiting: null, theme_draft: null});
     await advance(ctx, u, 'theme');
   });
   const onThemeColors = async (ctx: Context, u: UserRow, text: string) => {
-    const r = parseCustomTheme(text);
+    const r = parseCustomTheme(text, {brand: !!data(u).theme_brand});
     if (!r.ok) return ctx.reply(T.themeBad(r.error), html());
     await ctx.reply(T.themeSaved(themeLabel(r.choice)), html());
-    u = await patch(u, {video_theme: r.choice, awaiting: null});
+    u = await patch(u, {video_theme: r.choice, awaiting: null, theme_draft: null});
     await advance(ctx, u, 'theme');
+  };
+  /** A logo photo while we wait for theme colours: pick the brand colours from it. */
+  const onLogo = async (ctx: Context, u: UserRow, sizes: {file_id: string; width: number; height: number}[]) => {
+    // A small copy is plenty for colours (and quick to decode).
+    const pick = [...sizes].sort((a, b) => a.width - b.width).find((p) => p.width >= 200) ?? sizes.at(-1)!;
+    let choice: ThemeChoice | null = null;
+    try {
+      const img = jpeg.decode(await downloadFile(pick.file_id), {useTArray: true, maxResolutionInMP: 4, maxMemoryUsageInMB: 64});
+      choice = brandFromPixels(img.data);
+    } catch (e) {
+      console.warn('Could not read logo:', redact((e as Error).message));
+    }
+    if (!choice || choice.preset !== 'custom') return ctx.reply(T.brandNone(), html());
+    await patch(u, {theme_draft: choice});
+    return ctx.reply(T.brandFound([choice.bg, choice.accent, choice.accent2].filter(Boolean).join(', ')), html(K.brandFound()));
   };
 
   // ---------- summary ----------
@@ -1196,6 +1220,7 @@ export function createBot(deps: BotDeps) {
   });
   bot.on('message:photo', async (ctx) => {
     const u = await getOrCreate(ctx);
+    if (data(u).awaiting === 'theme_colors') return onLogo(ctx, u, ctx.message.photo);
     if (data(u).awaiting === 'knowledge') return ctx.reply(T.knowledgePhoto(), html(K.knowledgeDone()));
     if (!onboarded(u)) return showStep(ctx, u);
     return showHome(ctx, u);

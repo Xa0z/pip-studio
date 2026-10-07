@@ -316,6 +316,28 @@ export class Harness {
     return id;
   }
 
+  /** The user sends a photo (e.g. their logo). Telegram sends a few sizes; we give two. */
+  async sendPhoto(fileId: string, bytes: Buffer, width = 400, height = 400) {
+    this.refFiles.set(fileId, bytes);
+    const id = this.nextId++;
+    this.chat.push({id, from: 'user', kind: 'photo', text: `(photo ${fileId})`});
+    const update = {
+      update_id: this.updateId++,
+      message: {
+        message_id: id,
+        date: Math.floor(Date.now() / 1000),
+        chat: {id: this.userId, type: 'private', first_name: 'User'},
+        from: this.from(),
+        photo: [
+          {file_id: `${fileId}-thumb`, file_unique_id: `u-${fileId}-t`, width: 90, height: 90},
+          {file_id: fileId, file_unique_id: `u-${fileId}`, width, height, file_size: bytes.length},
+        ],
+      },
+    } as unknown as Update;
+    await this.bot.handleUpdate(update);
+    return id;
+  }
+
   /** Finds the newest bot message with a button for this callback data. */
   findButton(data: string | RegExp) {
     const match = (b: Button) => (typeof data === 'string' ? b.callback_data === data : !!b.callback_data && data.test(b.callback_data));

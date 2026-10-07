@@ -90,14 +90,18 @@ export const T = {
     `⚡ Full auto is only for the owner until TikTok approves this app (their rules say each post needs your OK). I set <b>Approval mode</b> for now.`,
   summary: (s: {username: string; niches: string[]; goal: Goal; character: string | null; voice: string; theme: string; times: string[]; tz: string; mode: Mode; link?: string}) =>
     `📋 <b>Here's your channel:</b>\nTikTok: @${esc(s.username)}\nNiche: ${s.niches.map((p) => esc(nicheLabel(p))).join(', ')}\nGoal: ${GOALS[s.goal].emoji} ${GOALS[s.goal].label}${s.link ? ` (${esc(s.link)})` : ''}\nCharacter: ${s.character ? esc(s.character) : 'none'} · Voice: ${esc(s.voice)}\nTheme: ${esc(s.theme)}\nPosts: ${s.times.length}/day at ${s.times.join(', ')} (${esc(s.tz)})\nMode: ${s.mode === 'approval' ? '✋ Approval' : '⚡ Full auto'}`,
-  askTheme: () =>
-    `🎨 <b>Pick a look for your videos.</b>\nThis sets the background, text and highlight colours. You can change it any time in /settings.`,
+  askTheme: (own: string | null) =>
+    `🎨 <b>Pick a look for your videos.</b>\nThis sets the background, text and highlight colours. ${own ? `If you skip this, you get colours made just for you (<b>${esc(own)}</b>), so your videos don't look like anyone else's. ` : ''}Use your brand colours or logo to match your business. You can change it any time in /settings.`,
+  askBrand: () =>
+    `🏷 <b>Your brand colours</b>\n\nSend your <b>logo as a photo</b> and I'll pick the colours from it.\n\nOr type 2 or 3 colours: <b>background</b>, <b>main colour</b>, and an optional <b>second colour</b>. Like this:\n<code>#FFF8F0 #D2462E #2E5E8C</code>`,
+  brandFound: (label: string) => `🎨 From your logo I got: <b>${esc(label)}</b>\n(background, main colour${label.split(',').length > 2 ? ', second colour' : ''})\nUse these?`,
+  brandNone: () => `I couldn't find clear colours in that logo (it may be black and white). Type your colours instead, like <code>#FFF8F0 #D2462E</code>.`,
   typeTheme: () =>
     `✏️ Send two colours: the <b>background</b> first, then the <b>highlight</b>. Like this:\n<code>#F2E8DC #A84F2C</code>`,
   themeBad: (why: string) =>
     why === 'contrast'
       ? `Those two colours are too close, so highlights would be hard to see. Pick a darker or lighter highlight and send both again.`
-      : `I need two colours like <code>#F2E8DC #A84F2C</code> (background first, then highlight). Try again.`,
+      : `I need colours like <code>#F2E8DC #A84F2C</code> (background first, then highlight). Try again.`,
   themeSaved: (label: string) => `🎨 Video theme: <b>${esc(label)}</b>`,
   starting: () => `🎬 Making your first test video. It won't be posted. I'll send it here in a few minutes.`,
   dryRunReady: (firstPost: string) => `Here's your first video! This is a test, it was <b>not</b> posted.\nYour first real post is <b>${esc(firstPost)}</b>.`,

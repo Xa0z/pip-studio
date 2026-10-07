@@ -57,9 +57,11 @@ export const K = {
     const rows: Keyboard = [];
     for (let i = 0; i < PRESET_IDS.length; i += 3)
       rows.push(PRESET_IDS.slice(i, i + 3).map((id, j) => b(`${current === id ? '✅ ' : ''}${i + j + 1}. ${PRESETS[id].label}`, `th:${id}`)));
-    rows.push([b(`${current === 'custom' ? '✅ ' : ''}🎨 My own colours`, 'th:custom')]);
+    rows.push([b(`${current === 'auto' ? '✅ ' : ''}✨ Colours made just for me`, 'th:auto')]);
+    rows.push([b(`${current === 'brand' ? '✅ ' : ''}🏷 My brand colours or logo`, 'th:brand'), b(`${current === 'custom' ? '✅ ' : ''}🎨 Pick 2 colours`, 'th:custom')]);
     return rows;
   },
+  brandFound: (): Keyboard => [[b('✅ Use these', 'th:usebrand'), b('✏️ Type them instead', 'th:brand')]],
   summary: (): Keyboard => [[b('🚀 Start my channel', 'sum:start')], [b('✏️ Change something', 'sum:edit')]],
   editPick: (): Keyboard => [
     [b('Niche', 'ed:niche'), b('Goal', 'ed:goal')],

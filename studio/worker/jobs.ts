@@ -19,7 +19,7 @@ import {esc, T} from '../bot/texts.js';
 import {loadAnalytics, videoStats} from '../lib/analytics.js';
 import {aadFor, decryptSecret} from '../lib/crypto.js';
 import {ctaLabel, GOALS, goalScore, pickLength} from '../lib/goals.js';
-import {isThemeChoice, resolveTheme} from '../../src/themes.js';
+import {defaultThemeFor, isThemeChoice, resolveTheme} from '../../src/themes.js';
 import {nextNiche, nicheById} from '../lib/niches.js';
 import {findPatterns, isExperiment, plannerHints} from '../lib/patterns.js';
 import {sceneRange, type StudioPlan} from '../lib/plan-schema.js';
@@ -233,7 +233,7 @@ async function prepareVideo(ctx: WorkerCtx, job: JobRow) {
     totalFrames: spec.totalFrames,
     character: key,
     ctaLabel: ctaLabel(cta, name),
-    theme: resolveTheme(isThemeChoice(u.onboarding_data?.video_theme) ? u.onboarding_data.video_theme : null),
+    theme: resolveTheme(isThemeChoice(u.onboarding_data?.video_theme) ? u.onboarding_data.video_theme : defaultThemeFor(u.id, u.is_owner || u.id === ctx.ownerId)),
     style,
   };
   const features = featuresFor(plan, new Date(v.slot_at), s.timezone, seconds, cta, niche);
