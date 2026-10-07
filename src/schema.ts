@@ -1,5 +1,6 @@
 import {z} from 'zod';
 import type {VideoTheme} from './themes';
+import type {VideoStyle} from './styles';
 
 export const CATEGORIES = ['space', 'human_body', 'animals', 'nature', 'physics'] as const;
 export type Category = (typeof CATEGORIES)[number];
@@ -160,6 +161,8 @@ export type VideoProps = {
   ctaLabel?: string;
   /** Full colour palette from the user's video theme (src/themes.ts). Default: Sage. */
   theme?: VideoTheme;
+  /** Backdrop, text motion, cuts, opening, captions and 2D/3D visuals (src/styles.ts). Default: the classic look. */
+  style?: Partial<VideoStyle>;
   /** Play the cut whooshes and the button pop. Set by the renderer when assets/sfx is copied in. */
   sfx?: boolean;
 };

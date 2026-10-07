@@ -10,7 +10,7 @@ export type JobKind = 'render' | 'dry_run' | 'character_preview' | 'voice_sample
 export type JobStatus = 'queued' | 'running' | 'done' | 'failed';
 
 /** What the bot waits for when the user types text instead of tapping. */
-export type Awaiting = 'claude_secret' | 'custom_niche' | 'link_url' | 'description' | 'timezone' | 'times' | 'theme_colors' | 'business_info' | 'ref_videos' | 'ref_notes' | null;
+export type Awaiting = 'claude_secret' | 'custom_niche' | 'link_url' | 'description' | 'timezone' | 'times' | 'theme_colors' | 'business_info' | 'ref_videos' | 'ref_notes' | 'knowledge' | null;
 
 /** What kind of videos a user gets: daily explainers about their niches, or marketing videos for their business. */
 export type ContentMode = 'explainer' | 'marketing';
@@ -23,6 +23,9 @@ export type MarketingBrief = {day: string; refs: RefVideo[]; notes: string; crea
 
 /** What a marketing video is based on. Saved on the video row (plan.marketing) so a regenerate keeps it. */
 export type MarketingInput = {business: string; ref: RefVideo; notes: string; day: string; index: number};
+
+/** One piece of business knowledge: a typed note, a file the user sent, or their website. */
+export type KnowledgeItem = {id: string; kind: 'note' | 'file' | 'link'; title: string; text: string; added_at: string};
 
 export type OnboardingData = {
   awaiting?: Awaiting;
@@ -48,6 +51,10 @@ export type OnboardingData = {
   content_mode?: ContentMode;
   /** The user's own words about their business: name, what they sell, who for, offer, link. */
   business?: string;
+  /** Extra business knowledge (notes, files, website text) that scripts read. */
+  knowledge?: KnowledgeItem[];
+  /** Also use the business knowledge in explainer videos (topics for that audience, a brand mention in the CTA). */
+  knowledge_in_explainers?: boolean;
   /** References being collected right now (before the notes come in). */
   ref_draft?: RefVideo[];
   /** Saved briefs, newest last (we keep the last few). */

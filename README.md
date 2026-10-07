@@ -165,7 +165,15 @@ to you. Nothing is posted until the first real slot, and in Approval mode only a
 ## Commands
 `/start` setup or continue · `/stats` today + 30-day chart · `/top` best videos · `/report` weekly report ·
 `/dashboard` Mini App · `/settings` change niche, goal, schedule, mode, or make a new character
-(the old one is kept) · `/pause` · `/resume` · `/disconnect` revokes TikTok and deletes all your data.
+(the old one is kept) · `/marketing` videos for a business · `/knowledge` business notes, files (PDF, Word, TXT, CSV)
+and website pages that scripts read · `/pause` · `/resume` · `/disconnect` revokes TikTok and deletes all your data.
+
+## Video variety
+Every video keeps the user's theme colours, but code picks a new style for each one (src/styles.ts): backdrop,
+headline motion, cut family, opening scene, captions, character corner, and 2D or 3D visuals. The opening, cuts,
+backdrop and headline motion never repeat back to back. 3D scenes use @remotion/three (Three.js) for bars, orbits
+and coin stacks, and CSS perspective for tiles and steps; they render on GitHub Actions like everything else.
+Preview several styles with `STILLS_IGNORE_CERTS=1 npx tsx studio/dev/style-stills.ts out/styles 4`.
 
 ## Analytics
 - Account snapshot every 6 hours; video snapshots at 1 h, 6 h, 24 h, 3 days, 7 days, then daily to day 30. Never deleted.

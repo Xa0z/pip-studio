@@ -18,6 +18,7 @@ import {MIN_VIDEOS_FOR_PATTERNS} from '../lib/patterns.js';
 import {COMMON_TIMEZONES, fmtLocal, localParts, parseTimes, parseTimezone, slotsBetween, suggestTimes} from '../lib/schedule.js';
 import {sendVideoCard, shortDay, STATUS_ICON, videoTitle} from './show-video.js';
 import {addBrief, checkRef, dayLabel, linkFrom, localDay, nextDay, REFS_PER_DAY} from '../lib/marketing.js';
+import {addKnowledge, fetchPage as realFetchPage, fileKind, fileToText, MAX_FILE_BYTES, MAX_TOTAL_CHARS, noteTitle, onlyLink, removeKnowledge, safeUrl, totalChars} from '../lib/knowledge.js';
 import {signState} from '../lib/state.js';
 import type {Store} from '../lib/store.js';
 import type {ChartInput} from '../lib/charts.js';
@@ -41,6 +42,10 @@ export type BotDeps = {
   statsChart?: (input: ChartInput) => Promise<Buffer>;
   revokeTikTok?: (userId: number) => Promise<void>;
   botInfo?: UserFromGetMe;
+  /** Downloads a file a user sent (default: Telegram's file API with the bot token). */
+  downloadFile?: (fileId: string) => Promise<Uint8Array>;
+  /** Reads a public web page for business knowledge. */
+  fetchPage?: (url: URL) => Promise<{title: string; text: string}>;
   /** Lets the owner allow Full auto for everyone after TikTok's audit. */
   allowAutoForAll?: boolean;
   now?: () => Date;
@@ -56,6 +61,16 @@ export function createBot(deps: BotDeps) {
   const now = deps.now ?? (() => new Date());
   const bot = new Bot(deps.token, deps.botInfo ? {botInfo: deps.botInfo} : {});
   const testKey = deps.testApiKey ?? realTestApiKey;
+  const readPage = deps.fetchPage ?? ((url: URL) => realFetchPage(url));
+  const downloadFile =
+    deps.downloadFile ??
+    (async (fileId: string) => {
+      const f = await bot.api.getFile(fileId);
+      if (!f.file_path) throw new Error('Telegram gave no file path');
+      const res = await fetch(`https://api.telegram.org/file/bot${deps.token}/${f.file_path}`, {signal: AbortSignal.timeout(15000)});
+      if (!res.ok) throw new Error(`download failed (${res.status})`);
+      return new Uint8Array(await res.arrayBuffer());
+    });
 
   // ---------- helpers ----------
   const getOrCreate = async (ctx: Context): Promise<UserRow> => {
@@ -974,7 +989,7 @@ export function createBot(deps: BotDeps) {
       goal: link ? 'traffic' : 'followers',
       niches: d.niches?.length ? d.niches : ['custom:Marketing'],
     });
-    await ctx.reply(T.businessSaved(link), html());
+    await ctx.reply(`${T.businessSaved(link)}\n\n${T.knowledgeHint()}`, html());
     if (!onboarded(u)) return advance(ctx, u, 'goal');
     // Already set up: switch to 3 posts a day and ask for the first references.
     const cur = await store.getSettings(u.id);
@@ -1020,8 +1035,12 @@ export function createBot(deps: BotDeps) {
   bot.on('message:video', (ctx) => onRefVideo(ctx, ctx.message.video));
   bot.on('message:document', async (ctx) => {
     const doc = ctx.message.document;
-    if (!doc.mime_type?.startsWith('video/')) return ctx.reply(T.refBad('not_video'));
-    return onRefVideo(ctx, {...doc, duration: 0});
+    if (doc.mime_type?.startsWith('video/')) return onRefVideo(ctx, {...doc, duration: 0});
+    // Any other file is business knowledge (a menu, a price list, a brochure).
+    const u = await getOrCreate(ctx);
+    if (data(u).awaiting === 'ref_videos') return ctx.reply(T.refBad('not_video'));
+    if (!onboarded(u) && data(u).awaiting !== 'knowledge') return showStep(ctx, u);
+    return onKnowledgeFile(ctx, u, doc);
   });
   bot.on('message:animation', (ctx) => onRefVideo(ctx, ctx.message.animation));
 
@@ -1069,6 +1088,119 @@ export function createBot(deps: BotDeps) {
     return showNiche(ctx, u);
   });
 
+
+  // ---------- business knowledge ----------
+  const showKnowledge = async (ctx: Context, u: UserRow) => {
+    const d = data(u);
+    const items = d.knowledge ?? [];
+    const marketing = d.content_mode === 'marketing';
+    await ctx.reply(
+      T.knowledgeMenu({
+        items: items.map((i) => ({kind: i.kind, title: i.title, chars: i.text.length})),
+        summary: d.business ?? null,
+        total: totalChars(items),
+        max: MAX_TOTAL_CHARS,
+        marketing,
+        useInExplainers: !!d.knowledge_in_explainers,
+      }),
+      html(K.knowledgeMenu(items.length, !marketing, !!d.knowledge_in_explainers)),
+    );
+  };
+  const askKnowledge = async (ctx: Context, u: UserRow) => {
+    await patch(u, {awaiting: 'knowledge'});
+    await ctx.reply(T.askKnowledge(), html(K.knowledgeDone()));
+  };
+  const saveKnowledge = async (ctx: Context, u: UserRow, item: {kind: 'note' | 'file' | 'link'; title: string; text: string}) => {
+    // Re-read: files can take a few seconds, and the user may have sent more meanwhile.
+    const fresh = (await store.getUser(u.id)) ?? u;
+    const r = addKnowledge(data(fresh).knowledge, {...item, id: crypto.randomUUID().slice(0, 8), added_at: now().toISOString()});
+    if (!r.ok) return ctx.reply(T.knowledgeBad(r.why), html(r.why === 'full' ? K.knowledgeDone() : undefined));
+    await patch(fresh, {knowledge: r.items});
+    return ctx.reply(T.knowledgeAdded(r.item.title, r.item.text.length, r.trimmed), html(K.knowledgeDone()));
+  };
+  const onKnowledgeText = async (ctx: Context, u: UserRow, text: string) => {
+    const link = onlyLink(text);
+    if (!link) return saveKnowledge(ctx, u, {kind: 'note', title: noteTitle(text), text});
+    const url = safeUrl(link);
+    if (!url) return ctx.reply(T.knowledgeBad('link'), html(K.knowledgeDone()));
+    await ctx.reply(T.knowledgeReading(url.hostname));
+    try {
+      const page = await readPage(url);
+      const title = `${url.hostname}${url.pathname !== '/' ? url.pathname : ''}`;
+      return saveKnowledge(ctx, u, {kind: 'link', title, text: page.title && !page.text.startsWith(page.title) ? `${page.title}\n${page.text}` : page.text});
+    } catch (e) {
+      return ctx.reply(T.knowledgeBad('link', redact((e as Error).message).slice(0, 80)), html(K.knowledgeDone()));
+    }
+  };
+  const onKnowledgeFile = async (ctx: Context, u: UserRow, doc: {file_id: string; file_name?: string; mime_type?: string; file_size?: number}) => {
+    const kind = fileKind(doc.mime_type, doc.file_name);
+    if (!kind) return ctx.reply(T.knowledgeBad('type'), html(K.knowledgeDone()));
+    if ((doc.file_size ?? 0) > MAX_FILE_BYTES) return ctx.reply(T.knowledgeBad('big'), html(K.knowledgeDone()));
+    const name = doc.file_name ?? 'file';
+    await ctx.reply(T.knowledgeReading(name));
+    let text: string;
+    try {
+      const buf = await downloadFile(doc.file_id);
+      if (buf.length > MAX_FILE_BYTES) return ctx.reply(T.knowledgeBad('big'), html(K.knowledgeDone()));
+      text = await fileToText(buf, kind);
+    } catch (e) {
+      return ctx.reply(T.knowledgeBad('read', redact((e as Error).message).slice(0, 80)), html(K.knowledgeDone()));
+    }
+    if (text.length < 3) return ctx.reply(T.knowledgeBad('empty'), html(K.knowledgeDone()));
+    return saveKnowledge(ctx, u, {kind: 'file', title: name, text});
+  };
+
+  bot.command('knowledge', async (ctx) => {
+    const u = await getOrCreate(ctx);
+    if (!onboarded(u) && data(u).content_mode !== 'marketing') return showStep(ctx, u);
+    return showKnowledge(ctx, u);
+  });
+  bot.callbackQuery(/^kn:(menu|add|done|rm|clear|clear:yes|explainers|del:([\w-]+))$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    let u = await getOrCreate(ctx);
+    const d = data(u);
+    const what = ctx.match[1];
+    if (what === 'menu') return showKnowledge(ctx, u);
+    if (what === 'add') return askKnowledge(ctx, u);
+    await ctx.editMessageReplyMarkup({reply_markup: {inline_keyboard: []}}).catch(() => undefined);
+    if (what === 'done') {
+      if (d.awaiting === 'knowledge') u = await patch(u, {awaiting: null});
+      await ctx.reply(T.knowledgeDone((d.knowledge ?? []).length + (d.business ? 1 : 0)));
+      return onboarded(u) ? showKnowledge(ctx, u) : showStep(ctx, u);
+    }
+    if (what === 'rm') {
+      const items = d.knowledge ?? [];
+      if (!items.length) return showKnowledge(ctx, u);
+      return ctx.reply('Which one should I remove?', html(K.knowledgeRemove(items.map((i) => ({id: i.id, label: cut(i.title, 40)})))));
+    }
+    if (what === 'clear') return ctx.reply('Remove all your business knowledge (files, notes and website)?', html(K.knowledgeClear()));
+    if (what === 'clear:yes') {
+      u = await patch(u, {knowledge: []});
+      await ctx.reply(T.knowledgeCleared());
+      return showKnowledge(ctx, u);
+    }
+    if (what === 'explainers') {
+      const on = !d.knowledge_in_explainers;
+      u = await patch(u, {knowledge_in_explainers: on});
+      await ctx.reply(T.knowledgeExplainers(on));
+      if (on && !(d.knowledge ?? []).length && !d.business) return askKnowledge(ctx, u);
+      return showKnowledge(ctx, u);
+    }
+    const id = ctx.match[2]!;
+    const item = (d.knowledge ?? []).find((i) => i.id === id);
+    if (item) {
+      u = await patch(u, {knowledge: removeKnowledge(d.knowledge, id)});
+      await ctx.reply(T.knowledgeRemoved(item.title));
+    }
+    return showKnowledge(ctx, u);
+  });
+  bot.on('message:photo', async (ctx) => {
+    const u = await getOrCreate(ctx);
+    if (data(u).awaiting === 'knowledge') return ctx.reply(T.knowledgePhoto(), html(K.knowledgeDone()));
+    if (!onboarded(u)) return showStep(ctx, u);
+    return showHome(ctx, u);
+  });
+
   // ---------- typed text ----------
   bot.on('message:text', async (ctx) => {
     if (ctx.message.text.startsWith('/')) return ctx.reply(T.unknownCommand(), html(K.backHome()));
@@ -1100,6 +1232,8 @@ export function createBot(deps: BotDeps) {
         return ctx.reply(/tiktok\.com|instagram\.com|youtu/i.test(text) ? T.refLink() : T.refNeedVideo((data(u).ref_draft ?? []).length), html());
       case 'ref_notes':
         return saveBrief(ctx, u, text);
+      case 'knowledge':
+        return onKnowledgeText(ctx, u, text);
     }
     if (!onboarded(u)) return showStep(ctx, u);
     return showHome(ctx, u);

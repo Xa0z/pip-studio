@@ -34,6 +34,8 @@ import type {WorkerCtx} from './context.js';
 import {makeVoiceSamples} from './voices.js';
 import {analyzeReference, studyReference, type MarketingContext} from './marketing.js';
 import {marketingSeconds} from '../lib/marketing.js';
+import {knowledgeText} from '../lib/knowledge.js';
+import {isVideoStyle, pickStyle, seedFrom, styleLabel} from '../../src/styles.js';
 import {transcribeMedia} from '../../src/voice.js';
 
 // ---------- state passed between phases ----------
@@ -158,7 +160,8 @@ async function prepareVideo(ctx: WorkerCtx, job: JobRow) {
     }
     const facts = await studyReference(refFile, refDir, process.env.TTS_PROVIDER === 'fake' ? undefined : transcribeMedia);
     const analysis = await analyzeReference(facts, mk.notes, ask);
-    marketing = {business: mk.business, notes: mk.notes, analysis, index: mk.index};
+    // The latest knowledge (summary, notes, files, website), not just the summary saved when the slot was planned.
+    marketing = {business: knowledgeText(u.onboarding_data ?? {}) || mk.business, notes: mk.notes, analysis, index: mk.index};
     seconds = marketingSeconds(facts.duration || mk.ref.duration);
   }
   const {writePlan, revise} = await import('./planner.js');
@@ -175,6 +178,7 @@ async function prepareVideo(ctx: WorkerCtx, job: JobRow) {
     experiment,
     recentHookTypes: real.slice(0, 5).map((x) => x.features?.hook_type ?? '').filter(Boolean),
     marketing,
+    business: !mk && u.onboarding_data?.knowledge_in_explainers ? knowledgeText(u.onboarding_data, 5000) || undefined : undefined,
   };
   let plan = await writePlan(pctx, ask);
 
@@ -212,6 +216,12 @@ async function prepareVideo(ctx: WorkerCtx, job: JobRow) {
   const scenes: TimedScene[] = buildTimeline(plan, voice, spec);
   validateTimeline(scenes, spec, sceneRange(seconds).min);
 
+  // Same colours every time, but a new look otherwise: different from this user's last few videos.
+  // The attempt number is in the seed, so Regenerate also gives a fresh look.
+  const recentStyles = all.filter((x) => x.id !== v.id).map((x) => x.plan?.style).filter(isVideoStyle).slice(0, 3);
+  const style = pickStyle(seedFrom(`${v.id}:${v.attempts}`), recentStyles);
+  console.log(`Style: ${styleLabel(style)}`);
+
   const key = characterKey(character);
   writeRegistry(character?.code && key ? [{key, code: character.code}] : []);
   const episode = index + 1;
@@ -224,9 +234,10 @@ async function prepareVideo(ctx: WorkerCtx, job: JobRow) {
     character: key,
     ctaLabel: ctaLabel(cta, name),
     theme: resolveTheme(isThemeChoice(u.onboarding_data?.video_theme) ? u.onboarding_data.video_theme : null),
+    style,
   };
   const features = featuresFor(plan, new Date(v.slot_at), s.timezone, seconds, cta, niche);
-  await store.updateVideo(v.id, {plan: mk ? {...plan, marketing: mk} : plan, features, caption: captionFor(plan), duration_s: seconds, character_id: character?.id ?? null});
+  await store.updateVideo(v.id, {plan: {...plan, style, ...(mk ? {marketing: mk} : {})}, features, caption: captionFor(plan), duration_s: seconds, character_id: character?.id ?? null});
   saveState(ctx, job, {kind: 'video', videoId: v.id, props, voicePath: voice.wavPath, seconds});
 }
 

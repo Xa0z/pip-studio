@@ -129,6 +129,7 @@ export const T = {
       '📊 /dashboard  full analytics',
       '⚙️ /settings  niche, goal, schedule, theme',
       '📣 /marketing  videos for your business',
+      '📚 /knowledge  teach me about your business',
       '⏸ /pause  and  ▶️ /resume  posting',
       '🗑 /disconnect  delete your data',
       '',
@@ -193,4 +194,45 @@ export const T = {
   marketingOff: () => `✅ Back to explainer videos. Pick your niche:`,
   marketingMenu: (business: string, lastDay: string | null) =>
     `📣 <b>Marketing videos are on</b>\n\nBusiness: ${esc([...business].slice(0, 200).join(''))}${business.length > 200 ? '…' : ''}\n${lastDay ? `Latest references: for ${esc(lastDay)}` : 'No references yet.'}`,
+
+  // Business knowledge
+  knowledgeMenu: (k: {items: {kind: string; title: string; chars: number}[]; summary: string | null; total: number; max: number; marketing: boolean; useInExplainers: boolean}) =>
+    [
+      '📚 <b>Business knowledge</b>',
+      '',
+      k.marketing
+        ? 'Your marketing videos only say what is written here: prices, offers, products, how to order. The more you add, the more varied and accurate they get.'
+        : `Tell me about your business and I can use it in your videos.${k.useInExplainers ? ' Your explainer videos pick topics for your customers and can mention your business at the end.' : ' Turn it on for your explainer videos below.'}`,
+      '',
+      k.summary ? `🏪 Summary: ${esc([...k.summary].slice(0, 120).join(''))}${k.summary.length > 120 ? '…' : ''}` : '🏪 No summary yet.',
+      ...(k.items.length
+        ? k.items.map((i, n) => `${n + 1}. ${i.kind === 'link' ? '🌐' : i.kind === 'file' ? '📄' : '📝'} ${esc(i.title)} <i>(${i.chars.toLocaleString('en-US')} characters)</i>`)
+        : ['Nothing else saved yet.']),
+      '',
+      `<i>${Math.round((k.total / k.max) * 100)}% of the space used.</i>`,
+    ].join('\n'),
+  askKnowledge: () =>
+    `➕ <b>Add business knowledge</b>\n\nSend me anything about your business, one message at a time:\n📝 type or forward a message (products, prices, offers, FAQ, opening hours, your story)\n📄 send a file (PDF, Word, TXT, CSV), like a menu or price list\n🌐 send your website link and I'll read the page\n\nOnly put real facts here: videos never make up offers or numbers. Tap Done when you're finished.`,
+  knowledgeAdded: (title: string, chars: number, trimmed: boolean) =>
+    `✅ Added <b>${esc(title)}</b> (${chars.toLocaleString('en-US')} characters)${trimmed ? '. It was long, so I kept the first part' : ''}. Send more or tap Done.`,
+  knowledgeReading: (what: string) => `📖 Reading ${esc(what)}…`,
+  knowledgeBad: (why: 'type' | 'big' | 'empty' | 'full' | 'read' | 'link', detail?: string) =>
+    why === 'type'
+      ? `I can read PDF, Word (.docx), TXT, CSV and web pages. Send it as one of those, or paste the text.`
+      : why === 'big'
+        ? `That file is over 5 MB. Send a smaller one, or paste the important part as text.`
+        : why === 'empty'
+          ? `I couldn't find any text in that. If it's a scanned PDF or a photo, type the important part instead.`
+          : why === 'full'
+            ? `Your business knowledge is full. Remove something you don't need any more (/knowledge, then Remove one).`
+            : why === 'link'
+              ? `I can't open that link${detail ? ` (${esc(detail)})` : ''}. Paste the text from the page instead.`
+              : `I couldn't read that file${detail ? ` (${esc(detail)})` : ''}. Paste the text instead.`,
+  knowledgePhoto: () => `I can't read photos yet. Send the text, a PDF or your website link instead.`,
+  knowledgeDone: (count: number) => `👍 Saved. Your next videos will use your ${count === 1 ? 'one piece' : `${count} pieces`} of business knowledge.`,
+  knowledgeCleared: () => `🧹 Cleared. Your short business summary is still saved.`,
+  knowledgeRemoved: (title: string) => `🗑 Removed ${esc(title)}.`,
+  knowledgeExplainers: (on: boolean) =>
+    on ? `✅ Your explainer videos will now pick topics your customers care about and can mention your business at the end.` : `👍 Your explainer videos won't use your business knowledge.`,
+  knowledgeHint: () => `Tip: you can also teach me more about your business (files, website, price list) with /knowledge.`,
 };
