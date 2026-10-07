@@ -1,7 +1,7 @@
 /** Builds the bot and API dependencies from environment variables (Vercel). */
 import {createBot} from '../bot/bot.js';
 import {baseUrl, need, opt, ownerId} from '../lib/env.js';
-import {githubDispatch} from '../lib/github.js';
+import {githubDispatch, githubTickNow} from '../lib/github.js';
 import type {Store} from '../lib/store.js';
 import {SupabaseStore} from '../lib/supabase-store.js';
 import {accessTokenFor, authorizeUrl, revokeToken} from '../lib/tiktok.js';
@@ -17,6 +17,7 @@ export function getBot() {
     token: need('TELEGRAM_BOT_TOKEN'),
     store: s,
     dispatch: githubDispatch,
+    tickNow: githubTickNow,
     ownerId: ownerId(),
     baseUrl: baseUrl(),
     tiktokAuthUrl: authorizeUrl,

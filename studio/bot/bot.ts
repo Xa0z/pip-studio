@@ -32,6 +32,8 @@ export type BotDeps = {
   token: string;
   store: Store;
   dispatch: Dispatcher;
+  /** Runs the posting step right away instead of waiting for the (often late) schedule. */
+  tickNow?: () => Promise<void>;
   ownerId: number;
   baseUrl: string;
   tiktokAuthUrl: (state: string) => string;
@@ -588,6 +590,8 @@ export function createBot(deps: BotDeps) {
     await makeDryRun(ctx, await getOrCreate(ctx));
   });
 
+  const kickTick = () => (deps.tickNow ? deps.tickNow().catch((e) => console.warn('could not start a tick:', redact((e as Error).message))) : Promise.resolve());
+
   // ---------- approval ----------
   const ownVideo = async (ctx: Context, id: string) => {
     const v = await store.getVideo(id);
@@ -613,6 +617,7 @@ export function createBot(deps: BotDeps) {
       await ctx.editMessageReplyMarkup({reply_markup: {inline_keyboard: []}}).catch(() => undefined);
       const s = await store.getSettings(v.user_id);
       const slot = new Date(v.slot_at);
+      if (slot.getTime() <= now().getTime() + 5 * 60000) await kickTick();
       return ctx.reply(T.approved(slot.getTime() <= now().getTime() + 5 * 60000 ? 'in the next few minutes' : `at ${fmtLocal(slot, s?.timezone ?? 'UTC')}`), html());
     }
     await ctx.answerCallbackQuery();
@@ -639,6 +644,7 @@ export function createBot(deps: BotDeps) {
     if (v.video_path && v.plan) {
       // Rendered fine, posting failed: try posting again.
       await store.updateVideo(v.id, {status: 'approved', error: null});
+      await kickTick();
       return ctx.reply(T.approved('in the next few minutes'), html());
     }
     await store.updateVideo(v.id, {status: 'planned', error: null});

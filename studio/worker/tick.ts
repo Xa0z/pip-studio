@@ -256,6 +256,8 @@ export async function publishOne(ctx: WorkerCtx, u: UserRow, v: VideoRow): Promi
   } catch (e) {
     const err = redact((e as Error).message);
     console.error(`publish ${v.id} failed: ${err}`);
+    // An annotation shows the reason on the run page (and through the API) without opening the log.
+    if (process.env.GITHUB_ACTIONS) console.log(`::error title=Publish failed::video ${v.id}: ${err.replace(/[\r\n]+/g, ' ').slice(0, 400)}`);
     await store.updateVideo(v.id, {status: 'failed', error: err.slice(0, 500)});
     const s = await store.getSettings(u.id);
     const when = new Date(v.slot_at);

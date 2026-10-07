@@ -56,7 +56,7 @@ export type CreatorInfo = {
 };
 
 export const creatorInfo = (token: string) =>
-  tiktokJson<CreatorInfo>('creator_info', '/v2/post/publish/creator_info/query/', {token, body: {}});
+  tiktokJson<CreatorInfo>('TikTok creator_info', '/v2/post/publish/creator_info/query/', {token, body: {}});
 
 export const userInfo = (token: string) =>
   tiktokJson<{user: {open_id: string; display_name: string}}>('user info', '/v2/user/info/?fields=open_id,display_name', {
