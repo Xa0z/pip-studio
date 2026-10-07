@@ -27,5 +27,7 @@ export const Icon = {
   trend: <I><path d="m22 7-8.5 8.5-5-5L2 17" /><path d="M16 7h6v6" /></I>,
   alert: <I><path d="M12 9v4M12 17h.01" /><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /></I>,
   grid: <I><rect x="3" y="3" width="7.5" height="7.5" rx="1.5" /><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5" /><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5" /><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5" /></I>,
+  sound: <I><path d="M11 5 6 9H2v6h4l5 4z" /><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14" /></I>,
+  muted: <I><path d="M11 5 6 9H2v6h4l5 4z" /><path d="m22 9-6 6M16 9l6 6" /></I>,
   sort: <I><path d="m3 16 4 4 4-4M7 20V4M21 8l-4-4-4 4M17 4v16" /></I>,
 };

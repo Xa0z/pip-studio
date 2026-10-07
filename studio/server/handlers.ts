@@ -141,6 +141,22 @@ export async function videoStream(req: Request, store: Store, botToken: string, 
   const end = Math.min(askedEnd, start + PLAY_CHUNK - 1);
   const up = await fetch(fileUrl, {headers: {Range: `bytes=${start}-${end}`}}).catch(() => null);
   if (!up || (up.status !== 206 && up.status !== 200)) return new Response('Could not load the video', {status: 502});
+  const upRange = /^bytes (\d+)-(\d+)\/(\d+)$/.exec(up.headers.get('content-range') ?? '');
+  if (up.status === 206 && upRange && up.body) {
+    // Pass Telegram's bytes straight through, so the first frame shows before the whole piece has arrived.
+    const [from, size] = [Number(upRange[1]), Number(upRange[3])];
+    const to = Math.min(Number(upRange[2]), size - 1);
+    return new Response(up.body, {
+      status: 206,
+      headers: {
+        'Content-Type': 'video/mp4',
+        'Accept-Ranges': 'bytes',
+        'Content-Range': `bytes ${from}-${to}/${size}`,
+        'Content-Length': String(to - from + 1),
+        'Cache-Control': 'private, max-age=3600',
+      },
+    });
+  }
   let body = new Uint8Array(await up.arrayBuffer());
   let total = Number(/\/(\d+)$/.exec(up.headers.get('content-range') ?? '')?.[1] ?? NaN);
   if (up.status === 200) {

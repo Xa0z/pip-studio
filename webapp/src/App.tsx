@@ -1,4 +1,5 @@
-import {useEffect, useMemo, useState, type ReactNode} from 'react';
+import {useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode} from 'react';
+import {createPortal} from 'react-dom';
 import {Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis} from 'recharts';
 import type {DashboardResponse} from '../../studio/lib/analytics';
 import {Icon} from './icons';
@@ -631,7 +632,7 @@ function Library({d, tg}: {d: Data; tg?: TelegramWebApp}) {
   const [sort, setSort] = useState<SortKey>('newest');
   const [show, setShow] = useState<Show>('all');
   const [toast, setToast] = useState<string | null>(null);
-  const [playing, setPlaying] = useState<{id: string; title: string; label: string; shareUrl: string | null; unposted: Unposted | null} | null>(null);
+  const [feedAt, setFeedAt] = useState<number | null>(null);
   const unposted = d.unposted ?? [];
   const posted = useMemo(() => {
     const by: Record<SortKey, (v: Video) => number> = {
@@ -652,12 +653,6 @@ function Library({d, tg}: {d: Data; tg?: TelegramWebApp}) {
     return [...p, ...u].sort((a, b) => b.at.localeCompare(a.at));
   }, [posted, unposted, show]);
   const open = (url: string | null) => url && (tg?.openLink ? tg.openLink(url) : window.open(url, '_blank'));
-  const playPosted = (v: Video) =>
-    v.playable ? setPlaying({id: v.id, title: v.topic || v.caption, label: `${postedDate(v.postedAt, d.timezone)} · ${fmtNum(v.views)} views`, shareUrl: v.shareUrl, unposted: null}) : open(v.shareUrl);
-  const playUnposted = (v: Unposted) =>
-    v.playable
-      ? setPlaying({id: v.id, title: v.topic || v.caption || (v.test ? 'Test video' : 'Untitled video'), label: `${postedDate(v.at, d.timezone)} · ${v.test ? 'Test video' : UNPOSTED_LABEL[v.status] ?? v.status}`, shareUrl: null, unposted: v})
-      : sendToChat(v);
   const sendToChat = async (v: Unposted) => {
     if (v.status === 'rendering') return setToast('This video is still being made.');
     setToast('Sending it to your chat…');
@@ -708,7 +703,7 @@ function Library({d, tg}: {d: Data; tg?: TelegramWebApp}) {
       <div className="library">
         {items.map((it) =>
           it.kind === 'posted' ? (
-            <button key={it.v.id} className="clip" onClick={() => playPosted(it.v)} aria-label={`${it.v.topic || it.v.caption}, ${fmtNum(it.v.views)} views. Play`}>
+            <button key={it.v.id} className="clip" onClick={() => setFeedAt(items.indexOf(it))} aria-label={`${it.v.topic || it.v.caption}, ${fmtNum(it.v.views)} views. Play`}>
               <div className="frame">
                 {it.v.thumb ? <img src={it.v.thumb} alt="" loading="lazy" /> : null}
                 <div className="frame-tags">
@@ -727,7 +722,7 @@ function Library({d, tg}: {d: Data; tg?: TelegramWebApp}) {
               </div>
             </button>
           ) : (
-            <button key={it.v.id} className="clip clip-unposted" onClick={() => playUnposted(it.v)} aria-label={`${it.v.topic || it.v.caption || (it.v.test ? 'Test video' : 'Untitled video')}, ${it.v.test ? 'test video' : UNPOSTED_LABEL[it.v.status] ?? it.v.status}. Play`}>
+            <button key={it.v.id} className="clip clip-unposted" onClick={() => setFeedAt(items.indexOf(it))} aria-label={`${it.v.topic || it.v.caption || (it.v.test ? 'Test video' : 'Untitled video')}, ${it.v.test ? 'test video' : UNPOSTED_LABEL[it.v.status] ?? it.v.status}. Play`}>
               <div className="frame">
                 {it.v.thumb ? <img src={it.v.thumb} alt="" loading="lazy" /> : null}
                 <div className="frame-tags">
@@ -746,18 +741,15 @@ function Library({d, tg}: {d: Data; tg?: TelegramWebApp}) {
           ),
         )}
       </div>
-      {playing ? (
-        <Player
-          src={`/api/video?id=${encodeURIComponent(playing.id)}&t=${encodeURIComponent(d.playToken ?? '')}`}
-          title={playing.title}
-          label={playing.label}
-          onClose={() => setPlaying(null)}
-          actions={
-            <>
-              {playing.shareUrl ? <button className="btn" onClick={() => open(playing.shareUrl)}>Open on TikTok</button> : null}
-              {playing.unposted ? <button className="btn" onClick={() => (sendToChat(playing.unposted!), setPlaying(null))}>Send to chat</button> : null}
-            </>
-          }
+      {feedAt !== null && items.length ? (
+        <Feed
+          items={items}
+          start={Math.min(feedAt, items.length - 1)}
+          tz={d.timezone}
+          src={(id) => `/api/video?id=${encodeURIComponent(id)}&t=${encodeURIComponent(d.playToken ?? '')}`}
+          onClose={() => setFeedAt(null)}
+          onOpen={open}
+          onSend={sendToChat}
         />
       ) : null}
       {toast ? <div className="toast" role="status">{toast}</div> : null}
@@ -765,9 +757,24 @@ function Library({d, tg}: {d: Data; tg?: TelegramWebApp}) {
   );
 }
 
-/** Full-screen player for one video, closed with the X, the backdrop or Escape. */
-function Player({src, title, label, actions, onClose}: {src: string; title: string; label: string; actions: ReactNode; onClose: () => void}) {
-  const [failed, setFailed] = useState(false);
+type FeedItem = {kind: 'posted'; v: Video} | {kind: 'unposted'; v: Unposted};
+const dayTime = (iso: string, tz: string) => {
+  const t = new Date(iso).toLocaleTimeString('en-GB', {timeZone: safeTz(tz), hour: '2-digit', minute: '2-digit'});
+  return `${postedDate(iso, tz)} at ${t}`;
+};
+
+/**
+ * TikTok-style feed: one video per screen, swipe up and down, the one on screen plays on its own.
+ * Only the video on screen and its neighbours get a source, so scrolling stays light on data.
+ */
+function Feed({items, start, tz, src, onClose, onOpen, onSend}: {items: FeedItem[]; start: number; tz: string; src: (id: string) => string; onClose: () => void; onOpen: (url: string | null) => void; onSend: (v: Unposted) => void}) {
+  const box = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(start);
+  const [muted, setMuted] = useState(false);
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (el) el.scrollTop = start * el.clientHeight;
+  }, [start]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
@@ -778,24 +785,133 @@ function Player({src, title, label, actions, onClose}: {src: string; title: stri
       document.body.style.overflow = prev;
     };
   }, [onClose]);
-  return (
-    <div className="player" role="dialog" aria-modal="true" aria-label={title} onClick={onClose}>
-      <div className="player-box" onClick={(e) => e.stopPropagation()}>
-        <div className="player-head">
-          <div className="player-title">
-            <b>{title}</b>
-            <span>{label}</span>
-          </div>
-          <button className="player-close" onClick={onClose} aria-label="Close">{Icon.close}</button>
-        </div>
-        {failed ? (
-          <div className="player-error">This video could not be loaded. Try sending it to the chat instead.</div>
-        ) : (
-          <video src={src} controls autoPlay playsInline preload="metadata" onError={() => setFailed(true)} />
-        )}
-        <div className="player-actions">{actions}</div>
+  const onScroll = () => {
+    const el = box.current;
+    if (!el || !el.clientHeight) return;
+    const i = Math.round(el.scrollTop / el.clientHeight);
+    if (i !== active) setActive(Math.max(0, Math.min(items.length - 1, i)));
+  };
+  // Portal to <body>: the tab view animates with a transform, which would trap a fixed overlay inside it.
+  return createPortal(
+    <div className="feed" role="dialog" aria-modal="true" aria-label="Your videos">
+      <div className="feed-top">
+        <button className="feed-btn" onClick={onClose} aria-label="Close">{Icon.close}</button>
+        <span className="feed-count">{active + 1} / {items.length}</span>
+        <button className="feed-btn" onClick={() => setMuted((m) => !m)} aria-label={muted ? 'Sound on' : 'Sound off'}>{muted ? Icon.muted : Icon.sound}</button>
       </div>
-    </div>
+      <div className="feed-scroll" ref={box} onScroll={onScroll}>
+        {items.map((it, i) => (
+          <Slide key={it.v.id} it={it} tz={tz} src={src} active={i === active} near={Math.abs(i - active) <= 1} muted={muted} onAutoMute={() => setMuted(true)} onOpen={onOpen} onSend={onSend} />
+        ))}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+function Slide({it, tz, src, active, near, muted, onAutoMute, onOpen, onSend}: {it: FeedItem; tz: string; src: (id: string) => string; active: boolean; near: boolean; muted: boolean; onAutoMute: () => void; onOpen: (url: string | null) => void; onSend: (v: Unposted) => void}) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [paused, setPaused] = useState(false);
+  const [waiting, setWaiting] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const v = it.v;
+  const title = v.topic || v.caption || (it.kind === 'unposted' && it.v.test ? 'Test video' : 'Untitled video');
+  const playable = v.playable && !failed;
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (!active) {
+      el.pause();
+      return;
+    }
+    setPaused(false);
+    // Phones block autoplay with sound until the user taps; then play muted and show the sound button.
+    el.play().catch(() => {
+      el.muted = true;
+      onAutoMute();
+      el.play().catch(() => setPaused(true));
+    });
+  }, [active, near]);
+  const toggle = () => {
+    const el = ref.current;
+    if (!el) return;
+    if (el.paused) el.play().then(() => setPaused(false)).catch(() => undefined);
+    else (el.pause(), setPaused(true));
+  };
+  return (
+    <section className="slide">
+      {playable && near ? (
+        <video
+          ref={ref}
+          src={src(v.id)}
+          poster={v.thumb ?? undefined}
+          preload="auto"
+          playsInline
+          loop
+          muted={muted}
+          onClick={toggle}
+          onWaiting={() => setWaiting(true)}
+          onPlaying={() => setWaiting(false)}
+          onCanPlay={() => setWaiting(false)}
+          onTimeUpdate={(e) => setProgress(e.currentTarget.duration ? e.currentTarget.currentTime / e.currentTarget.duration : 0)}
+          onError={() => setFailed(true)}
+        />
+      ) : v.thumb ? (
+        <img className="slide-still" src={v.thumb} alt="" loading="lazy" />
+      ) : (
+        <div className="slide-still" />
+      )}
+      {playable && active && waiting && <span className="slide-spin" aria-label="Loading" />}
+      {playable && paused && !waiting && <span className="slide-paused" aria-hidden="true">{Icon.play}</span>}
+      {!playable && (
+        <div className="slide-cta">
+          {it.kind === 'posted' ? (
+            <button className="btn" onClick={() => onOpen(it.v.shareUrl)}>Watch on TikTok</button>
+          ) : it.v.status === 'rendering' ? (
+            <p>Pip is still making this video.</p>
+          ) : (
+            <button className="btn" onClick={() => onSend(it.v)}>Send to chat</button>
+          )}
+        </div>
+      )}
+
+      {it.kind === 'posted' && (
+        <div className="rail">
+          <span>{Icon.eye}<b>{fmtNum(it.v.views)}</b></span>
+          <span>{Icon.heart}<b>{fmtNum(it.v.likes)}</b></span>
+          <span>{Icon.comment}<b>{fmtNum(it.v.comments)}</b></span>
+          <span>{Icon.share}<b>{fmtNum(it.v.shares)}</b></span>
+          {it.v.shareUrl ? <button onClick={() => onOpen(it.v.shareUrl)} aria-label="Open on TikTok">{Icon.external}<b>TikTok</b></button> : null}
+        </div>
+      )}
+      <div className="slide-info">
+        <div className="slide-tags">
+          {it.kind === 'posted' ? (
+            <>
+              <span className="tag tag-accent">Posted</span>
+              {it.v.viral && it.v.ratio ? <span className="tag">{it.v.ratio.toFixed(1)}× usual</span> : null}
+              {it.v.experiment ? <span className="tag">Test</span> : null}
+            </>
+          ) : (
+            <span className={`tag tag-status tag-${it.v.test ? 'test' : it.v.status}`}>{it.v.test ? 'Test video' : UNPOSTED_LABEL[it.v.status] ?? it.v.status}</span>
+          )}
+        </div>
+        <h3 className="slide-title">{title}</h3>
+        <p className="slide-when">
+          {Icon.calendar}
+          {it.kind === 'posted' ? dayTime(it.v.postedAt, tz) : `${it.v.test ? 'Made' : 'Planned for'} ${dayTime(it.v.at, tz)}`}
+        </p>
+        {it.kind === 'posted' && (
+          <p className="slide-stats">
+            <b>{fmtPct(it.v.engagement)}</b> engagement
+            {it.v.velocity24h !== null && it.v.velocity24h !== undefined ? <> · <b>{fmtNum(it.v.velocity24h)}</b> views in first 24h</> : null}
+            {it.v.hookType ? <> · {it.v.hookType} hook</> : null}
+          </p>
+        )}
+      </div>
+      {playable && <i className="slide-bar" style={{transform: `scaleX(${progress})`}} aria-hidden="true" />}
+    </section>
   );
 }
 
