@@ -156,6 +156,7 @@ ON-SCREEN TEXT:
   orbit {center, satellite, label} - one thing around another (a cycle, a routine).
   steps {steps:[{icon, text (max 22 chars)}] (2-4)} - how to order, book or use it.
   spotlight {icon, caption (max 60 chars)} - one big icon with the key message.
+  media {kind: "photo" | "clip", query, caption (max 60 chars), icon} - a REAL stock photo or clip from a free library, e.g. "fresh sourdough bread" or "barista pouring latte". It is a generic example, never the business's own product, so the caption must not claim it is. At most 2 times. Never brands, logos, people's names or famous characters.
 - Never the same layout twice in a row. At least 3 different layouts.
 - Icons must be one of: ${ICONS.join(', ')}.
 - "pip" sets the presenter's "expression" (happy, surprised, thinking, excited, wink) and "pose" (idle, pointing, waving, jumping) per scene. Hook: surprised or excited. CTA: waving.

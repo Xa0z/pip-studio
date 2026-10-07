@@ -37,7 +37,15 @@ if (styles.length > 1) styles[styles.length - 1] = {...styles[styles.length - 1]
 if (process.env.STILLS_STYLE) styles.forEach((s, k) => (styles[k] = {...s, ...JSON.parse(process.env.STILLS_STYLE!)}));
 const at = process.env.STILLS_AT ? Number(process.env.STILLS_AT) : null;
 
-const serveUrl = await bundle({entryPoint: path.resolve('remotion/index.ts')});
+// STILLS_MEDIA=<dir with photo.jpg and clip.mp4>: the spotlight scene shows the photo and the compare scene the clip.
+const mediaDir = process.env.STILLS_MEDIA ? path.resolve(process.env.STILLS_MEDIA) : null;
+if (mediaDir) {
+  scenes[4] = {...scenes[4], visual: {layout: 'media', kind: 'photo', query: 'clouds', caption: 'Clouds of acid all day', icon: 'star', src: 'media/photo.jpg'}};
+  scenes[3] = {...scenes[3], visual: {layout: 'media', kind: 'clip', query: 'storm', caption: 'Storms that never stop', icon: 'star', src: 'media/clip.mp4', seconds: 5}};
+}
+const publicDir = mediaDir ? fs.mkdtempSync(path.join(out, 'public-')) : undefined;
+if (mediaDir && publicDir) fs.cpSync(mediaDir, path.join(publicDir, 'media'), {recursive: true});
+const serveUrl = await bundle({entryPoint: path.resolve('remotion/index.ts'), publicDir});
 const browserExecutable = process.env.REMOTION_BROWSER_EXECUTABLE || null;
 // Sandboxes behind a TLS proxy can't verify Google Fonts' certificate; this is a local preview tool only.
 const chromiumOptions = {ignoreCertificateErrors: !!process.env.STILLS_IGNORE_CERTS};
@@ -51,4 +59,5 @@ for (const [k, style] of styles.entries()) {
     await renderStill({composition, serveUrl, inputProps: props, output: path.join(out, `style${k + 1}-${String(i).padStart(2, '0')}.png`), frame: s.from + (at ?? Math.min(70, s.durationInFrames - 20)), browserExecutable, chromiumOptions, imageFormat: 'png'});
   }
 }
+if (publicDir) fs.rmSync(publicDir, {recursive: true, force: true});
 console.log(`Stills in ${out}`);

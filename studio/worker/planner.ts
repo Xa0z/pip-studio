@@ -68,6 +68,7 @@ ON-SCREEN TEXT:
   orbit {center, satellite, label} - one thing going around another (also for cycles).
   steps {steps:[{icon, text (max 22 chars)}] (2-4)} - a process in order.
   spotlight {icon, caption (max 60 chars)} - one big icon and a short caption.
+  media {kind: "photo" | "clip", query, caption (max 60 chars), icon} - a REAL photo or short video clip found in a free stock library (Pexels, Pixabay, Openverse). "query" is 2 to 5 plain English words for what the camera sees (e.g. "lava flowing at night", "honeybee on flower"). Use it at most 2 times, only where a real picture beats a drawing (animals, places, nature, food, objects). Never people's names, brands, logos, artworks or famous characters. "icon" is shown if nothing is found.
 - Never the same layout twice in a row. At least 3 different layouts.
 - Icons must be one of: ${ICONS.join(', ')}. Good icons for this niche: ${n.icons.join(', ')}.
 - "pip" sets the character's "expression" (happy, surprised, thinking, excited, wink) and "pose" (idle, pointing, waving, jumping) per scene. Hook: surprised or excited. CTA: waving.

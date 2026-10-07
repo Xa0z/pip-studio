@@ -9,6 +9,7 @@ import {Headline} from './common';
 import {CompareScene} from './CompareScene';
 import {Spotlight3D, Steps3D} from './Depth';
 import {IconGridScene} from './IconGridScene';
+import {MediaScene} from './MediaScene';
 import {OrbitScene} from './OrbitScene';
 import {SpotlightScene} from './SpotlightScene';
 import {StepsScene} from './StepsScene';
@@ -35,6 +36,7 @@ export const FactScene: React.FC<{scene: TimedScene; factIndex?: number}> = ({sc
       {v?.layout === 'iconGrid' ? <IconGridScene visual={v} /> : null}
       {v?.layout === 'orbit' ? deep ? <Orbit3D visual={v} /> : <OrbitScene visual={v} /> : null}
       {v?.layout === 'steps' ? deep ? <Steps3D visual={v} durationInFrames={scene.durationInFrames} /> : <StepsScene visual={v} durationInFrames={scene.durationInFrames} /> : null}
+      {v?.layout === 'media' ? <MediaScene visual={v} durationInFrames={scene.durationInFrames} /> : null}
       {v?.layout === 'spotlight' ? deep ? <Spotlight3D visual={v} /> : <SpotlightScene visual={v} /> : null}
     </>
   );

@@ -81,6 +81,10 @@ export type HarnessOptions = {
   statsChart?: (input: import('../lib/charts.js').ChartInput) => Promise<Buffer>;
   /** Saves files the bot sends (photos as buffers) here so screenshots can show them. */
   mediaDir?: string;
+  /** Stand-in for the free media library (default: finds nothing, so tests never touch the network). */
+  findMedia?: import('../worker/media.js').MediaFinder;
+  /** Changes every video plan the fake Claude writes (e.g. to add a media scene). */
+  editPlan?: (plan: any) => any;
   /** Write generated characters into the real remotion/ folder (only for real renders). */
   realRegistry?: boolean;
 };
@@ -175,7 +179,17 @@ export class Harness {
         const inner = fakeAsk(() => this.characterName());
         return (prompt, system, images) => {
           this.systems.push(system);
-          return inner(prompt, system, images);
+          const out = inner(prompt, system, images);
+          const edit = opts.editPlan;
+          if (!edit) return out;
+          return out.then((text) => {
+            try {
+              const plan = JSON.parse(text);
+              return Array.isArray(plan?.scenes) ? JSON.stringify(edit(plan)) : text;
+            } catch {
+              return text;
+            }
+          });
         };
       },
       claudeCode: async () => 'OK',
@@ -184,6 +198,7 @@ export class Harness {
       ownerId: opts.ownerId ?? 0,
       minutesLimit: 1700,
       now,
+      findMedia: opts.findMedia ?? (async () => null),
     };
   }
 
