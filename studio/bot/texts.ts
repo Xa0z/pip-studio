@@ -48,7 +48,7 @@ export const T = {
 
   // Step 3
   chooseNiche: (picked: string[]) =>
-    `${progress(3)}\n\nWhat should your videos be about? Pick 1 or 2. I'll switch between them.${picked.length ? `\n\nPicked: ${picked.map(nicheLabel).join(', ')}` : ''}`,
+    `${progress(3)}\n\nWhat should your videos be about? Pick 1 or 2. I'll switch between them.${picked.length ? `\n\nPicked: ${picked.map((p) => esc(nicheLabel(p))).join(', ')}` : ''}`,
   nicheMax: () => `You can pick up to 2. Tap one again to remove it.`,
   nicheNeedOne: () => `Pick at least one niche first.`,
   customNiche: () => `✏️ Type your niche in a few words (e.g. "weird ocean facts").`,
@@ -81,7 +81,7 @@ export const T = {
   typeTimezone: () => `⌨️ Type your time zone, like <code>Asia/Baghdad</code>, <code>Berlin</code> or <code>UTC+3</code>.`,
   timezoneBad: () => `I don't know that time zone. Try <code>Europe/Berlin</code>, <code>Tokyo</code> or <code>UTC+3</code>.`,
   askPostsPerDay: () => `How many videos per day?`,
-  suggestTimes: (times: string[], niches: string[]) => `I suggest posting at <b>${times.join(', ')}</b> your time. Evenings usually do well for ${niches.map(nicheLabel).join(' and ')}.`,
+  suggestTimes: (times: string[], niches: string[]) => `I suggest posting at <b>${times.join(', ')}</b> your time. Evenings usually do well for ${niches.map((p) => esc(nicheLabel(p))).join(' and ')}.`,
   typeTimes: (n: number) => `✏️ Type ${n} time${n > 1 ? 's' : ''} in 24h format, like <code>${['19:00', '12:00, 20:00', '09:00, 15:00, 21:00'][n - 1]}</code>.`,
   timesBad: (n: number) => `I need exactly ${n} different time${n > 1 ? 's' : ''} like <code>09:00</code>. Try again.`,
   askMode: () =>
@@ -89,7 +89,7 @@ export const T = {
   autoNotAllowed: () =>
     `⚡ Full auto is only for the owner until TikTok approves this app (their rules say each post needs your OK). I set <b>Approval mode</b> for now.`,
   summary: (s: {username: string; niches: string[]; goal: Goal; character: string | null; voice: string; theme: string; times: string[]; tz: string; mode: Mode; link?: string}) =>
-    `📋 <b>Here's your channel:</b>\nTikTok: @${esc(s.username)}\nNiche: ${s.niches.map(nicheLabel).join(', ')}\nGoal: ${GOALS[s.goal].emoji} ${GOALS[s.goal].label}${s.link ? ` (${esc(s.link)})` : ''}\nCharacter: ${s.character ? esc(s.character) : 'none'} · Voice: ${esc(s.voice)}\nTheme: ${esc(s.theme)}\nPosts: ${s.times.length}/day at ${s.times.join(', ')} (${esc(s.tz)})\nMode: ${s.mode === 'approval' ? '✋ Approval' : '⚡ Full auto'}`,
+    `📋 <b>Here's your channel:</b>\nTikTok: @${esc(s.username)}\nNiche: ${s.niches.map((p) => esc(nicheLabel(p))).join(', ')}\nGoal: ${GOALS[s.goal].emoji} ${GOALS[s.goal].label}${s.link ? ` (${esc(s.link)})` : ''}\nCharacter: ${s.character ? esc(s.character) : 'none'} · Voice: ${esc(s.voice)}\nTheme: ${esc(s.theme)}\nPosts: ${s.times.length}/day at ${s.times.join(', ')} (${esc(s.tz)})\nMode: ${s.mode === 'approval' ? '✋ Approval' : '⚡ Full auto'}`,
   askTheme: () =>
     `🎨 <b>Pick a look for your videos.</b>\nThis sets the background, text and highlight colours. You can change it any time in /settings.`,
   typeTheme: () =>
@@ -113,6 +113,7 @@ export const T = {
   regenLimit: () => `That slot was already remade 3 times. Skip it or post one of them.`,
   posted: (caption: string, privacy: string) => `✅ <b>Posted!</b>${privacy === 'SELF_ONLY' ? ' (private: only you can see it until TikTok approves the app)' : ''}\n${esc(caption)}`,
   failed: (when: string, why: string) => `❌ Your ${esc(when)} video failed: ${esc(why)}`,
+  publishCutOff: () => `⚠️ Posting one of your videos was cut off. Check your TikTok profile first: if the video is not there, tap Retry.`,
   reconnect: () => `⚠️ Your TikTok login expired. Connect again to keep posting.`,
 
   // Commands
@@ -191,5 +192,5 @@ export const T = {
   noRefsYet: () => `I need your 3 reference videos before I can make marketing videos. Send /marketing to add them.`,
   marketingOff: () => `✅ Back to explainer videos. Pick your niche:`,
   marketingMenu: (business: string, lastDay: string | null) =>
-    `📣 <b>Marketing videos are on</b>\n\nBusiness: ${esc(business.slice(0, 200))}${business.length > 200 ? '…' : ''}\n${lastDay ? `Latest references: for ${esc(lastDay)}` : 'No references yet.'}`,
+    `📣 <b>Marketing videos are on</b>\n\nBusiness: ${esc([...business].slice(0, 200).join(''))}${business.length > 200 ? '…' : ''}\n${lastDay ? `Latest references: for ${esc(lastDay)}` : 'No references yet.'}`,
 };

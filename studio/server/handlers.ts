@@ -1,5 +1,5 @@
 /** HTTP handlers (Web Request/Response), shared by Vercel functions and the local dev server. */
-import {Api, webhookCallback} from 'grammy';
+import {Api, BotError, webhookCallback} from 'grammy';
 import {onTikTokConnected} from '../bot/bot.js';
 import {buildDashboard, buildSchedule, buildUnposted, loadAnalytics, UNPOSTED_STATUSES, UPCOMING_STATUSES, type Range} from '../lib/analytics.js';
 import {opt} from '../lib/env.js';
@@ -181,5 +181,21 @@ export async function dashboardSend(req: Request, store: Store, botToken: string
 
 export function telegramWebhook(bot: ReturnType<typeof createBot>) {
   const secret = opt('TELEGRAM_WEBHOOK_SECRET');
-  return webhookCallback(bot, 'std/http', secret ? {secretToken: secret} : {});
+  // grammY gives up after 10 s by default and answers 500, so Telegram sends the same update again
+  // (double jobs, double replies). Vercel allows 30 s; on a timeout answer 200 instead of a retry.
+  const handle = webhookCallback(bot, 'std/http', {timeoutMilliseconds: 25_000, onTimeout: 'return', ...(secret ? {secretToken: secret} : {})});
+  return async (req: Request): Promise<Response> => {
+    try {
+      return await handle(req);
+    } catch (e) {
+      // On webhooks grammY rethrows handler errors instead of calling bot.catch. Run it here and answer 200,
+      // so the user gets a message and Telegram does not resend the same update over and over.
+      if (e instanceof BotError) {
+        await bot.errorHandler(e);
+        return new Response('ok');
+      }
+      console.error('Webhook failed:', redact(e instanceof Error ? e.message : String(e)));
+      return new Response('error', {status: 500});
+    }
+  };
 }

@@ -6,7 +6,7 @@ import {Background} from './components/Background';
 import {isTalking, Subtitles} from './components/Subtitles';
 import {CTA_TAP, CtaScene} from './scenes/CtaScene';
 import {FactScene} from './scenes/FactScene';
-import {hookClick, HookScene, TYPE_START} from './scenes/HookScene';
+import {hookClick, HookScene, hookSpeed, TYPE_START} from './scenes/HookScene';
 import {typedEnd} from './scenes/common';
 import {RecapScene} from './scenes/RecapScene';
 import {resolveTheme} from '../src/themes';
@@ -145,10 +145,10 @@ export const Video: React.FC<VideoProps> = ({title, scenes, words, voiceFile, mu
         : null}
       {sfx && hook ? (
         <>
-          <Sequence from={hook.from + TYPE_START} durationInFrames={typedEnd(hook.headline, TYPE_START) - TYPE_START} layout="none">
+          <Sequence from={hook.from + TYPE_START} durationInFrames={typedEnd(hook.headline, TYPE_START, hookSpeed(hook)) - TYPE_START} layout="none">
             <Audio src={staticFile('sfx/typing.wav')} volume={0.3} />
           </Sequence>
-          <Sequence from={hook.from + hookClick(hook.headline)} durationInFrames={10} layout="none">
+          <Sequence from={hook.from + hookClick(hook)} durationInFrames={10} layout="none">
             <Audio src={staticFile('sfx/click.wav')} volume={0.45} />
           </Sequence>
         </>

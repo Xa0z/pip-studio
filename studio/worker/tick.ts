@@ -133,7 +133,7 @@ export async function planUpcoming(ctx: WorkerCtx): Promise<number> {
     const marketing = u.onboarding_data?.content_mode === 'marketing';
     for (const slot of slots) {
       const iso = slot.toISOString();
-      if (existing.some((v) => v.slot_at === iso)) continue; // already made (or skipped/failed) for this slot
+      if (existing.some((v) => new Date(v.slot_at).getTime() === slot.getTime())) continue; // already made (or skipped/failed) for this slot
       // Marketing videos copy one of the day's reference videos; no references yet means nothing to make.
       let mk: MarketingInput | null = null;
       if (marketing) {
@@ -191,16 +191,16 @@ export async function publishDue(ctx: WorkerCtx): Promise<{published: number; fa
   const waiting = await ctx.store.videosByStatus(['approved', 'awaiting_approval']);
   for (const v of waiting) {
     if (v.is_dry_run) continue;
-    const u = await ctx.store.getUser(v.user_id);
-    if (!u || u.status !== 'active') continue;
     if (v.status === 'awaiting_approval') {
-      // Nobody answered for 24 h after the slot: drop it.
+      // Nobody answered for 24 h after the slot: drop it (paused users too, so their files don't pile up).
       if (now.getTime() - new Date(v.slot_at).getTime() > 24 * 3600000) {
         await ctx.store.updateVideo(v.id, {status: 'skipped', error: 'not approved in time', video_path: null});
         if (v.video_path) await ctx.store.removeFiles([v.video_path]).catch(() => undefined);
       }
       continue;
     }
+    const u = await ctx.store.getUser(v.user_id);
+    if (!u || u.status !== 'active') continue;
     if (new Date(v.slot_at).getTime() > now.getTime() + 2 * 60000) continue; // not yet
     const ok = await publishOne(ctx, u, v);
     if (ok) published++;
@@ -213,6 +213,7 @@ export async function publishOne(ctx: WorkerCtx, u: UserRow, v: VideoRow): Promi
   const {store, msg} = ctx;
   await store.updateVideo(v.id, {status: 'publishing', attempts: v.attempts + 1});
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'pip-pub-'));
+  let posted = false;
   try {
     if (!v.video_path) throw new Error('no rendered video');
     const file = path.join(tmp, 'video.mp4');
@@ -220,6 +221,7 @@ export async function publishOne(ctx: WorkerCtx, u: UserRow, v: VideoRow): Promi
     // Refresh the token before every post (creator_info is checked inside publishVideo).
     const {token, row} = await accessTokenFor(store, u.id, {force: true, now: ctx.now()});
     const pub = await publishVideo(file, v.caption ?? '', token, {privacy: v.privacy ?? 'SELF_ONLY', durationSec: v.duration_s ?? 62, mode: 'direct'});
+    posted = true; // on TikTok now: nothing below may turn this into a failure
     const postId = pub.postIds[0] ?? null;
     const shareUrl = postId ? `https://www.tiktok.com/@${pub.username || row.username}/video/${postId}` : null;
     await store.updateVideo(v.id, {
@@ -255,6 +257,12 @@ export async function publishOne(ctx: WorkerCtx, u: UserRow, v: VideoRow): Promi
     return true;
   } catch (e) {
     const err = redact((e as Error).message);
+    if (posted) {
+      // It is on TikTok: only telling the user failed (blocked bot, Telegram down). Never mark it failed,
+      // or Retry would post the same video a second time.
+      console.warn(`posted ${v.id} but could not tell the user: ${err}`);
+      return true;
+    }
     console.error(`publish ${v.id} failed: ${err}`);
     // An annotation shows the reason on the run page (and through the API) without opening the log.
     if (process.env.GITHUB_ACTIONS) console.log(`::error title=Publish failed::video ${v.id}: ${err.replace(/[\r\n]+/g, ' ').slice(0, 400)}`);
@@ -263,8 +271,11 @@ export async function publishOne(ctx: WorkerCtx, u: UserRow, v: VideoRow): Promi
     const when = new Date(v.slot_at);
     const p = localParts(when, s?.timezone ?? 'UTC');
     const label = `${String(p.hour).padStart(2, '0')}:${String(p.minute).padStart(2, '0')}`;
-    if (e instanceof TikTokReconnectNeeded) await msg.text(u.id, T.reconnect(), K.connectTikTok(authorizeUrl(signState(u.id))));
-    else await msg.text(u.id, T.failed(label, plainReason(err)), [...(claudeAccessProblem(err) ? K.claudeAgain() : []), ...K.retry(`retry:${v.id}`)]);
+    const tell =
+      e instanceof TikTokReconnectNeeded
+        ? msg.text(u.id, T.reconnect(), K.connectTikTok(authorizeUrl(signState(u.id))))
+        : msg.text(u.id, T.failed(label, plainReason(err)), [...(claudeAccessProblem(err) ? K.claudeAgain() : []), ...K.retry(`retry:${v.id}`)]);
+    await tell.catch((m) => console.warn(`could not tell user ${u.id}: ${redact((m as Error).message)}`));
     return false;
   } finally {
     fs.rmSync(tmp, {recursive: true, force: true});
@@ -321,6 +332,8 @@ export async function collectMetrics(ctx: WorkerCtx): Promise<{videos: number; a
         for (const x of due.filter((d) => !d.v.tiktok_video_id)) {
           const postedAt = new Date(x.v.posted_at!).getTime() / 1000;
           const cap = norm((x.v.caption ?? '').split('\n')[0]);
+          // No caption to compare: an empty prefix would match any video posted around that time.
+          if (!cap) continue;
           const match = list.find((t) => Math.abs(t.create_time - postedAt) < 1800 && norm(t.video_description ?? t.title ?? '').startsWith(cap.slice(0, 20)));
           if (match) {
             x.v.tiktok_video_id = match.id;
@@ -371,8 +384,10 @@ export async function weeklyReports(ctx: WorkerCtx): Promise<number> {
     const week = weekStart(ctx.now(), s.timezone);
     const latest = await ctx.store.latestPattern(u.id);
     if (latest?.week_start === week) continue;
-    const pending = await ctx.store.listJobs({userId: u.id, kind: ['weekly_analysis'], status: ['queued', 'running']});
-    if (pending.some((j) => j.input.week_start === week)) continue;
+    // A run for this week is going, or failed in the last 6 h (don't start a new one every tick).
+    const recent = await ctx.store.listJobs({userId: u.id, kind: ['weekly_analysis'], status: ['queued', 'running', 'failed']});
+    const sixHoursAgo = ctx.now().getTime() - 6 * 3600000;
+    if (recent.some((j) => j.input.week_start === week && (j.status !== 'failed' || new Date(j.created_at).getTime() > sixHoursAgo))) continue;
     const posted = await ctx.store.listVideos(u.id, {status: ['posted'], limit: 1});
     if (!posted.length) continue;
     const job = await ctx.store.insertJob({kind: 'weekly_analysis', user_id: u.id, input: {week_start: week}});
@@ -391,6 +406,13 @@ export async function cleanup(ctx: WorkerCtx) {
     if (now - t > 90 * 60000) {
       const {fail} = await import('./jobs.js');
       await fail(ctx, j.id, 'the job took too long');
+    }
+  }
+  // Posts cut off mid-upload (runner died): it may or may not be on TikTok, so ask the user to check before Retry.
+  for (const v of await ctx.store.videosByStatus(['publishing'])) {
+    if (now - new Date(v.updated_at ?? v.created_at).getTime() > 75 * 60000) {
+      await ctx.store.updateVideo(v.id, {status: 'failed', error: 'posting was cut off'});
+      await ctx.msg.text(v.user_id, T.publishCutOff(), K.retry(`retry:${v.id}`)).catch(() => undefined);
     }
   }
   // Rendered files of videos that will never be posted.

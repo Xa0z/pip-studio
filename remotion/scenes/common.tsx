@@ -14,11 +14,19 @@ type Token = {text: string; hi: boolean};
 /** Splits text into words and marks the ones that belong to a highlight phrase. */
 export const tokenize = (text: string, highlight: string[]): Token[] => {
   const escaped = highlight.filter(Boolean).map((h) => h.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  const parts = escaped.length ? text.split(new RegExp(`(${escaped.join('|')})`, 'gi')) : [text];
+  // Whole words only: "Sun" must not cut "Sunlight" into "Sun light".
+  const parts = escaped.length ? text.split(new RegExp(`(?<![\\p{L}\\p{N}])(${escaped.join('|')})(?![\\p{L}\\p{N}])`, 'giu')) : [text];
   const out: Token[] = [];
+  let glue = false; // the previous piece ended inside a word
   for (const p of parts) {
     const hi = highlight.some((h) => h.toLowerCase() === p.toLowerCase());
-    for (const w of p.split(/\s+/).filter(Boolean)) out.push({text: w, hi});
+    p.split(/(\s+)/).forEach((w, j) => {
+      if (!w || /^\s+$/.test(w)) return;
+      // Punctuation stuck to a highlight ("62%!") stays on the same word instead of becoming its own.
+      if (j === 0 && glue && out.length && !/^[\p{L}\p{N}]/u.test(w)) out[out.length - 1].text += w;
+      else out.push({text: w, hi});
+    });
+    if (p) glue = !/\s$/.test(p);
   }
   return out;
 };
@@ -186,16 +194,16 @@ export const formatNumber = (v: number, decimals = 0) =>
 
 /** Characters typed per frame, and when typing of `text` (starting at `start`) is done. */
 export const TYPE_SPEED = 1.1;
-export const typedEnd = (text: string, start: number) => start + Math.ceil(text.length / TYPE_SPEED);
+export const typedEnd = (text: string, start: number, speed = TYPE_SPEED) => start + Math.ceil(text.length / speed);
 
 /**
  * Text that types itself out with a blinking caret, like someone searching.
  * Highlight words turn accent as they are typed; their marker draws from `markAt`.
  */
-export const TypeText: React.FC<{text: string; highlight: string[]; start: number; markAt?: number; caret?: boolean}> = ({text, highlight, start, markAt = 100000, caret = true}) => {
+export const TypeText: React.FC<{text: string; highlight: string[]; start: number; markAt?: number; caret?: boolean; speed?: number}> = ({text, highlight, start, markAt = 100000, caret = true, speed = TYPE_SPEED}) => {
   const th = useTheme();
   const frame = useCurrentFrame();
-  const n = Math.max(0, Math.floor((frame - start) * TYPE_SPEED));
+  const n = Math.max(0, Math.floor((frame - start) * speed));
   const done = n >= text.length;
   const tokens = tokenize(text, highlight);
   let used = 0;

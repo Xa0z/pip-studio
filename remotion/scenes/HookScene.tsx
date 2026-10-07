@@ -1,14 +1,17 @@
 import React from 'react';
 import {interpolate, useCurrentFrame, useVideoConfig} from 'remotion';
-import type {Scene} from '../../src/schema';
+import type {TimedScene} from '../../src/schema';
 import {ClickRipple, Cursor} from '../components/Cursor';
 import {EASE_IN_OUT, pop, prog, punch} from '../motion';
 import {FONT, useTheme} from '../theme';
-import {typedEnd, TypeText} from './common';
+import {TYPE_SPEED, typedEnd, TypeText} from './common';
 
 export const TYPE_START = 10;
+type Hook = Pick<TimedScene, 'headline' | 'durationInFrames'>;
+/** Typing speed: faster for a short hook, so the click and the marker still land inside the scene. */
+export const hookSpeed = (s: Hook) => Math.min(4, Math.max(TYPE_SPEED, s.headline.length / Math.max(1, s.durationInFrames - TYPE_START - 28)));
 /** Frame (inside the hook) where the pointer clicks search. */
-export const hookClick = (headline: string) => typedEnd(headline, TYPE_START) + 16;
+export const hookClick = (s: Hook) => typedEnd(s.headline, TYPE_START, hookSpeed(s)) + 16;
 const BAR_LEFT = 60;
 const BAR_TOP = 330;
 const BAR_W = 960;
@@ -18,14 +21,15 @@ const BAR_H = 400;
  * Opens like a screen recording: the question types itself into a search bar,
  * the pointer clicks search, and the key words get marked.
  */
-export const HookScene: React.FC<{scene: Scene; title: string}> = ({scene, title}) => {
+export const HookScene: React.FC<{scene: TimedScene; title: string}> = ({scene, title}) => {
   const th = useTheme();
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const badge = pop(frame, fps, 0, 10);
   const bar = pop(frame, fps, 2, 14);
-  const end = typedEnd(scene.headline, TYPE_START);
-  const click = hookClick(scene.headline);
+  const speed = hookSpeed(scene);
+  const end = typedEnd(scene.headline, TYPE_START, speed);
+  const click = hookClick(scene);
   const fontSize = scene.headline.length > 30 ? 70 : 84;
   // Pointer glides in from the lower right to the search button, then leaves.
   const btn = {x: BAR_LEFT + BAR_W - 30 - 38, y: BAR_TOP + BAR_H - 24 - 38};
@@ -75,7 +79,7 @@ export const HookScene: React.FC<{scene: Scene; title: string}> = ({scene, title
         }}
       >
         <div style={{fontFamily: FONT, fontWeight: 800, fontSize, lineHeight: 1.1, letterSpacing: -1, color: th.ink}}>
-          {frame < TYPE_START ? <span style={{color: th.inkMuted, fontWeight: 600}}>Ask anything…</span> : <TypeText text={scene.headline} highlight={scene.highlight} start={TYPE_START} markAt={click + 2} />}
+          {frame < TYPE_START ? <span style={{color: th.inkMuted, fontWeight: 600}}>Ask anything…</span> : <TypeText text={scene.headline} highlight={scene.highlight} start={TYPE_START} markAt={click + 2} speed={speed} />}
         </div>
         <div style={{position: 'absolute', left: 44, bottom: 30, fontFamily: FONT, fontSize: 56, fontWeight: 400, color: th.inkMuted, lineHeight: 1}}>+</div>
         <div

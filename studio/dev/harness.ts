@@ -80,6 +80,8 @@ export type HarnessOptions = {
   statsChart?: (input: import('../lib/charts.js').ChartInput) => Promise<Buffer>;
   /** Saves files the bot sends (photos as buffers) here so screenshots can show them. */
   mediaDir?: string;
+  /** Write generated characters into the real remotion/ folder (only for real renders). */
+  realRegistry?: boolean;
 };
 
 export class Harness {
@@ -105,7 +107,8 @@ export class Harness {
     const workDir = opts.workDir ?? fs.mkdtempSync(path.join(os.tmpdir(), 'pip-studio-work-'));
     this.mediaDir = opts.mediaDir ?? path.join(workDir, '_media');
     fs.mkdirSync(this.mediaDir, {recursive: true});
-    if ((opts.renderer ?? fakeRenderer) === fakeRenderer) process.env.STUDIO_REGISTRY_DIR = path.join(workDir, '_registry');
+    if (opts.realRegistry) delete process.env.STUDIO_REGISTRY_DIR;
+    else process.env.STUDIO_REGISTRY_DIR = path.join(workDir, '_registry');
     const now = opts.now ?? (() => new Date());
     this.now = now;
     setMemoryStoreClock(now);
@@ -323,6 +326,7 @@ export class Harness {
         await finish(this.ctx, id);
         done.push({id, ok: true});
       } catch (e) {
+        if (process.env.HARNESS_DEBUG) console.error('job failed:', e);
         await fail(this.ctx, id, (e as Error).message);
         done.push({id, ok: false, error: (e as Error).message});
       }

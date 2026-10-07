@@ -55,6 +55,7 @@ async function runChat() {
     ownerId: OWNER,
     firstName: 'Ahmad',
     renderer: FAST ? fakeRenderer : realRenderer,
+    realRegistry: !FAST,
     workDir: WORK,
     now: clock.now,
     statsChart: statsChartPng,
