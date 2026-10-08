@@ -1,6 +1,6 @@
 import {useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
-import {Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis} from 'recharts';
+import {Area, AreaChart, Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis} from 'recharts';
 import type {DashboardResponse} from '../../studio/lib/analytics';
 import {Icon} from './icons';
 import type {TelegramWebApp} from './main';
@@ -8,13 +8,16 @@ import type {TelegramWebApp} from './main';
 type Data = DashboardResponse;
 type Video = Data['videos'][number];
 type Range = 7 | 30 | 90 | 'all';
-type Tab = 'overview' | 'library' | 'insights';
+type Tab = 'home' | 'library' | 'goals' | 'insights' | 'schedule';
 type SortKey = 'newest' | 'views' | 'likes' | 'engagement' | 'velocity';
 
-const TABS: {id: Tab; label: string; icon: ReactNode}[] = [
-  {id: 'overview', label: 'Overview', icon: Icon.grid},
+/** Bottom bar: two tabs, the raised Goals button in the middle, two tabs. */
+const NAV: {id: Tab; label: string; icon: ReactNode}[] = [
+  {id: 'home', label: 'Home', icon: Icon.home},
   {id: 'library', label: 'Library', icon: Icon.film},
+  {id: 'goals', label: 'Goals', icon: Icon.target},
   {id: 'insights', label: 'Insights', icon: Icon.trend},
+  {id: 'schedule', label: 'Schedule', icon: Icon.calendar},
 ];
 const RANGES: {id: Range; label: string; title: string}[] = [
   {id: 7, label: '7D', title: 'Last 7 days'},
@@ -29,9 +32,9 @@ const SORTS: {id: SortKey; label: string}[] = [
   {id: 'engagement', label: 'Best engagement'},
   {id: 'velocity', label: 'Fastest first 24h'},
 ];
-const GOAL_LABEL: Record<string, string> = {followers: 'Grow followers', views: 'Get views', creator_rewards: 'Creator Rewards', traffic: 'Send traffic'};
 const STATUS_LABEL: Record<string, string> = {planned: 'Planned', rendering: 'Being made', awaiting_approval: 'Needs your OK', approved: 'Approved', publishing: 'Posting now'};
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAYS_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 // ---------------------------------------------------------------- formatting
@@ -72,7 +75,7 @@ const postedDate = (iso: string, tz: string) => shortDay(new Date(iso).toLocaleD
 // ---------------------------------------------------------------- app
 export function App({tg}: {tg?: TelegramWebApp}) {
   const [range, setRange] = useState<Range>(30);
-  const [tab, setTab] = useState<Tab>('overview');
+  const [tab, setTab] = useState<Tab>('home');
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,6 +102,10 @@ export function App({tg}: {tg?: TelegramWebApp}) {
     tg?.HapticFeedback?.selectionChanged();
     set(v);
   };
+  const go = (t: Tab) => {
+    pick(setTab, t);
+    window.scrollTo({top: 0});
+  };
 
   if (error && !data)
     return (
@@ -113,56 +120,63 @@ export function App({tg}: {tg?: TelegramWebApp}) {
     );
   if (!data) return <Skeleton />;
 
-  const fresh = data.insights.n === 0;
-  const rangeTitle = RANGES.find((r) => r.id === range)!.title;
+  const onRange = (r: Range) => pick(setRange, r);
   return (
     <div className={`app${loading ? ' is-loading' : ''}`} aria-busy={loading}>
-      <TopBar d={data} />
-      <Profile d={data} />
-      <nav className="tabbar" aria-label="View">
-        <div className="tabbar-in" role="tablist">
-          {TABS.map((t) => (
-            <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => (pick(setTab, t.id), window.scrollTo({top: 0}))}>
-              {t.icon}
-              <span>{t.label}</span>
-            </button>
-          ))}
-        </div>
-      </nav>
-      {tab !== 'insights' && !fresh && (
-        <div className="range-row">
-          <h2>{rangeTitle}</h2>
-          <div className="seg seg-sm" role="group" aria-label="Time range">
-            {RANGES.map((r) => (
-              <button key={String(r.id)} aria-pressed={range === r.id} onClick={() => pick(setRange, r.id)}>
-                {r.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      <TopBar d={data} loading={loading} onRefresh={() => pick(setAttempt, attempt + 1)} />
       <main key={tab} className="view">
-        {tab === 'overview' && (fresh ? <Welcome d={data} /> : <Overview d={data} range={range} tg={tg} />)}
-        {tab === 'library' && <Library d={data} tg={tg} />}
+        {tab === 'home' && <Home d={data} range={range} onRange={onRange} go={go} tg={tg} />}
+        {tab === 'library' && <Library d={data} tg={tg} range={range} onRange={onRange} />}
+        {tab === 'goals' && <Goals d={data} />}
         {tab === 'insights' && <Insights d={data} />}
+        {tab === 'schedule' && <Schedule d={data} />}
       </main>
       <footer className="foot">
         Updated {when(data.generatedAt, data.timezone, data.generatedAt).time} · times in {data.timezone.replace(/_/g, ' ')}
       </footer>
+      <nav className="dock" aria-label="Sections">
+        <div className="dock-in" role="tablist">
+          {NAV.map((t) => (
+            <button key={t.id} role="tab" className={t.id === 'goals' ? 'dock-main' : undefined} aria-selected={tab === t.id} aria-label={t.label} title={t.label} onClick={() => go(t.id)}>
+              {t.icon}
+            </button>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }
 
 // ---------------------------------------------------------------- shared pieces
-function Card({title, icon, aside, children, className = ''}: {title?: string; icon?: ReactNode; aside?: ReactNode; children: ReactNode; className?: string}) {
+/** Headline in two voices: a sans first line and a serif second line. */
+function PageHead({top, accent, text}: {top: string; accent: string; text?: string}) {
   return (
-    <section className={`card ${className}`}>
-      {title && (
-        <header className="card-head">
-          <h3>
-            {icon && <span className="card-icon">{icon}</span>}
-            {title}
-          </h3>
+    <header className="page-head">
+      <h1>
+        {top}
+        <em>{accent}</em>
+      </h1>
+      {text && <p>{text}</p>}
+    </header>
+  );
+}
+
+/** Numbered section title, like "1  Best time to post". */
+function Section({n, title, children}: {n: number; title: string; children: ReactNode}) {
+  return (
+    <section className="section">
+      <h2 className="section-title"><span>{n}</span>{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+function Tile({label, icon, children, className = '', aside}: {label?: string; icon?: ReactNode; children: ReactNode; className?: string; aside?: ReactNode}) {
+  return (
+    <section className={`tile ${className}`}>
+      {(label || aside) && (
+        <header className="tile-head">
+          <span className="tile-label">{icon}{label}</span>
           {aside}
         </header>
       )}
@@ -171,16 +185,20 @@ function Card({title, icon, aside, children, className = ''}: {title?: string; i
   );
 }
 
-/** ▲/▼ chip. `ratio` is a relative change (0.24 = +24%), `abs` an absolute one. */
-function Delta({ratio, abs}: {ratio?: number; abs?: number}) {
+/** Small "+12%" / "−3" badge. `ratio` is a relative change (0.24 = +24%), `abs` an absolute one. */
+function Badge({ratio, abs}: {ratio?: number; abs?: number}) {
   const v = ratio ?? abs ?? 0;
   if (!Number.isFinite(v)) return null;
   const dir = v > 0 ? 'up' : v < 0 ? 'down' : 'flat';
   // Past +900% a percentage stops meaning much; say "12×" instead.
-  const text = ratio !== undefined && ratio > 9 ? `${Math.round(ratio + 1)}×` : ratio !== undefined ? `${Math.abs(ratio * 100) >= 10 ? Math.round(Math.abs(ratio * 100)) : Math.abs(ratio * 100).toFixed(1).replace(/\.0$/, '')}%` : fmtNum(Math.abs(v));
+  const text =
+    ratio !== undefined && ratio > 9
+      ? `${Math.round(ratio + 1)}×`
+      : ratio !== undefined
+        ? `${v > 0 ? '+' : v < 0 ? '−' : ''}${Math.abs(ratio * 100) >= 10 ? Math.round(Math.abs(ratio * 100)) : Math.abs(ratio * 100).toFixed(1).replace(/\.0$/, '')}%`
+        : signed(v);
   return (
-    <span className={`delta ${dir}`}>
-      <span aria-hidden="true">{dir === 'up' ? '▲' : dir === 'down' ? '▼' : '–'}</span>
+    <span className={`badge ${dir}`}>
       <span className="sr">{dir === 'up' ? 'up' : dir === 'down' ? 'down' : 'no change'} </span>
       {text}
     </span>
@@ -188,38 +206,32 @@ function Delta({ratio, abs}: {ratio?: number; abs?: number}) {
 }
 const change = (now: number, prev: number) => (prev > 0 ? (now - prev) / prev : undefined);
 
-/** 12-ish point trend line for stat tiles. Hidden when there is nothing to show. */
+function RangePills({range, onRange}: {range: Range; onRange: (r: Range) => void}) {
+  return (
+    <div className="ranges" role="group" aria-label="Time range">
+      {RANGES.map((r) => (
+        <button key={String(r.id)} aria-pressed={range === r.id} aria-label={r.title} onClick={() => onRange(r.id)}>
+          {r.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** 30-ish point trend line for stat tiles. Hidden when there is nothing to show. */
 function Spark({values}: {values: (number | null)[]}) {
   const pts = values.map((v, i) => [i, v] as const).filter((p): p is readonly [number, number] => p[1] !== null);
-  if (pts.length < 2) return <div className="spark spark-none" aria-hidden="true" />;
+  if (pts.length < 2) return null;
   const xs = values.length - 1 || 1;
   const min = Math.min(...pts.map((p) => p[1]));
   const max = Math.max(...pts.map((p) => p[1]));
   const y = (v: number) => (max === min ? 20 : 28 - ((v - min) / (max - min)) * 24);
   const line = pts.map(([i, v], k) => `${k ? 'L' : 'M'}${((i / xs) * 100).toFixed(2)},${y(v).toFixed(2)}`).join('');
-  const area = `${line}L${((pts.at(-1)![0] / xs) * 100).toFixed(2)},32L${((pts[0][0] / xs) * 100).toFixed(2)},32Z`;
-  const last = pts.at(-1)!;
   return (
     <div className="spark" aria-hidden="true">
       <svg viewBox="0 0 100 32" preserveAspectRatio="none">
-        <path d={area} className="spark-area" />
         <path d={line} className="spark-line" vectorEffect="non-scaling-stroke" />
       </svg>
-      <i className="spark-dot" style={{left: `${(last[0] / xs) * 100}%`, top: `${(y(last[1]) / 32) * 100}%`}} />
-    </div>
-  );
-}
-
-function Stat({icon, label, value, delta, note, spark}: {icon: ReactNode; label: string; value: string; delta?: ReactNode; note?: string; spark?: (number | null)[]}) {
-  return (
-    <div className="stat">
-      <div className="stat-label">
-        <span className="stat-icon">{icon}</span>
-        {label}
-      </div>
-      <div className="stat-value">{value}</div>
-      <div className="stat-foot">{delta ?? <span className="stat-note">{note}</span>}</div>
-      {spark && <Spark values={spark} />}
     </div>
   );
 }
@@ -234,69 +246,61 @@ function ChartTip({active, payload, label, fmt}: {active?: boolean; payload?: re
   );
 }
 
-function AxisEnds({days}: {days: string[]}) {
-  if (days.length < 2) return null;
-  return (
-    <div className="axis-ends" aria-hidden="true">
-      <span>{shortDay(days[0])}</span>
-      {days.length > 6 && <span>{shortDay(days[Math.floor(days.length / 2)])}</span>}
-      <span>{shortDay(days.at(-1)!)}</span>
-    </div>
-  );
-}
-
-/** Y ticks sit just above their gridline, left-aligned inside the plot (no axis gutter on a phone). */
-const yAxis = {
-  orientation: 'left',
-  mirror: true,
-  axisLine: false,
-  tickLine: false,
-  width: 1,
-  tickCount: 3,
-  tick: (p: {x: number | string; y: number | string; payload: {value: number}}) =>
-    p.payload.value ? <text x={Number(p.x) + 2} y={Number(p.y) - 6} fontSize={10} fill="var(--hint)" className="ytick">{fmtNum(p.payload.value)}</text> : <g />,
-} as const;
-
-// ---------------------------------------------------------------- header
-function TopBar({d}: {d: Data}) {
+function TopBar({d, loading, onRefresh}: {d: Data; loading: boolean; onRefresh: () => void}) {
+  const a = d.account;
+  const name = a.displayName || a.username || 'Your channel';
   const s = d.schedule;
   const live = !!s && s.times.length > 0;
   return (
     <div className="topbar">
-      <span className="brand"><img src="/logo.svg" alt="" width="26" height="26" />Pip Studio</span>
-      <span className={`live${live ? '' : ' off'}`}>
-        <i aria-hidden="true" />
-        {live ? (s!.mode === 'auto' ? 'Autopilot on' : 'Running') : 'Paused'}
+      <span className="who">
+        {a.avatar ? <img className="who-avatar" src={a.avatar} alt="" /> : <span className="who-avatar ph" aria-hidden="true">{name[0]?.toUpperCase()}</span>}
+        <span className="who-name">{a.username ? `@${a.username}` : name}</span>
+      </span>
+      <span className="topbar-end">
+        <span className={`live${live ? '' : ' off'}`} title={live ? (s!.mode === 'auto' ? 'Autopilot on' : 'Running') : 'Paused'}>
+          <i aria-hidden="true" />
+          {live ? (s!.mode === 'auto' ? 'Autopilot' : 'Running') : 'Paused'}
+        </span>
+        <button className={`round${loading ? ' spinning' : ''}`} onClick={onRefresh} disabled={loading} aria-label="Refresh">{Icon.refresh}</button>
       </span>
     </div>
   );
 }
 
-function Profile({d}: {d: Data}) {
-  const a = d.account;
-  const name = a.displayName || a.username || 'Your channel';
-  const any = a.followers || a.likes || a.videoCount;
-  return (
-    <header className="profile">
-      <div className="profile-row">
-        {a.avatar ? <img className="avatar" src={a.avatar} alt="" /> : <div className="avatar ph" aria-hidden="true">{name[0]?.toUpperCase()}</div>}
-        <div className="profile-text">
-          <div className="name">{name}</div>
-          <div className="handle">
-            {a.username ? `@${a.username}` : 'TikTok'}
-            <span className="goal">{GOAL_LABEL[d.goal] ?? d.goal}</span>
-          </div>
-        </div>
-      </div>
-      {any ? (
-        <dl className="totals">
-          <div><dt>Followers</dt><dd>{fmtNum(a.followers)}</dd></div>
-          <div><dt>Likes</dt><dd>{fmtNum(a.likes)}</dd></div>
-          <div><dt>Videos</dt><dd>{fmtNum(a.videoCount)}</dd></div>
-        </dl>
-      ) : null}
-    </header>
-  );
+// ---------------------------------------------------------------- goals math
+/** TikTok's Creator Rewards bar: 10,000 followers and 100,000 views in the last 30 days. */
+const REWARDS = {followers: 10_000, views: 100_000};
+const STREAK_GOAL = 7;
+const MILESTONES = [100, 500, 1_000, 2_500, 5_000, 10_000, 25_000, 50_000, 100_000, 250_000, 500_000, 1_000_000, 5_000_000, 10_000_000];
+const nextMilestone = (n: number) => MILESTONES.find((m) => m > n) ?? Math.ceil((n + 1) / 10_000_000) * 10_000_000;
+const daysTo = (left: number, perDay: number) => (left <= 0 ? 0 : perDay > 0 ? Math.ceil(left / perDay) : null);
+const etaShort = (days: number | null) => (days === null ? 'Not yet' : days === 0 ? 'Done' : days <= 1 ? '~1 day' : days > 365 ? '1 year +' : `~${days} days`);
+
+const dayKey = (iso: string, tz: string) => new Date(iso).toLocaleDateString('en-CA', {timeZone: safeTz(tz)});
+/** Days in a row, ending today or yesterday, with at least one posted video. */
+function postingStreak(d: Data) {
+  const days = new Set(d.videos.map((v) => dayKey(v.postedAt, d.timezone)));
+  let t = new Date(d.generatedAt).getTime();
+  if (!days.has(dayKey(new Date(t).toISOString(), d.timezone))) t -= 864e5;
+  let n = 0;
+  while (days.has(dayKey(new Date(t).toISOString(), d.timezone))) (n++, (t -= 864e5));
+  return n;
+}
+
+type GoalRow = {id: string; icon: ReactNode; title: string; sub: string; value: number; target: number; perDay: number | null; fmt: (n: number) => string};
+function goalRows(d: Data): GoalRow[] {
+  const followers = d.account.followers;
+  const views30 = d.kpis.growth.views.month;
+  const followersPerDay = d.kpis.growth.followers.week / 7;
+  const rewards = d.goal === 'creator_rewards';
+  const fTarget = rewards ? REWARDS.followers : nextMilestone(followers);
+  const vTarget = rewards ? REWARDS.views : nextMilestone(views30);
+  return [
+    {id: 'followers', icon: Icon.users, title: rewards ? `${fmtNum(fTarget)} followers` : `Reach ${fmtNum(fTarget)} followers`, sub: rewards ? 'Creator Rewards · Followers' : 'Next milestone · Followers', value: followers, target: fTarget, perDay: followersPerDay, fmt: fmtFull},
+    {id: 'views', icon: Icon.eye, title: `${fmtNum(vTarget)} views in 30 days`, sub: rewards ? 'Creator Rewards · Views' : 'Next milestone · Views', value: views30, target: vTarget, perDay: null, fmt: fmtFull},
+    {id: 'streak', icon: Icon.calendar, title: `Post ${STREAK_GOAL} days in a row`, sub: 'Habit · Posting streak', value: Math.min(postingStreak(d), STREAK_GOAL), target: STREAK_GOAL, perDay: 1, fmt: (n) => `${n} day${n === 1 ? '' : 's'}`},
+  ];
 }
 
 /** "13h 42m" until `iso`, ticking every 20 s. */
@@ -316,10 +320,10 @@ function useCountdown(iso: string | undefined) {
 function Countdown({iso}: {iso: string}) {
   const c = useCountdown(iso);
   if (!c) return null;
-  if (c.soon) return <div className="count-big">Any minute</div>;
+  if (c.soon) return <span className="count">Any minute</span>;
   const days = Math.floor(c.h / 24);
   return (
-    <div className="count-big" aria-label={`in ${c.h} hours ${c.m} minutes`}>
+    <span className="count" aria-label={`in ${c.h} hours ${c.m} minutes`}>
       {days >= 2 ? (
         <>{days}<small>days</small></>
       ) : (
@@ -328,270 +332,226 @@ function Countdown({iso}: {iso: string}) {
           {String(c.m).padStart(c.h > 0 ? 2 : 1, '0')}<small>m</small>
         </>
       )}
-    </div>
+    </span>
   );
 }
 
-// ---------------------------------------------------------------- schedule
-function NextPost({d, big = false}: {d: Data; big?: boolean}) {
-  const s = d.schedule;
-  const next = s?.upcoming[0];
-  const at = next?.slotAt ?? s?.nextSlot;
-  if (!s || !at)
-    return (
-      <Card className="next">
-        <div className="next-row">
-          <span className="next-icon">{Icon.calendar}</span>
-          <div>
-            <div className="next-title">No posting times set</div>
-            <p className="muted">Send /settings in the bot to pick when videos go out.</p>
-          </div>
-        </div>
-      </Card>
-    );
-  const w = when(at, d.timezone, d.generatedAt);
-  const first = d.insights.n === 0;
-  if (big)
-    return (
-      <section className="poster" aria-label={`${first ? 'Your first video posts' : 'Next post'} ${w.day} at ${w.time}`}>
-        <div className="poster-top">
-          <span className="poster-eyebrow">{first ? 'Your first video goes live in' : 'Next video goes live in'}</span>
-          {next && <span className={`chip status-${next.status}`}>{STATUS_LABEL[next.status] ?? next.status}</span>}
-        </div>
-        <Countdown iso={at} />
-        <div className="poster-when">
-          {Icon.calendar}
-          <span><b>{w.day}</b> at <b>{w.time}</b></span>
-        </div>
-        {next?.topic && <div className="poster-topic">{next.topic}</div>}
-        {next?.status === 'awaiting_approval' && <p className="poster-hint">{Icon.chat} Approve it in the chat with Pip.</p>}
-        {s.times.length > 0 && (
-          <div className="poster-slots">
-            <span>{s.postsPerDay === 1 ? 'Every day' : `${s.postsPerDay}× a day`}</span>
-            {s.times.map((t) => <span key={t} className="slot">{t}</span>)}
-          </div>
-        )}
-      </section>
-    );
+/** The soft light-blue card: one message from Pip and one action. */
+function Nudge({kicker, icon, title, children, action}: {kicker: string; icon: ReactNode; title: ReactNode; children?: ReactNode; action?: {label: string; onClick: () => void}}) {
   return (
-    <Card className="next">
-      <div className="next-row">
-        <span className="next-icon">{Icon.calendar}</span>
-        <div className="next-main">
-          <div className="eyebrow">{first ? 'Your first video posts' : 'Next post'}</div>
-          <div className="next-title">
-            {w.day} <span className="muted-strong">at</span> {w.time}
-          </div>
-          {next?.topic && <div className="next-topic">{next.topic}</div>}
-        </div>
-        {next && <span className={`chip status-${next.status}`}>{STATUS_LABEL[next.status] ?? next.status}</span>}
+    <section className="nudge">
+      <span className="nudge-kicker">{icon}{kicker}</span>
+      <div className="nudge-row">
+        <h3 className="nudge-title">{title}</h3>
+        {action && <button className="nudge-btn" onClick={action.onClick}>{action.label}</button>}
       </div>
-      {next?.status === 'awaiting_approval' && <p className="next-hint">{Icon.chat} Approve it in the chat with Pip.</p>}
-      {s.times.length > 0 && (
-        <div className="slots">
-          <span className="muted">{s.postsPerDay === 1 ? 'Every day at' : `${s.postsPerDay} a day at`}</span>
-          {s.times.map((t) => <span key={t} className="slot">{t}</span>)}
-        </div>
-      )}
-    </Card>
+      {children}
+    </section>
   );
 }
 
-function Upcoming({d}: {d: Data}) {
-  const list = d.schedule?.upcoming ?? [];
-  if (!list.length) return null;
-  return (
-    <Card title="Coming up" icon={Icon.clock}>
-      <ul className="queue">
-        {list.map((v) => {
-          const w = when(v.slotAt, d.timezone, d.generatedAt);
-          return (
-            <li key={v.id}>
-              <div className="queue-when"><b>{w.time}</b><span>{w.day}</span></div>
-              <div className="queue-topic">{v.topic || 'Topic not picked yet'}</div>
-              <span className={`chip status-${v.status}`}>{STATUS_LABEL[v.status] ?? v.status}</span>
-            </li>
-          );
-        })}
-      </ul>
-    </Card>
-  );
-}
-
-// ---------------------------------------------------------------- overview: first run
-function Welcome({d}: {d: Data}) {
-  const s = d.schedule;
-  const approval = (s?.mode ?? 'approval') === 'approval';
-  const time = s?.upcoming[0]?.slotAt ?? s?.nextSlot;
-  const steps = [
-    {title: 'Pip makes the video', text: 'Script, voice and edit, ready before the posting time.'},
-    ...(approval ? [{title: 'You approve it', text: 'It arrives in the chat. Tap Approve, or skip it.'}] : []),
-    {title: 'It posts to TikTok', text: time ? `${when(time, d.timezone, d.generatedAt).day} at ${when(time, d.timezone, d.generatedAt).time}.` : 'At your next posting time.'},
-    {title: 'Stats show up here', text: 'First numbers about an hour after posting, then they update through the day.'},
-  ];
-  return (
-    <>
-      <NextPost d={d} big />
-      <div className="section-label">What happens next</div>
-      <ol className="steps">
-        {steps.map((x, i) => (
-          <li key={x.title}>
-            <span className="step-n">{String(i + 1).padStart(2, '0')}</span>
-            <div>
-              <div className="step-title">{x.title}</div>
-              <div className="step-text">{x.text}</div>
-            </div>
-          </li>
-        ))}
-      </ol>
-      <div className="section-label">Your stats</div>
-      <div className="stats stats-ghost">
-        <Stat icon={Icon.eye} label="Views" value="—" note="After first post" />
-        <Stat icon={Icon.users} label="Followers" value={d.account.followers ? fmtNum(d.account.followers) : '—'} note={d.account.followers ? 'On TikTok now' : 'After first post'} />
-        <Stat icon={Icon.heart} label="Likes" value="—" note="After first post" />
-        <Stat icon={Icon.pulse} label="Engagement" value="—" note="After first post" />
-      </div>
-    </>
-  );
-}
-
-// ---------------------------------------------------------------- overview
-function Overview({d, range, tg}: {d: Data; range: Range; tg?: TelegramWebApp}) {
+// ---------------------------------------------------------------- home
+function Home({d, range, onRange, go, tg}: {d: Data; range: Range; onRange: (r: Range) => void; go: (t: Tab) => void; tg?: TelegramWebApp}) {
+  if (d.insights.n === 0) return <Welcome d={d} go={go} />;
   const k = d.kpis;
   const s = d.series;
-  const days = s.map((x) => x.day);
-  const rangeWord = range === 'all' ? '' : `${range} days`;
+  const rangeTitle = RANGES.find((r) => r.id === range)!.title;
   const leadFollowers = d.goal === 'followers';
   const viewsDelta = change(k.views.value, k.views.prev);
   const likesDelta = change(k.likes.value, k.likes.prev);
   const tail = (xs: (number | null)[]) => xs.slice(-Math.min(xs.length, 30));
-  const engagementSeries = s.map((x) => (x.views >= 100 ? x.engagement : null));
-  const followerPts = s.map((x) => x.followers).filter((x): x is number => x !== null);
-  const followerChart = followerPts.length >= 2 && Math.max(...followerPts) !== Math.min(...followerPts);
-  const anyLikes = s.some((x) => x.likes > 0);
-  const top = useMemo(() => [...d.videos].sort((a, b) => b.views - a.views)[0], [d.videos]);
-  const posted = d.videos.length;
+  const top = [...d.videos].sort((a, b) => b.views - a.views)[0];
   const open = (url: string | null) => url && (tg?.openLink ? tg.openLink(url) : window.open(url, '_blank'));
-
   const hero = leadFollowers
-    ? {label: 'Followers', icon: Icon.users, value: k.followers.value, delta: <Delta abs={k.followers.change} />, caption: range === 'all' ? 'in the last 30 days' : `in ${rangeWord}`, key: 'followers' as const}
-    : {label: 'Views', icon: Icon.eye, value: k.views.value, delta: viewsDelta !== undefined ? <Delta ratio={viewsDelta} /> : null, caption: viewsDelta !== undefined ? `vs previous ${rangeWord}` : range === 'all' ? 'since you started' : 'first period with data', key: 'views' as const};
+    ? {label: 'Followers', value: k.followers.value, badge: <Badge abs={k.followers.change} />, caption: range === 'all' ? 'in the last 30 days' : `in ${range} days`, key: 'followers' as const}
+    : {label: 'Total views', value: k.views.value, badge: viewsDelta !== undefined ? <Badge ratio={viewsDelta} /> : null, caption: viewsDelta !== undefined ? `vs the ${range === 'all' ? 'period' : `${range} days`} before` : range === 'all' ? 'since you started' : 'first period with data', key: 'views' as const};
   const heroData = hero.key === 'followers' ? s.filter((x) => x.followers !== null) : s;
+  const goal = goalRows(d)[0];
+  const eta = daysTo(goal.target - goal.value, goal.perDay ?? 0);
+  const next = d.schedule?.upcoming[0];
+  const nextAt = next?.slotAt ?? d.schedule?.nextSlot;
 
   return (
     <>
-      <section className="card hero" aria-label={`${hero.label}: ${fmtFull(hero.value)}`}>
-        <div className="hero-top">
-          <div className="stat-label">
-            <span className="stat-icon">{hero.icon}</span>
-            {hero.label}
-          </div>
-        </div>
-        <div className="hero-value">{fmtFull(hero.value)}</div>
-        <div className="hero-delta">
-          {hero.delta}
-          <span className="muted">{hero.caption}</span>
-        </div>
-        {heroData.some((x) => (x[hero.key] ?? 0) > 0) ? (
-          <div className="hero-chart">
-            <ResponsiveContainer width="100%" height={170}>
-              <AreaChart data={heroData} margin={{top: 18, right: 0, left: 0, bottom: 0}}>
-                <defs>
-                  <linearGradient id="heroFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0" style={{stopColor: 'var(--accent)', stopOpacity: 0.16}} />
-                    <stop offset="1" style={{stopColor: 'var(--accent)', stopOpacity: 0}} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid vertical={false} stroke="var(--grid)" />
-                <XAxis dataKey="day" hide />
-                <YAxis {...yAxis} tickFormatter={fmtNum} domain={hero.key === 'followers' ? ['dataMin', 'dataMax'] : [0, 'auto']} />
-                <Tooltip content={(p) => <ChartTip {...p} fmt={fmtFull} />} cursor={{stroke: 'var(--line-strong)', strokeWidth: 1}} isAnimationActive={false} />
-                <Area type="monotone" dataKey={hero.key} stroke="var(--accent)" strokeWidth={2} fill="url(#heroFill)" activeDot={{r: 4, stroke: 'var(--surface)', strokeWidth: 2, fill: 'var(--accent)'}} animationDuration={500} />
-              </AreaChart>
-            </ResponsiveContainer>
-            <AxisEnds days={heroData.map((x) => x.day)} />
-          </div>
-        ) : (
-          <p className="chart-empty">No {hero.label.toLowerCase()} in this period yet.</p>
-        )}
+      <section className="balance" aria-label={`${hero.label}: ${fmtFull(hero.value)}`}>
+        <span className="balance-label">{hero.label} <i>·</i> {rangeTitle}</span>
+        <div className="balance-value">{fmtFull(hero.value)}</div>
+        <div className="balance-delta">{hero.badge}<span>{hero.caption}</span></div>
       </section>
+      {heroData.some((x) => (x[hero.key] ?? 0) > 0) ? (
+        <div className="big-chart">
+          <ResponsiveContainer width="100%" height={190}>
+            <AreaChart data={heroData} margin={{top: 8, right: 0, left: 0, bottom: 0}}>
+              <XAxis dataKey="day" hide />
+              <YAxis hide domain={hero.key === 'followers' ? ['dataMin', 'dataMax'] : [0, 'auto']} />
+              <Tooltip content={(p) => <ChartTip {...p} fmt={fmtFull} />} cursor={{stroke: 'var(--text)', strokeWidth: 1, strokeDasharray: '3 3'}} isAnimationActive={false} />
+              <Area type="linear" dataKey={hero.key} stroke="var(--accent)" strokeWidth={2} fill="var(--accent)" fillOpacity={0.22} activeDot={{r: 5, stroke: 'var(--bg)', strokeWidth: 2, fill: 'var(--text)'}} animationDuration={500} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      ) : (
+        <p className="chart-empty">No {hero.label.toLowerCase()} in this period yet.</p>
+      )}
+      <RangePills range={range} onRange={onRange} />
 
-      <div className="stats">
+      <div className="tiles">
         {leadFollowers ? (
-          <Stat icon={Icon.eye} label="Views" value={fmtNum(k.views.value)} delta={viewsDelta !== undefined ? <Delta ratio={viewsDelta} /> : undefined} note="No earlier period" spark={tail(s.map((x) => x.views))} />
+          <Tile label="Views" icon={Icon.eye}>
+            <div className="tile-badge">{viewsDelta !== undefined ? <Badge ratio={viewsDelta} /> : <span className="badge flat">New</span>}</div>
+            <div className="tile-value">{fmtNum(k.views.value)}</div>
+            <Spark values={tail(s.map((x) => x.views))} />
+          </Tile>
         ) : (
-          <Stat icon={Icon.users} label="Followers" value={fmtNum(k.followers.value)} delta={k.followers.change ? <Delta abs={k.followers.change} /> : undefined} note="No change yet" spark={tail(s.map((x) => x.followers))} />
+          <Tile label="Followers" icon={Icon.users}>
+            <div className="tile-badge"><Badge abs={k.followers.change} /></div>
+            <div className="tile-value">{fmtNum(k.followers.value)}</div>
+            <Spark values={tail(s.map((x) => x.followers))} />
+          </Tile>
         )}
-        <Stat icon={Icon.heart} label="Likes" value={fmtNum(k.likes.value)} delta={likesDelta !== undefined ? <Delta ratio={likesDelta} /> : undefined} note="No earlier period" spark={tail(s.map((x) => x.likes))} />
-        <Stat icon={Icon.pulse} label="Engagement" value={fmtPct(k.engagement.value)} note="Likes, comments, shares per view" spark={tail(engagementSeries)} />
-        <Stat icon={Icon.film} label="Videos posted" value={String(posted)} note={posted ? `${(posted / Math.max(1, days.length)).toFixed(1)} a day` : 'None in this period'} />
+        <Tile label="Likes" icon={Icon.heart}>
+          <div className="tile-badge">{likesDelta !== undefined ? <Badge ratio={likesDelta} /> : <span className="badge flat">New</span>}</div>
+          <div className="tile-value">{fmtNum(k.likes.value)}</div>
+          <Spark values={tail(s.map((x) => x.likes))} />
+        </Tile>
+        <Tile label="Engagement" icon={Icon.pulse}>
+          <div className="tile-badge"><span className="badge flat">per view</span></div>
+          <div className="tile-value">{fmtPct(k.engagement.value)}</div>
+          <Spark values={tail(s.map((x) => (x.views >= 100 ? x.engagement : null)))} />
+        </Tile>
+        <Tile label="Posted" icon={Icon.film}>
+          <div className="tile-badge"><span className="badge flat">{d.videos.length ? `${(d.videos.length / Math.max(1, s.length)).toFixed(1)} a day` : 'None yet'}</span></div>
+          <div className="tile-value">{d.videos.length}</div>
+          <p className="tile-note">videos in this period</p>
+        </Tile>
       </div>
 
-      <NextPost d={d} big />
+      <Nudge
+        kicker="Pip forecast"
+        icon={Icon.target}
+        title={eta === 0 ? `You reached ${fmtNum(goal.target)} followers!` : <>How soon can you reach <b>{fmtNum(goal.target)}</b> followers?</>}
+        action={{label: 'Find out', onClick: () => go('goals')}}
+      />
+
+      <Today d={d} />
+
+      {nextAt && (
+        <Tile label="Next post" icon={Icon.clock} aside={next ? <span className={`chip status-${next.status}`}>{STATUS_LABEL[next.status] ?? next.status}</span> : null} className="next-tile">
+          <button className="row-link" onClick={() => go('schedule')}>
+            <span>
+              <b className="next-when">{when(nextAt, d.timezone, d.generatedAt).day} at {when(nextAt, d.timezone, d.generatedAt).time}</b>
+              {next?.topic && <span className="next-topic">{next.topic}</span>}
+            </span>
+            {Icon.chevron}
+          </button>
+        </Tile>
+      )}
 
       {top && top.views > 0 && (
-        <Card title="Top video" icon={Icon.trend} className="top">
+        <Tile label="Top video" icon={Icon.trend}>
           <button className="top-video" onClick={() => open(top.shareUrl)} aria-label={`${top.topic || top.caption}, ${fmtNum(top.views)} views. Open on TikTok`}>
             <div className="top-thumb">{top.thumb ? <img src={top.thumb} alt="" loading="lazy" /> : null}<span className="top-rank">#1</span></div>
             <div className="top-body">
               <div className="top-title">{top.topic || top.caption}</div>
-              <div className="top-meta">
-                {postedDate(top.postedAt, d.timezone)}
-                {top.hookType && <> · {top.hookType} hook</>}
-              </div>
+              <div className="top-meta">{postedDate(top.postedAt, d.timezone)}{top.hookType && <> · {top.hookType} hook</>}</div>
               <div className="top-nums">
                 <span><b>{fmtNum(top.views)}</b> views</span>
                 <span><b>{fmtNum(top.likes)}</b> likes</span>
-                <span><b>{fmtPct(top.engagement)}</b> eng.</span>
               </div>
-              {top.viral && top.ratio ? <span className="chip chip-accent">{top.ratio.toFixed(1)}× your usual views</span> : null}
+              {top.viral && top.ratio ? <span className="badge up">{top.ratio.toFixed(1)}× your usual</span> : null}
             </div>
-            <span className="top-go">{Icon.external}</span>
           </button>
-        </Card>
+        </Tile>
       )}
 
-      <Card title="New followers" icon={Icon.users}>
+      <Records d={d} />
+      <MoreCharts d={d} range={range} />
+    </>
+  );
+}
+
+function Today({d}: {d: Data}) {
+  const g = d.kpis.growth;
+  const streak = postingStreak(d);
+  const perDay = g.followers.week / 7;
+  return (
+    <div className="tiles tiles-4" aria-label="Today">
+      <div className="mini"><span>Views today</span><b>{signed(g.views.day)}</b></div>
+      <div className="mini"><span>Followers today</span><b>{signed(g.followers.day)}</b></div>
+      <div className="mini"><span>Posting streak</span><b>{streak}<small> day{streak === 1 ? '' : 's'}</small></b></div>
+      <div className="mini"><span>New followers a day</span><b>{perDay >= 10 ? fmtNum(Math.round(perDay)) : perDay.toFixed(1).replace(/\.0$/, '')}</b></div>
+    </div>
+  );
+}
+
+function Records({d}: {d: Data}) {
+  const s = d.series;
+  const best = <K extends 'views' | 'newFollowers' | 'likes'>(k: K) => s.reduce<(typeof s)[number] | null>((m, x) => (x[k] > (m?.[k] ?? 0) ? x : m), null);
+  const v = best('views');
+  const f = best('newFollowers');
+  const l = best('likes');
+  const rows = [
+    v && {label: 'Most views in a day', value: fmtFull(v.views), day: v.day},
+    f && {label: 'Most new followers in a day', value: `+${fmtFull(f.newFollowers)}`, day: f.day},
+    l && {label: 'Most likes in a day', value: fmtFull(l.likes), day: l.day},
+  ].filter(Boolean) as {label: string; value: string; day: string}[];
+  if (!rows.length) return null;
+  return (
+    <Tile label="Your records" icon={Icon.trophy} aside={<span className="tile-aside">This period</span>}>
+      <ul className="list">
+        {rows.map((x) => (
+          <li key={x.label}>
+            <span>{x.label}<small>{shortDay(x.day)}</small></span>
+            <b>{x.value}</b>
+          </li>
+        ))}
+      </ul>
+    </Tile>
+  );
+}
+
+function MoreCharts({d, range}: {d: Data; range: Range}) {
+  const s = d.series;
+  const k = d.kpis;
+  const followerPts = s.map((x) => x.followers).filter((x): x is number => x !== null);
+  const followerChart = followerPts.length >= 2 && Math.max(...followerPts) !== Math.min(...followerPts) && range !== 7 && d.goal !== 'followers';
+  const anyLikes = s.some((x) => x.likes > 0);
+  return (
+    <>
+      <Tile label="New followers" icon={Icon.users}>
         <div className="growth">
-          <div><b className={k.growth.followers.day > 0 ? 'pos' : ''}>{signed(k.growth.followers.day)}</b><span>Today</span></div>
-          <div><b className={k.growth.followers.week > 0 ? 'pos' : ''}>{signed(k.growth.followers.week)}</b><span>7 days</span></div>
-          <div><b className={k.growth.followers.month > 0 ? 'pos' : ''}>{signed(k.growth.followers.month)}</b><span>30 days</span></div>
+          <div><b>{signed(k.growth.followers.day)}</b><span>Today</span></div>
+          <div><b>{signed(k.growth.followers.week)}</b><span>7 days</span></div>
+          <div><b>{signed(k.growth.followers.month)}</b><span>30 days</span></div>
         </div>
-        {followerChart && range !== 7 && !leadFollowers && (
+        {followerChart && (
           <div className="chart">
-            <ResponsiveContainer width="100%" height={120}>
-              <AreaChart data={s} margin={{top: 18, right: 0, left: 0, bottom: 0}}>
-                <CartesianGrid vertical={false} stroke="var(--grid)" />
+            <ResponsiveContainer width="100%" height={110}>
+              <AreaChart data={s} margin={{top: 8, right: 0, left: 0, bottom: 0}}>
                 <XAxis dataKey="day" hide />
-                <YAxis {...yAxis} tickFormatter={fmtNum} domain={['dataMin', 'dataMax']} />
-                <Tooltip content={(p) => <ChartTip {...p} fmt={(v) => `${fmtFull(v)} followers`} />} cursor={{stroke: 'var(--line-strong)', strokeWidth: 1}} isAnimationActive={false} />
-                <Area type="monotone" dataKey="followers" stroke="var(--accent-2)" strokeWidth={2} fill="var(--accent-2)" fillOpacity={0.1} connectNulls={false} activeDot={{r: 4, stroke: 'var(--surface)', strokeWidth: 2, fill: 'var(--accent-2)'}} animationDuration={500} />
+                <YAxis hide domain={['dataMin', 'dataMax']} />
+                <Tooltip content={(p) => <ChartTip {...p} fmt={(v) => `${fmtFull(v)} followers`} />} cursor={{stroke: 'var(--text)', strokeWidth: 1, strokeDasharray: '3 3'}} isAnimationActive={false} />
+                <Area type="linear" dataKey="followers" stroke="var(--accent)" strokeWidth={2} fill="var(--accent)" fillOpacity={0.18} connectNulls={false} activeDot={{r: 4, stroke: 'var(--surface)', strokeWidth: 2, fill: 'var(--text)'}} animationDuration={500} />
               </AreaChart>
             </ResponsiveContainer>
-            <AxisEnds days={days} />
           </div>
         )}
-      </Card>
-
+      </Tile>
       {anyLikes && (
-        <Card title="Daily likes" icon={Icon.heart}>
+        <Tile label="Daily likes" icon={Icon.heart}>
           <div className="chart">
-            <ResponsiveContainer width="100%" height={120}>
-              <BarChart data={s} margin={{top: 18, right: 0, left: 0, bottom: 0}} barCategoryGap={s.length > 40 ? 1 : 2}>
-                <CartesianGrid vertical={false} stroke="var(--grid)" />
+            <ResponsiveContainer width="100%" height={110}>
+              <BarChart data={s} margin={{top: 8, right: 0, left: 0, bottom: 0}} barCategoryGap={s.length > 40 ? 1 : 2}>
                 <XAxis dataKey="day" hide />
-                <YAxis {...yAxis} tickFormatter={fmtNum} />
-                <Tooltip content={(p) => <ChartTip {...p} fmt={(v) => `${fmtFull(v)} likes`} />} cursor={{fill: 'var(--grid)'}} isAnimationActive={false} />
-                <Bar dataKey="likes" fill="var(--accent-2)" radius={[3, 3, 0, 0]} maxBarSize={14} animationDuration={500} />
+                <YAxis hide />
+                <Tooltip content={(p) => <ChartTip {...p} fmt={(v) => `${fmtFull(v)} likes`} />} cursor={{fill: 'var(--surface-2)'}} isAnimationActive={false} />
+                <Bar dataKey="likes" fill="var(--accent)" radius={[3, 3, 0, 0]} maxBarSize={14} animationDuration={500} />
               </BarChart>
             </ResponsiveContainer>
-            <AxisEnds days={days} />
           </div>
-        </Card>
+        </Tile>
       )}
-
       {d.months.length > 0 && (
-        <Card title="By month" icon={Icon.calendar}>
+        <Tile label="By month" icon={Icon.calendar}>
           <div className="table-wrap">
             <table>
               <thead>
@@ -610,9 +570,303 @@ function Overview({d, range, tg}: {d: Data; range: Range; tg?: TelegramWebApp}) 
               </tbody>
             </table>
           </div>
-        </Card>
+        </Tile>
       )}
     </>
+  );
+}
+
+// ---------------------------------------------------------------- home: first run
+function Welcome({d, go}: {d: Data; go: (t: Tab) => void}) {
+  const s = d.schedule;
+  const approval = (s?.mode ?? 'approval') === 'approval';
+  const at = s?.upcoming[0]?.slotAt ?? s?.nextSlot;
+  const w = at ? when(at, d.timezone, d.generatedAt) : null;
+  const steps = [
+    {title: 'Pip makes the video', text: 'Script, voice and edit, ready before the posting time.'},
+    ...(approval ? [{title: 'You approve it', text: 'It arrives in the chat. Tap Approve, or skip it.'}] : []),
+    {title: 'It posts to TikTok', text: w ? `${w.day} at ${w.time}.` : 'At your next posting time.'},
+    {title: 'Stats show up here', text: 'First numbers about an hour after posting, then they update through the day.'},
+  ];
+  return (
+    <>
+      <section className="balance">
+        <span className="balance-label">{at ? 'Your first video goes live in' : 'No posting times yet'}</span>
+        <div className="balance-value">{at ? <Countdown iso={at} /> : '—'}</div>
+        <div className="balance-delta">{w ? <span>{w.day} at {w.time}</span> : <span>Send /settings in the bot to pick times.</span>}</div>
+      </section>
+      {s && s.times.length > 0 && (
+        <div className="ranges static" aria-label="Posting times">
+          {s.times.map((t) => <span key={t}>{t}</span>)}
+        </div>
+      )}
+      <Nudge kicker="Pip forecast" icon={Icon.target} title={<>How soon can you reach <b>{fmtNum(goalRows(d)[0].target)}</b> followers?</>} action={{label: 'Goals', onClick: () => go('goals')}} />
+      <Section n={1} title="What happens next">
+        <ol className="steps">
+          {steps.map((x, i) => (
+            <li key={x.title}>
+              <span className="step-n">{String(i + 1).padStart(2, '0')}</span>
+              <div>
+                <div className="step-title">{x.title}</div>
+                <div className="step-text">{x.text}</div>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </Section>
+      <Section n={2} title="Your stats">
+        <div className="tiles">
+          {[['Views', Icon.eye], ['Followers', Icon.users], ['Likes', Icon.heart], ['Engagement', Icon.pulse]].map(([label, icon]) => (
+            <Tile key={label as string} label={label as string} icon={icon as ReactNode} className="ghost">
+              <div className="tile-value">—</div>
+              <p className="tile-note">After the first post</p>
+            </Tile>
+          ))}
+        </div>
+      </Section>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------- goals
+function Goals({d}: {d: Data}) {
+  const rows = goalRows(d);
+  const open = rows.filter((g) => g.value < g.target);
+  const main = rows[0];
+  const perDay = main.perDay ?? 0;
+  const eta = daysTo(main.target - main.value, perDay);
+  const count = open.length;
+  return (
+    <>
+      <PageHead
+        top={count ? `You have ${count}` : 'You reached'}
+        accent={count ? `goal${count === 1 ? '' : 's'} in progress` : 'every goal'}
+        text="Pip tracks these from your TikTok numbers. Time estimates use your pace from the last 7 days."
+      />
+      <section className="nudge">
+        <span className="nudge-kicker">{Icon.trend}{eta === 0 ? 'Goal reached' : perDay > 0 ? "You're on your way" : 'Getting started'}</span>
+        <p className="nudge-text">
+          {eta === 0
+            ? `You passed ${fmtFull(main.target)} followers.`
+            : perDay > 0
+              ? `At ${perDay >= 10 ? fmtNum(Math.round(perDay)) : perDay.toFixed(1)} new followers a day, you reach ${fmtFull(main.target)} followers in about ${eta} day${eta === 1 ? '' : 's'}.`
+              : 'Once followers start coming in, Pip shows how long the goal takes at your pace.'}
+        </p>
+        <div className="scale" aria-hidden="true">
+          <span>{fmtNum(main.value)}</span>
+          <b>{etaShort(eta)}</b>
+          <span>{fmtNum(main.target)}</span>
+        </div>
+      </section>
+      <ul className="goals">
+        {rows.map((g) => {
+          const pct = Math.min(1, g.target ? g.value / g.target : 0);
+          return (
+            <li key={g.id} className="goal">
+              <div className="goal-top">
+                <span className="goal-icon">{g.icon}</span>
+                <span className="goal-text">
+                  <b>{g.title}</b>
+                  <small>{g.sub}</small>
+                </span>
+                {pct >= 1 ? <span className="badge up">Done</span> : <span className="goal-pct">{Math.floor(pct * 100)}%</span>}
+              </div>
+              <div className="goal-bar" role="progressbar" aria-valuemin={0} aria-valuemax={g.target} aria-valuenow={Math.min(g.value, g.target)} aria-label={g.title}>
+                <i style={{width: `${Math.max(pct * 100, g.value > 0 ? 1.5 : 0)}%`}} />
+              </div>
+              <div className="goal-ends">
+                <span>{g.fmt(g.value)}</span>
+                <span>{g.fmt(g.target)}</span>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      {d.goal === 'creator_rewards' && <p className="fine">TikTok also needs you to be 18 or older. Pip checks the numbers, TikTok decides.</p>}
+    </>
+  );
+}
+
+// ---------------------------------------------------------------- schedule
+function Schedule({d}: {d: Data}) {
+  const s = d.schedule;
+  const next = s?.upcoming[0];
+  const at = next?.slotAt ?? s?.nextSlot;
+  if (!s || !at)
+    return (
+      <>
+        <PageHead top="No posting" accent="times yet" text="Send /settings in the bot to pick when videos go out." />
+      </>
+    );
+  const w = when(at, d.timezone, d.generatedAt);
+  return (
+    <>
+      <PageHead top="Next video" accent="goes live in" />
+      <section className="poster" aria-label={`Next post ${w.day} at ${w.time}`}>
+        <div className="poster-top">
+          <span className="poster-eyebrow">{w.day} at {w.time}</span>
+          {next && <span className={`chip status-${next.status}`}>{STATUS_LABEL[next.status] ?? next.status}</span>}
+        </div>
+        <div className="poster-count"><Countdown iso={at} /></div>
+        {next?.topic && <div className="poster-topic">{next.topic}</div>}
+        {next?.status === 'awaiting_approval' && <p className="poster-hint">{Icon.chat} Approve it in the chat with Pip.</p>}
+      </section>
+      <Section n={1} title="Posting times">
+        <div className="ranges static">
+          {s.times.map((t) => <span key={t}>{t}</span>)}
+        </div>
+        <p className="fine">{s.postsPerDay === 1 ? 'One video every day' : `${s.postsPerDay} videos a day`}, {s.mode === 'auto' ? 'posted on autopilot' : 'each sent to you to approve first'}. Change this with /settings in the bot.</p>
+      </Section>
+      {s.upcoming.length > 0 && (
+        <Section n={2} title="Coming up">
+          <ul className="queue">
+            {s.upcoming.map((v) => {
+              const x = when(v.slotAt, d.timezone, d.generatedAt);
+              return (
+                <li key={v.id}>
+                  <div className="queue-when"><b>{x.time}</b><span>{x.day}</span></div>
+                  <div className="queue-topic">{v.topic || 'Topic not picked yet'}</div>
+                  <span className={`chip status-${v.status}`}>{STATUS_LABEL[v.status] ?? v.status}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </Section>
+      )}
+    </>
+  );
+}
+
+// ---------------------------------------------------------------- insights
+function Insights({d}: {d: Data}) {
+  const ins = d.insights;
+  const min = ins.minVideos ?? 15;
+  if (ins.n === 0)
+    return (
+      <>
+        <PageHead top="What works" accent="for your channel" text="Pip compares your videos to find which topics, hooks and posting times work best. It starts after your first videos." />
+        <Tile className="empty">
+          <div className="state-icon">{Icon.trend}</div>
+          <h3>No videos to compare yet</h3>
+          <Meter n={0} min={min} />
+        </Tile>
+      </>
+    );
+  const max = Math.max(1, ...ins.heatmap.flat().map((x) => x ?? 0));
+  const anyHeat = ins.heatmap.some((r) => r.some((c) => c !== null));
+  let best: {wd: number; h: number; v: number} | null = null;
+  ins.heatmap.forEach((row, wd) => row.forEach((v, h) => v !== null && v > (best?.v ?? -1) && (best = {wd, h, v})));
+  const b = best as {wd: number; h: number; v: number} | null;
+  const inSchedule = b && (d.schedule?.times ?? []).some((x) => Number(x.slice(0, 2)) === b.h);
+  let n = 0;
+  return (
+    <>
+      <PageHead top="What works" accent="for your channel" text={`Based on ${ins.n} video${ins.n === 1 ? '' : 's'}.${ins.weekStart ? ` Weekly report from ${shortDay(ins.weekStart)}.` : ''}`} />
+      {ins.tooSmall && (
+        <Tile className="note">
+          <p><b>Early days.</b> Patterns get reliable after {min} videos. Treat these as first hints.</p>
+          <Meter n={ins.n} min={min} />
+        </Tile>
+      )}
+      {b && (
+        <Section n={++n} title="Best time to post">
+          <div className="tiles">
+            <Tile label="Best slot" icon={Icon.clock} className="lit">
+              <div className="tile-value">{DAYS[b.wd]} {String(b.h).padStart(2, '0')}:00</div>
+              <p className="tile-note">{DAYS_LONG[b.wd]}s around {String(b.h).padStart(2, '0')}:00</p>
+            </Tile>
+            <Tile label="Median views" icon={Icon.eye}>
+              <div className="tile-value">{fmtNum(b.v)}</div>
+              <p className="tile-note">{inSchedule ? 'Already one of your times' : 'Add it with /settings'}</p>
+            </Tile>
+          </div>
+        </Section>
+      )}
+      <Section n={++n} title="What's working">
+        <Tile>
+          {ins.summary ? <p className="summary">{ins.summary}</p> : <p className="muted">Your first weekly report arrives on Monday.</p>}
+          {ins.patterns.length > 0 && (
+            <ul className="patterns">
+              {ins.patterns.slice(0, 6).map((p) => (
+                <li key={p.feature + p.value}>
+                  <span className={`badge ${p.lift >= 1 ? 'up' : 'down'}`}>{p.lift.toFixed(1)}×</span>
+                  <span>{p.text}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Tile>
+      </Section>
+      {ins.changes.length > 0 && (
+        <Section n={++n} title="Changes for next week">
+          <Tile>
+            <ul className="changes">{ins.changes.map((c) => <li key={c}><span className="tick">{Icon.check}</span>{c}</li>)}</ul>
+          </Tile>
+        </Section>
+      )}
+      <Section n={++n} title="Views by day and hour">
+        <Tile>
+          {anyHeat ? (
+            <>
+              <div className="heat" role="img" aria-label="Heatmap of median views by weekday and hour">
+                <div className="hrow head">
+                  <span />
+                  {Array.from({length: 24}, (_, h) => <span key={h}>{h % 6 === 0 ? String(h).padStart(2, '0') : ''}</span>)}
+                </div>
+                {ins.heatmap.map((row, wd) => (
+                  <div key={wd} className="hrow">
+                    <span className="hday">{DAYS[wd]}</span>
+                    {row.map((c, h) => (
+                      <span key={h} className={`cell${c === null ? ' cell-none' : ''}`} title={c === null ? `${DAYS[wd]} ${h}:00 · no videos` : `${DAYS[wd]} ${h}:00 · ${fmtNum(c)} median views`} style={c === null ? undefined : {background: `color-mix(in oklab, var(--accent) ${Math.round(30 + 70 * (c / max))}%, var(--surface-2))`}} />
+                    ))}
+                  </div>
+                ))}
+              </div>
+              <p className="fine">Median views, {d.timezone.replace(/_/g, ' ')} time. Brighter is better.</p>
+            </>
+          ) : (
+            <p className="muted">Not enough videos yet.</p>
+          )}
+        </Tile>
+      </Section>
+      <Section n={++n} title="Best topics">
+        <Ranked rows={ins.bestTopics} />
+      </Section>
+      <Section n={++n} title="Best hooks">
+        <Ranked rows={ins.bestHooks} />
+      </Section>
+    </>
+  );
+}
+
+function Meter({n, min}: {n: number; min: number}) {
+  return (
+    <div className="meter">
+      <div className="meter-bar" role="progressbar" aria-valuemin={0} aria-valuemax={min} aria-valuenow={Math.min(n, min)}>
+        <i style={{width: `${Math.min(100, (100 * n) / min)}%`}} />
+      </div>
+      <span>{Math.min(n, min)} of {min} videos</span>
+    </div>
+  );
+}
+
+function Ranked({rows}: {rows: {label: string; medianViews: number; n: number}[]}) {
+  const max = Math.max(1, ...rows.map((r) => r.medianViews));
+  return (
+    <Tile>
+      {!rows.length && <p className="muted">Not enough videos yet.</p>}
+      <ul className="ranked">
+        {rows.map((r, i) => (
+          <li key={r.label}>
+            <div className="rank-top">
+              <span className="rank-label">{r.label}</span>
+              <span className="rank-num"><b>{fmtNum(r.medianViews)}</b> median · {r.n} video{r.n === 1 ? '' : 's'}</span>
+            </div>
+            <div className="bar"><i className={i === 0 ? 'lead' : ''} style={{width: `${(100 * r.medianViews) / max}%`}} /></div>
+          </li>
+        ))}
+      </ul>
+    </Tile>
   );
 }
 
@@ -628,11 +882,12 @@ const UNPOSTED_LABEL: Record<string, string> = {
   failed: 'Did not post',
 };
 
-function Library({d, tg}: {d: Data; tg?: TelegramWebApp}) {
+function Library({d, tg, range, onRange}: {d: Data; tg?: TelegramWebApp; range: Range; onRange: (r: Range) => void}) {
   const [sort, setSort] = useState<SortKey>('newest');
   const [show, setShow] = useState<Show>('all');
   const [toast, setToast] = useState<string | null>(null);
   const [feedAt, setFeedAt] = useState<number | null>(null);
+  const [query, setQuery] = useState('');
   const unposted = d.unposted ?? [];
   const posted = useMemo(() => {
     const by: Record<SortKey, (v: Video) => number> = {
@@ -648,10 +903,10 @@ function Library({d, tg}: {d: Data; tg?: TelegramWebApp}) {
   const items = useMemo(() => {
     const p = posted.map((v) => ({kind: 'posted' as const, at: v.postedAt, v}));
     const u = unposted.map((v) => ({kind: 'unposted' as const, at: v.at, v}));
-    if (show === 'posted') return p;
-    if (show === 'unposted') return u;
-    return [...p, ...u].sort((a, b) => b.at.localeCompare(a.at));
-  }, [posted, unposted, show]);
+    const all = show === 'posted' ? p : show === 'unposted' ? u : [...p, ...u].sort((a, b) => b.at.localeCompare(a.at));
+    const q = query.trim().toLowerCase();
+    return q ? all.filter((it) => `${it.v.topic ?? ''} ${it.v.caption ?? ''}`.toLowerCase().includes(q)) : all;
+  }, [posted, unposted, show, query]);
   const open = (url: string | null) => url && (tg?.openLink ? tg.openLink(url) : window.open(url, '_blank'));
   const sendToChat = async (v: Unposted) => {
     if (v.status === 'rendering') return setToast('This video is still being made.');
@@ -668,17 +923,25 @@ function Library({d, tg}: {d: Data; tg?: TelegramWebApp}) {
   const total = d.videos.length + unposted.length;
   return (
     <>
-      <Upcoming d={d} />
+      <PageHead top="Your library" accent={`${total} video${total === 1 ? '' : 's'}`} text="Tap any video to watch it full screen, then swipe up for the next one." />
+      <RangePills range={range} onRange={onRange} />
       {total > 0 && (
-        <div className="seg seg-filter" role="tablist" aria-label="Which videos">
+        <div className="pills" role="tablist" aria-label="Which videos">
           {([['all', `All ${total}`], ['posted', `Posted ${d.videos.length}`], ['unposted', `Not posted ${unposted.length}`]] as [Show, string][]).map(([id, label]) => (
-            <button key={id} role="tab" aria-selected={show === id} onClick={() => setShow(id)}>{label}</button>
+            <button key={id} className="pill" role="tab" aria-selected={show === id} onClick={() => setShow(id)}>{label}</button>
           ))}
         </div>
       )}
+      {total > 4 && (
+        <label className="search">
+          {Icon.search}
+          <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search your videos" aria-label="Search your videos" enterKeyHint="search" />
+          {query ? <button onClick={() => setQuery('')} aria-label="Clear search">{Icon.close}</button> : null}
+        </label>
+      )}
       {show === 'posted' && posted.length > 1 && (
         <div className="library-bar">
-          <span className="count">{posted.length} posted video{posted.length === 1 ? '' : 's'}</span>
+          <span className="lib-count">{posted.length} posted video{posted.length === 1 ? '' : 's'}</span>
           <label className="select">
             {Icon.sort}
             <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} aria-label="Sort videos">
@@ -688,11 +951,13 @@ function Library({d, tg}: {d: Data; tg?: TelegramWebApp}) {
         </div>
       )}
       {!items.length && (
-        <div className="card empty">
+        <div className="tile empty">
           <div className="state-icon">{Icon.film}</div>
-          <h3>{show === 'unposted' ? 'Every video was posted' : show === 'posted' && d.insights.n ? 'No videos posted in this period' : 'No videos yet'}</h3>
+          <h3>{query.trim() ? `No videos match “${query.trim()}”` : show === 'unposted' ? 'Every video was posted' : show === 'posted' && d.insights.n ? 'No videos posted in this period' : 'No videos yet'}</h3>
           <p>
-            {show === 'unposted'
+            {query.trim()
+              ? 'Try another word from the topic or caption.'
+              : show === 'unposted'
               ? 'Videos you skip, that fail, or that wait for your OK show up here.'
               : show === 'posted' && d.insights.n
                 ? 'Pick a longer range above to see older videos.'
@@ -915,134 +1180,23 @@ function Slide({it, tz, src, active, near, muted, onAutoMute, onOpen, onSend}: {
   );
 }
 
-// ---------------------------------------------------------------- insights
-function Insights({d}: {d: Data}) {
-  const ins = d.insights;
-  const min = ins.minVideos ?? 15;
-  if (ins.n === 0)
-    return (
-      <div className="card empty">
-        <div className="state-icon">{Icon.trend}</div>
-        <h3>Insights start after your first videos</h3>
-        <p>Pip compares your videos to find which topics, hooks and posting times work best for your channel.</p>
-        <Meter n={0} min={min} />
-      </div>
-    );
-  const max = Math.max(1, ...ins.heatmap.flat().map((x) => x ?? 0));
-  const anyHeat = ins.heatmap.some((r) => r.some((c) => c !== null));
-  return (
-    <>
-      {ins.tooSmall && (
-        <div className="card note">
-          <div className="note-head">
-            <span className="card-icon">{Icon.info}</span>
-            <b>Early days</b>
-          </div>
-          <p>Patterns get reliable after {min} videos. Treat these as first hints.</p>
-          <Meter n={ins.n} min={min} />
-        </div>
-      )}
-      <Card title="What's working" icon={Icon.trend} aside={ins.weekStart ? <span className="muted small">Week of {shortDay(ins.weekStart)}</span> : null}>
-        {ins.summary ? <p className="summary">{ins.summary}</p> : <p className="muted">Your first weekly report arrives on Monday.</p>}
-        {ins.patterns.length > 0 && (
-          <ul className="patterns">
-            {ins.patterns.slice(0, 6).map((p) => (
-              <li key={p.feature + p.value}>
-                <span className={`lift ${p.lift >= 1 ? 'up' : 'down'}`}>{p.lift >= 1 ? '▲' : '▼'} {p.lift.toFixed(1)}×</span>
-                <span>{p.text}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
-      {ins.changes.length > 0 && (
-        <Card title="Changes for next week" icon={Icon.check}>
-          <ul className="changes">{ins.changes.map((c) => <li key={c}><span className="tick">{Icon.check}</span>{c}</li>)}</ul>
-        </Card>
-      )}
-      <Card title="Best posting times" icon={Icon.clock}>
-        <p className="muted small">Median views by day and hour, {d.timezone.replace(/_/g, ' ')}.</p>
-        {anyHeat ? (
-          <>
-            <div className="heat" role="img" aria-label="Heatmap of median views by weekday and hour">
-              <div className="hrow head">
-                <span />
-                {Array.from({length: 24}, (_, h) => <span key={h}>{h % 6 === 0 ? String(h).padStart(2, '0') : ''}</span>)}
-              </div>
-              {ins.heatmap.map((row, wd) => (
-                <div key={wd} className="hrow">
-                  <span className="hday">{DAYS[wd]}</span>
-                  {row.map((c, h) => (
-                    <span key={h} className={`cell${c === null ? ' cell-none' : ''}`} title={c === null ? `${DAYS[wd]} ${h}:00 · no videos` : `${DAYS[wd]} ${h}:00 · ${fmtNum(c)} median views`} style={c === null ? undefined : {background: `color-mix(in oklab, var(--accent) ${Math.round(30 + 70 * (c / max))}%, var(--surface-2))`}} />
-                  ))}
-                </div>
-              ))}
-            </div>
-            <div className="heat-legend" aria-hidden="true">
-              <span>Fewer views</span>
-              <i style={{background: 'linear-gradient(90deg, color-mix(in oklab, var(--accent) 30%, var(--surface-2)), var(--accent))'}} />
-              <span>More</span>
-            </div>
-          </>
-        ) : (
-          <p className="muted">Not enough videos yet.</p>
-        )}
-      </Card>
-      <Ranked title="Best topics" rows={ins.bestTopics} />
-      <Ranked title="Best hooks" rows={ins.bestHooks} />
-    </>
-  );
-}
-
-function Meter({n, min}: {n: number; min: number}) {
-  return (
-    <div className="meter">
-      <div className="meter-bar" role="progressbar" aria-valuemin={0} aria-valuemax={min} aria-valuenow={Math.min(n, min)}>
-        <i style={{width: `${Math.min(100, (100 * n) / min)}%`}} />
-      </div>
-      <span>{Math.min(n, min)} of {min} videos</span>
-    </div>
-  );
-}
-
-function Ranked({title, rows}: {title: string; rows: {label: string; medianViews: number; n: number}[]}) {
-  const max = Math.max(1, ...rows.map((r) => r.medianViews));
-  return (
-    <Card title={title} aside={rows.length ? <span className="muted small">Median views</span> : null}>
-      {!rows.length && <p className="muted">Not enough videos yet.</p>}
-      <ul className="ranked">
-        {rows.map((r, i) => (
-          <li key={r.label}>
-            <div className="rank-top">
-              <span className="rank-label">{r.label}</span>
-              <span className="rank-num"><b>{fmtNum(r.medianViews)}</b> · {r.n} video{r.n === 1 ? '' : 's'}</span>
-            </div>
-            <div className="bar"><i className={i === 0 ? 'lead' : ''} style={{width: `${(100 * r.medianViews) / max}%`}} /></div>
-          </li>
-        ))}
-      </ul>
-    </Card>
-  );
-}
 
 // ---------------------------------------------------------------- loading
 function Skeleton() {
   return (
     <div className="app" role="status" aria-label="Loading your channel">
-      <div className="profile">
-        <div className="profile-row">
-          <div className="avatar sk" />
-          <div className="profile-text">
-            <div className="sk sk-line" style={{width: 140}} />
-            <div className="sk sk-line sm" style={{width: 100}} />
-          </div>
-        </div>
+      <div className="topbar">
+        <div className="sk" style={{width: 150, height: 40, borderRadius: 99}} />
+        <div className="sk" style={{width: 40, height: 40, borderRadius: 99}} />
       </div>
-
-      <div className="range-row"><div className="sk sk-line" style={{width: 110}} /><div className="sk" style={{width: 168, height: 36, borderRadius: 10}} /></div>
       <div className="view">
-      <div className="card hero"><div className="sk sk-line sm" style={{width: 70}} /><div className="sk" style={{width: 150, height: 40, margin: '12px 0'}} /><div className="sk" style={{height: 170}} /></div>
-      <div className="stats">{[0, 1, 2, 3].map((i) => <div key={i} className="stat"><div className="sk sk-line sm" style={{width: 70}} /><div className="sk" style={{width: 80, height: 26, marginTop: 10}} /><div className="sk" style={{height: 32, marginTop: 16}} /></div>)}</div>
+        <div className="balance">
+          <div className="sk sk-line sm" style={{width: 120}} />
+          <div className="sk" style={{width: 220, height: 56, margin: '14px 0 12px'}} />
+          <div className="sk sk-line sm" style={{width: 160}} />
+        </div>
+        <div className="sk" style={{height: 190, borderRadius: 20}} />
+        <div className="tiles">{[0, 1, 2, 3].map((i) => <div key={i} className="sk" style={{height: 132, borderRadius: 22}} />)}</div>
       </div>
     </div>
   );
