@@ -93,12 +93,26 @@ export const T = {
   askTheme: () =>
     `🎨 <b>Pick a look for your videos.</b>\nThis sets the background, text and highlight colours. You can change it any time in /settings.`,
   typeTheme: () =>
-    `✏️ Send two colours: the <b>background</b> first, then the <b>highlight</b>. Like this:\n<code>#F2E8DC #A84F2C</code>`,
+    `✏️ Send two colours: the <b>background</b> first, then the <b>highlight</b>. Like this:\n<code>#F2E8DC #A84F2C</code>\nOr paste your brand palette with labels (Background, Primary, Text, Highlight...) and I'll use it.`,
   themeBad: (why: string) =>
     why === 'contrast'
       ? `Those two colours are too close, so highlights would be hard to see. Pick a darker or lighter highlight and send both again.`
-      : `I need two colours like <code>#F2E8DC #A84F2C</code> (background first, then highlight). Try again.`,
+      : `I need two colours like <code>#F2E8DC #A84F2C</code> (background first, then highlight), or a labelled palette with a <b>Background</b> line. Try again.`,
   themeSaved: (label: string) => `🎨 Video theme: <b>${esc(label)}</b>`,
+  themePicked: (c: {bg: string; accent: string; ink?: string; inkMuted?: string; surface?: string; accent2?: string; accentSoft?: string; marker?: string}) => {
+    const rows: [string, string | undefined][] = [
+      ['Background', c.bg],
+      ['Highlight (buttons, badges, caption word)', c.accent],
+      ['Text', c.ink],
+      ['Muted text', c.inkMuted],
+      ['Cards', c.surface],
+      ['Second colour (bars, arrows)', c.accent2],
+      ['Third colour (bars)', c.accentSoft],
+      ['Marker behind key words', c.marker],
+    ];
+    const lines = rows.filter(([, v]) => v).map(([k, v]) => `${k}: <code>${esc(v!)}</code>`);
+    return `🎨 <b>Got your colours.</b> Here's how I'll use them:\n${lines.join('\n')}${lines.length > 2 ? "\n<i>If a colour would be hard to read on video, I'll quietly adjust that one.</i>" : ''}`;
+  },
   starting: () => `🎬 Making your first test video. It won't be posted. I'll send it here in a few minutes.`,
   dryRunReady: (firstPost: string) => `Here's your first video! This is a test, it was <b>not</b> posted.\nYour first real post is <b>${esc(firstPost)}</b>.`,
   allSet: () => `🎉 Your channel is running! Use /stats, /top, /report and /dashboard to follow how it goes, and /settings to change things.`,
