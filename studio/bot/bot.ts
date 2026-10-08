@@ -539,7 +539,7 @@ export function createBot(deps: BotDeps) {
   const onThemeColors = async (ctx: Context, u: UserRow, text: string) => {
     const r = parseCustomTheme(text);
     if (!r.ok) return ctx.reply(T.themeBad(r.error), html());
-    await ctx.reply(T.themeSaved(themeLabel(r.choice)), html());
+    await ctx.reply(r.choice.preset === 'custom' ? T.themePicked(r.choice) : T.themeSaved(themeLabel(r.choice)), html());
     u = await patch(u, {video_theme: r.choice, awaiting: null});
     await advance(ctx, u, 'theme');
   };

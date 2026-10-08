@@ -33,6 +33,29 @@ describe('video themes', () => {
     expect(parseCustomTheme('#F2E8DC #E8DCCF')).toEqual({ok: false, error: 'contrast'});
   });
 
+  it('takes a labelled brand palette and keeps every colour readable', () => {
+    const palette = 'Primary: #6C8FF5\nSecondary: #A9BDF7\nAccent: #FFD6E7\nBackground: #F7F8FC\nSurface: #FFFFFF\nText: #25283D\nMuted: #7C8199\nHighlight: #FFF0B8';
+    const r = parseCustomTheme(palette);
+    expect(r).toEqual({
+      ok: true,
+      choice: {preset: 'custom', bg: '#F7F8FC', accent: '#6C8FF5', accent2: '#A9BDF7', accentSoft: '#FFD6E7', surface: '#FFFFFF', ink: '#25283D', inkMuted: '#7C8199', marker: '#FFF0B8'},
+    });
+    const t = resolveTheme(r.ok ? r.choice : null);
+    expect(t.bg).toBe('#F7F8FC');
+    expect(t.accent).toBe('#6C8FF5');
+    expect(t.ink).toBe('#25283D');
+    expect(t.surface).toBe('#FFFFFF');
+    expect(t.marker).toBe('#FFF0B8');
+    expect(contrast(t.onAccent, t.accent)).toBeGreaterThanOrEqual(4.5);
+    // Labels are matched loosely, and a pale highlight never becomes the main accent.
+    expect(parseCustomTheme('- background = #ffffff\n- highlight: #fff0b8\n- brand colour: #1f2124')).toMatchObject({ok: true, choice: {bg: '#FFFFFF', accent: '#1F2124', marker: '#FFF0B8'}});
+    expect(parseCustomTheme('Background: #FFFFFF\nHighlight: #FFF0B8')).toEqual({ok: false, error: 'contrast'});
+    // Unreadable extras fall back to derived colours.
+    expect(resolveTheme({preset: 'custom', bg: '#F7F8FC', accent: '#6C8FF5', ink: '#EEEEEE'}).ink).toBe('#24272A');
+    // Unlabelled lists still use the first two colours.
+    expect(parseCustomTheme('#F2E8DC #A84F2C #FFFFFF')).toEqual({ok: true, choice: {preset: 'custom', bg: '#F2E8DC', accent: '#A84F2C'}});
+  });
+
   it('a dark custom background gets light text', () => {
     const t = deriveTheme('#101820', '#F2AA4C');
     expect(t.ink).toBe('#F2F1EC');
@@ -55,6 +78,16 @@ describe('video themes', () => {
     expect(h.botTexts().join('\n')).toContain('Theme: Custom');
     expect(seen.at(-1)?.bg).toBe('#101820');
     expect(seen.at(-1)?.accent).toBe('#F2AA4C');
+  });
+
+  it('the bot accepts a pasted brand palette and says which colours it picked', async () => {
+    h = new Harness({userId: OWNER, ownerId: OWNER});
+    const results = await runOnboarding(h, {theme: 'Primary: #6C8FF5\nBackground: #F7F8FC\nText: #25283D\nHighlight: #FFF0B8'});
+    expect(results.every((r) => r.ok)).toBe(true);
+    expect((await h.user())!.onboarding_data.video_theme).toEqual({preset: 'custom', bg: '#F7F8FC', accent: '#6C8FF5', ink: '#25283D', marker: '#FFF0B8'});
+    const texts = h.botTexts().join('\n');
+    expect(texts).toContain('Got your colours');
+    expect(texts).not.toContain('I need two colours');
   });
 
   it('can be changed later from /settings', async () => {

@@ -18,8 +18,12 @@ export type VideoTheme = {
   onAccent: string; // text on accent
 };
 
-/** What we store per user: a preset id, or custom background + accent colours. */
-export type ThemeChoice = {preset: PresetId} | {preset: 'custom'; bg: string; accent: string};
+/** Optional brand colours a user can send on top of background + accent (from a labelled palette). */
+export type BrandExtras = {ink?: string; inkMuted?: string; surface?: string; accent2?: string; accentSoft?: string; marker?: string};
+const EXTRA_KEYS = ['ink', 'inkMuted', 'surface', 'accent2', 'accentSoft', 'marker'] as const;
+
+/** What we store per user: a preset id, or custom background + accent colours (plus any brand extras). */
+export type ThemeChoice = {preset: PresetId} | ({preset: 'custom'; bg: string; accent: string} & BrandExtras);
 
 export const PRESETS = {
   sage: {label: 'Sage', bg: '#EBE5DF', accent: '#465B53'},
@@ -109,9 +113,26 @@ export function deriveTheme(bgIn: string, accentIn: string): VideoTheme {
   };
 }
 
+/**
+ * Use the user's own brand colours where they stay readable; anything that would be hard
+ * to read falls back to the derived colour.
+ */
+export function applyExtras(base: VideoTheme, x: BrandExtras): VideoTheme {
+  const t = {...base};
+  const ok = (c: string | undefined): c is string => !!c && !!normalizeHex(c);
+  if (ok(x.surface) && contrast(t.ink, x.surface) >= 7) t.surface = normalizeHex(x.surface)!;
+  if (ok(x.ink) && contrast(x.ink, t.bg) >= 7 && contrast(x.ink, t.surface) >= 7) t.ink = normalizeHex(x.ink)!;
+  if (ok(x.inkMuted) && contrast(x.inkMuted, t.bg) >= 3.5) t.inkMuted = normalizeHex(x.inkMuted)!;
+  if (ok(x.accent2) && contrast(x.accent2, t.bg) >= 1.5) t.accent2 = normalizeHex(x.accent2)!;
+  if (ok(x.accentSoft) && contrast(x.accentSoft, t.bg) >= 1.2) t.accentSoft = normalizeHex(x.accentSoft)!;
+  // The marker is the highlighter band behind key words, which are drawn in the accent colour.
+  if (ok(x.marker) && contrast(t.accent, x.marker) >= 2) t.marker = normalizeHex(x.marker)!;
+  return t;
+}
+
 export function resolveTheme(choice: ThemeChoice | null | undefined): VideoTheme {
   if (!choice || choice.preset === 'sage') return SAGE;
-  if (choice.preset === 'custom') return deriveTheme(choice.bg, choice.accent);
+  if (choice.preset === 'custom') return applyExtras(deriveTheme(choice.bg, choice.accent), choice);
   const p = PRESETS[choice.preset];
   return p ? deriveTheme(p.bg, p.accent) : SAGE;
 }
@@ -122,14 +143,53 @@ export function themeLabel(choice: ThemeChoice | null | undefined): string {
   return PRESETS[choice.preset]?.label ?? PRESETS.sage.label;
 }
 
+// Brand palette labels people use, mapped to the part of the video they colour.
+const LABELS: Record<string, keyof BrandExtras | 'bg' | 'primary' | 'accentLabel'> = {
+  background: 'bg', bg: 'bg', base: 'bg', canvas: 'bg',
+  primary: 'primary', brand: 'primary', main: 'primary',
+  secondary: 'accent2',
+  accent: 'accentLabel', tertiary: 'accentLabel',
+  surface: 'surface', card: 'surface', panel: 'surface',
+  text: 'ink', ink: 'ink', foreground: 'ink', fg: 'ink',
+  muted: 'inkMuted', subtle: 'inkMuted', 'muted text': 'inkMuted', 'secondary text': 'inkMuted',
+  highlight: 'marker', marker: 'marker',
+};
+
+/** Read "Label: #hex" lines. Returns null when the text has no labelled colours. */
+function parseLabelled(text: string): Record<string, string> | null {
+  const out: Record<string, string> = {};
+  for (const line of text.split(/\n|;/)) {
+    const m = /^[\s\-*•]*([a-z][a-z ]*?)\s*(?:colou?r)?\s*[:=\-–—]?\s*#([0-9a-f]{6}|[0-9a-f]{3})\b/i.exec(line);
+    if (!m) continue;
+    const key = LABELS[m[1].trim().toLowerCase()];
+    const hex = normalizeHex(m[2]);
+    if (key && hex && !out[key]) out[key] = hex;
+  }
+  return out.bg ? out : null;
+}
+
 /**
- * Parse "background accent" typed by a user, e.g. "#F2E8DC #A84F2C" or "f2e8dc, a84f2c".
- * Returns an error message when the pair would be hard to read.
+ * Parse colours typed by a user. Either "background accent", e.g. "#F2E8DC #A84F2C" or
+ * "f2e8dc, a84f2c", or a labelled brand palette ("Background: #F7F8FC", "Primary: #6C8FF5", ...).
+ * Returns an error message when the colours would be hard to read.
  */
 export function parseCustomTheme(text: string): {ok: true; choice: ThemeChoice} | {ok: false; error: string} {
+  const labelled = parseLabelled(text);
+  if (labelled) {
+    const bg = labelled.bg;
+    // The accent fills badges, buttons and the active caption word, so it must stand out from the
+    // background. Light "highlight" colours usually can't, so they become the marker band instead.
+    const candidates = [labelled.primary, labelled.accentLabel, labelled.marker, labelled.accent2].filter(Boolean);
+    const accent = candidates.find((c) => contrast(bg, c) >= 2.5);
+    if (!accent) return {ok: false, error: candidates.length ? 'contrast' : 'two'};
+    const choice: ThemeChoice = {preset: 'custom', bg, accent};
+    if (labelled.accentLabel && labelled.accentLabel !== accent) choice.accentSoft = labelled.accentLabel;
+    for (const k of EXTRA_KEYS) if (k !== 'accentSoft' && labelled[k] && labelled[k] !== accent) choice[k] = labelled[k];
+    return {ok: true, choice};
+  }
   const parts = text.split(/[\s,;]+/).filter(Boolean);
-  if (parts.length !== 2) return {ok: false, error: 'two'};
-  const [bg, accent] = parts.map(normalizeHex);
+  if (parts.length < 2) return {ok: false, error: 'two'};
+  const [bg, accent] = parts.slice(0, 2).map(normalizeHex);
   if (!bg || !accent) return {ok: false, error: 'hex'};
   if (contrast(bg, accent) < 2.5) return {ok: false, error: 'contrast'};
   return {ok: true, choice: {preset: 'custom', bg, accent}};
@@ -138,6 +198,7 @@ export function parseCustomTheme(text: string): {ok: true; choice: ThemeChoice} 
 export function isThemeChoice(x: unknown): x is ThemeChoice {
   if (!x || typeof x !== 'object') return false;
   const c = x as Record<string, unknown>;
-  if (c.preset === 'custom') return typeof c.bg === 'string' && typeof c.accent === 'string' && !!normalizeHex(c.bg) && !!normalizeHex(c.accent);
+  if (c.preset === 'custom')
+    return typeof c.bg === 'string' && typeof c.accent === 'string' && !!normalizeHex(c.bg) && !!normalizeHex(c.accent) && EXTRA_KEYS.every((k) => c[k] === undefined || (typeof c[k] === 'string' && !!normalizeHex(c[k] as string)));
   return typeof c.preset === 'string' && c.preset in PRESETS;
 }
