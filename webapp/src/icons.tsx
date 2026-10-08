@@ -34,4 +34,6 @@ export const Icon = {
   trophy: <I><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z" /><path d="M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4" /></I>,
   search: <I><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></I>,
   sort: <I><path d="m3 16 4 4 4-4M7 20V4M21 8l-4-4-4 4M17 4v16" /></I>,
+  home: <I><path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5" /></I>,
+  chevron: <I><path d="m9 6 6 6-6 6" /></I>,
 };
