@@ -19,6 +19,7 @@ import {fail, finish, prepare, render} from '../worker/jobs.js';
 import {tick, type TickReport} from '../worker/tick.js';
 import {FakeTikTok, type FakeTikTokOptions} from './fake-tiktok.js';
 import {fakeAsk} from './fixtures.js';
+import {htmlToText} from '../lib/knowledge.js';
 
 export type ChatItem = {
   id: number;
@@ -80,6 +81,10 @@ export type HarnessOptions = {
   statsChart?: (input: import('../lib/charts.js').ChartInput) => Promise<Buffer>;
   /** Saves files the bot sends (photos as buffers) here so screenshots can show them. */
   mediaDir?: string;
+  /** Stand-in for the free media library (default: finds nothing, so tests never touch the network). */
+  findMedia?: import('../worker/media.js').MediaFinder;
+  /** Changes every video plan the fake Claude writes (e.g. to add a media scene). */
+  editPlan?: (plan: any) => any;
   /** Write generated characters into the real remotion/ folder (only for real renders). */
   realRegistry?: boolean;
 };
@@ -92,6 +97,10 @@ export class Harness {
   /** File ids the worker downloaded from Telegram, and fake files to hand back for them. */
   downloads: string[] = [];
   refFiles = new Map<string, Buffer>();
+  /** Web pages the bot can "read" for business knowledge (url -> html). */
+  pages = new Map<string, string>();
+  /** Every system prompt the worker sent to Claude, newest last. */
+  systems: string[] = [];
   tiktok: FakeTikTok;
   bot: ReturnType<typeof createBot>;
   ctx: WorkerCtx;
@@ -127,6 +136,16 @@ export class Harness {
       revokeTikTok: async () => undefined,
       botInfo: BOT_INFO,
       allowAutoForAll: opts.allowAutoForAll,
+      downloadFile: async (fileId) => {
+        const f = this.refFiles.get(fileId);
+        if (!f) throw new Error('file not found');
+        return new Uint8Array(f);
+      },
+      fetchPage: async (url) => {
+        const html = this.pages.get(url.toString()) ?? this.pages.get(url.origin);
+        if (html == null) throw new Error('the site answered 404');
+        return htmlToText(html);
+      },
       now,
     });
     this.bot.api.config.use(async (_prev, method, payload: any) => ({ok: true, result: this.fakeApi(method, payload)}) as any);
@@ -156,13 +175,30 @@ export class Harness {
       dispatch: async (jobId) => {
         this.queue.push(jobId);
       },
-      ask: () => fakeAsk(() => this.characterName()),
+      ask: () => {
+        const inner = fakeAsk(() => this.characterName());
+        return (prompt, system, images) => {
+          this.systems.push(system);
+          const out = inner(prompt, system, images);
+          const edit = opts.editPlan;
+          if (!edit) return out;
+          return out.then((text) => {
+            try {
+              const plan = JSON.parse(text);
+              return Array.isArray(plan?.scenes) ? JSON.stringify(edit(plan)) : text;
+            } catch {
+              return text;
+            }
+          });
+        };
+      },
       claudeCode: async () => 'OK',
       render: opts.renderer ?? fakeRenderer,
       workDir,
       ownerId: opts.ownerId ?? 0,
       minutesLimit: 1700,
       now,
+      findMedia: opts.findMedia ?? (async () => null),
     };
   }
 
@@ -270,6 +306,47 @@ export class Harness {
         from: this.from(),
         ...(opts.asDocument ? {document: {...media, file_name: `${fileId}.mp4`}} : {video: media}),
         ...(opts.caption ? {caption: opts.caption} : {}),
+      },
+    } as unknown as Update;
+    await this.bot.handleUpdate(update);
+    return id;
+  }
+
+  /** The user sends a file (a PDF, a price list...). Its bytes come from `refFiles`. */
+  async sendDocument(fileId: string, fileName: string, mime: string, bytes?: Buffer) {
+    if (bytes) this.refFiles.set(fileId, bytes);
+    const id = this.nextId++;
+    this.chat.push({id, from: 'user', kind: 'text', text: `(file ${fileName})`});
+    const update = {
+      update_id: this.updateId++,
+      message: {
+        message_id: id,
+        date: Math.floor(Date.now() / 1000),
+        chat: {id: this.userId, type: 'private', first_name: 'User'},
+        from: this.from(),
+        document: {file_id: fileId, file_unique_id: `u-${fileId}`, file_name: fileName, mime_type: mime, file_size: bytes?.length ?? this.refFiles.get(fileId)?.length ?? 100},
+      },
+    } as unknown as Update;
+    await this.bot.handleUpdate(update);
+    return id;
+  }
+
+  /** The user sends a photo (e.g. their logo). Telegram sends a few sizes; we give two. */
+  async sendPhoto(fileId: string, bytes: Buffer, width = 400, height = 400) {
+    this.refFiles.set(fileId, bytes);
+    const id = this.nextId++;
+    this.chat.push({id, from: 'user', kind: 'photo', text: `(photo ${fileId})`});
+    const update = {
+      update_id: this.updateId++,
+      message: {
+        message_id: id,
+        date: Math.floor(Date.now() / 1000),
+        chat: {id: this.userId, type: 'private', first_name: 'User'},
+        from: this.from(),
+        photo: [
+          {file_id: `${fileId}-thumb`, file_unique_id: `u-${fileId}-t`, width: 90, height: 90},
+          {file_id: fileId, file_unique_id: `u-${fileId}`, width, height, file_size: bytes.length},
+        ],
       },
     } as unknown as Update;
     await this.bot.handleUpdate(update);

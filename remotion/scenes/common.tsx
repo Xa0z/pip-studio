@@ -1,7 +1,7 @@
 import React from 'react';
 import {spring, useCurrentFrame, useVideoConfig} from 'remotion';
-import {prog} from '../motion';
-import {FONT, useTheme} from '../theme';
+import {EASE_OUT, prog} from '../motion';
+import {FONT, useStyle, useTheme} from '../theme';
 
 export const useIn = (delay = 0, damping = 14) => {
   const frame = useCurrentFrame();
@@ -103,30 +103,92 @@ export const Highlighted: React.FC<{text: string; highlight: string[]}> = ({text
   );
 };
 
-export const Headline: React.FC<{text: string; highlight: string[]; size?: number; top?: number; width?: number}> = ({
-  text,
-  highlight,
-  size = 74,
-  top = 340,
-  width = 760,
-}) => {
+/**
+ * Words rise out of an invisible line one after another (a masked slide, no blur),
+ * then the highlight marker draws.
+ */
+export const RiseText: React.FC<{text: string; highlight: string[]; delay?: number; stagger?: number}> = ({text, highlight, delay = 0, stagger = 3}) => {
   const th = useTheme();
+  const frame = useCurrentFrame();
+  const tokens = tokenize(text, highlight);
+  const markerStart = delay + tokens.length * stagger + 8;
+  let hiSeen = 0;
   return (
-    <div
-      style={{
-        position: 'absolute',
-        top,
-        left: 70,
-        width,
-        fontFamily: FONT,
-        fontWeight: 800,
-        fontSize: size,
-        lineHeight: 1.1,
-        letterSpacing: -1,
-        color: th.ink,
-      }}
-    >
-      <KineticText text={text} highlight={highlight} delay={2} />
+    <>
+      {tokens.map((tk, i) => {
+        const up = prog(frame, delay + i * stagger, 14, EASE_OUT);
+        const mark = tk.hi ? prog(frame, markerStart + hiSeen++ * 4, 12) : 0;
+        return (
+          <React.Fragment key={i}>
+            <span style={{display: 'inline-block', overflow: 'hidden', verticalAlign: 'top', padding: '0 0.08em', margin: '0 -0.08em'}}>
+              <span style={{display: 'inline-block', translate: `0 ${(1 - up) * 1.1}em`, ...(tk.hi ? markerStyle(th.accent, th.marker, mark) : null)}}>{tk.text}</span>
+            </span>
+            {i < tokens.length - 1 ? ' ' : null}
+          </React.Fragment>
+        );
+      })}
+    </>
+  );
+};
+
+/** Words land one by one from big to normal size, like rubber stamps; highlights land tilted. */
+export const StampText: React.FC<{text: string; highlight: string[]; delay?: number; stagger?: number}> = ({text, highlight, delay = 0, stagger = 4}) => {
+  const th = useTheme();
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  const tokens = tokenize(text, highlight);
+  return (
+    <>
+      {tokens.map((tk, i) => {
+        const at = delay + i * stagger;
+        const land = spring({frame: frame - at, fps, config: {damping: 12, mass: 0.5, stiffness: 200}});
+        const tilt = tk.hi ? -3 : 0;
+        return (
+          <React.Fragment key={i}>
+            <span
+              style={{
+                display: 'inline-block',
+                opacity: frame < at ? 0 : Math.min(1, land * 3),
+                scale: `${1 + (1 - land) * 0.9}`,
+                rotate: `${tilt * land}deg`,
+                ...(tk.hi ? {color: th.onAccent, background: th.accent, borderRadius: 10, padding: '0 0.18em', margin: '0 0.02em'} : null),
+              }}
+            >
+              {tk.text}
+            </span>
+            {i < tokens.length - 1 ? ' ' : null}
+          </React.Fragment>
+        );
+      })}
+    </>
+  );
+};
+
+/** The headline motion this video's style asks for. */
+export const MotionText: React.FC<{text: string; highlight: string[]; delay?: number}> = ({text, highlight, delay = 0}) => {
+  const style = useStyle();
+  if (style.headline === 'rise') return <RiseText text={text} highlight={highlight} delay={delay} />;
+  if (style.headline === 'stamp') return <StampText text={text} highlight={highlight} delay={delay} />;
+  if (style.headline === 'typed') {
+    const speed = 1.6;
+    return <TypeText text={text} highlight={highlight} start={delay} speed={speed} markAt={typedEnd(text, delay, speed) + 4} />;
+  }
+  return <KineticText text={text} highlight={highlight} delay={delay} />;
+};
+
+export const Headline: React.FC<{text: string; highlight: string[]; size?: number; top?: number; width?: number}> = ({text, highlight, size = 74, top = 340, width = 760}) => {
+  const th = useTheme();
+  const style = useStyle();
+  const center = style.align === 'center';
+  // Centred headlines run the full width, so they sit below the character's corner.
+  const box: React.CSSProperties = center
+    ? {top: top + 80, left: 70, width: 940, textAlign: 'center', fontSize: Math.round(size * 0.92)}
+    : style.side === 'left'
+      ? {top, left: 1080 - 70 - width, width, fontSize: size}
+      : {top, left: 70, width, fontSize: size};
+  return (
+    <div style={{position: 'absolute', fontFamily: FONT, fontWeight: 800, lineHeight: 1.1, letterSpacing: -1, color: th.ink, ...box}}>
+      <MotionText text={text} highlight={highlight} delay={2} />
     </div>
   );
 };

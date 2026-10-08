@@ -19,7 +19,7 @@ import {esc, T} from '../bot/texts.js';
 import {loadAnalytics, videoStats} from '../lib/analytics.js';
 import {aadFor, decryptSecret} from '../lib/crypto.js';
 import {ctaLabel, GOALS, goalScore, pickLength} from '../lib/goals.js';
-import {isThemeChoice, resolveTheme} from '../../src/themes.js';
+import {defaultThemeFor, isThemeChoice, resolveTheme} from '../../src/themes.js';
 import {nextNiche, nicheById} from '../lib/niches.js';
 import {findPatterns, isExperiment, plannerHints} from '../lib/patterns.js';
 import {sceneRange, type StudioPlan} from '../lib/plan-schema.js';
@@ -34,6 +34,9 @@ import type {WorkerCtx} from './context.js';
 import {makeVoiceSamples} from './voices.js';
 import {analyzeReference, studyReference, type MarketingContext} from './marketing.js';
 import {marketingSeconds} from '../lib/marketing.js';
+import {knowledgeText} from '../lib/knowledge.js';
+import {creditFor, realMediaFinder} from './media.js';
+import {isVideoStyle, pickStyle, seedFrom, styleLabel} from '../../src/styles.js';
 import {transcribeMedia} from '../../src/voice.js';
 
 // ---------- state passed between phases ----------
@@ -42,6 +45,8 @@ type VideoState = {
   videoId: string;
   props: Omit<VideoProps, 'voiceFile' | 'musicFile'>;
   voicePath: string;
+  /** Photos and clips from the free media library, copied into the render's public folder as media/<name>. */
+  mediaPaths?: string[];
   seconds: number;
   outPath?: string;
   thumbPath?: string;
@@ -158,7 +163,8 @@ async function prepareVideo(ctx: WorkerCtx, job: JobRow) {
     }
     const facts = await studyReference(refFile, refDir, process.env.TTS_PROVIDER === 'fake' ? undefined : transcribeMedia);
     const analysis = await analyzeReference(facts, mk.notes, ask);
-    marketing = {business: mk.business, notes: mk.notes, analysis, index: mk.index};
+    // The latest knowledge (summary, notes, files, website), not just the summary saved when the slot was planned.
+    marketing = {business: knowledgeText(u.onboarding_data ?? {}) || mk.business, notes: mk.notes, analysis, index: mk.index};
     seconds = marketingSeconds(facts.duration || mk.ref.duration);
   }
   const {writePlan, revise} = await import('./planner.js');
@@ -175,6 +181,7 @@ async function prepareVideo(ctx: WorkerCtx, job: JobRow) {
     experiment,
     recentHookTypes: real.slice(0, 5).map((x) => x.features?.hook_type ?? '').filter(Boolean),
     marketing,
+    business: !mk && u.onboarding_data?.knowledge_in_explainers ? knowledgeText(u.onboarding_data, 5000) || undefined : undefined,
   };
   let plan = await writePlan(pctx, ask);
 
@@ -212,6 +219,36 @@ async function prepareVideo(ctx: WorkerCtx, job: JobRow) {
   const scenes: TimedScene[] = buildTimeline(plan, voice, spec);
   validateTimeline(scenes, spec, sceneRange(seconds).min);
 
+  // Same colours every time, but a new look otherwise: different from this user's last few videos.
+  // The attempt number is in the seed, so Regenerate also gives a fresh look.
+  const recentStyles = all.filter((x) => x.id !== v.id).map((x) => x.plan?.style).filter(isVideoStyle).slice(0, 3);
+  const style = pickStyle(seedFrom(`${v.id}:${v.attempts}`), recentStyles);
+  console.log(`Style: ${styleLabel(style)}`);
+
+  // Real photos and clips the script asked for, from free libraries. A miss keeps the scene, drawn with its icon.
+  const mediaPaths: string[] = [];
+  const credits: string[] = [];
+  const used = new Set<string>();
+  const finder = ctx.findMedia ?? realMediaFinder;
+  for (const [i, sc] of scenes.entries()) {
+    const vis = sc.visual;
+    if (vis?.layout !== 'media') continue;
+    delete vis.src, delete vis.seconds, delete vis.credit;
+    try {
+      const got = await finder(vis, {dir: path.join(dir, 'media'), index: i, used, sceneSeconds: sc.durationInFrames / FPS});
+      if (got) {
+        vis.src = got.publicName;
+        vis.credit = creditFor(got.hit);
+        if (got.hit.kind === 'clip') vis.seconds = Math.min(15, got.hit.seconds ?? 15);
+        else vis.kind = 'photo';
+        mediaPaths.push(got.file);
+        credits.push(vis.credit);
+      }
+    } catch (e) {
+      console.warn(`No media for scene ${i + 1}:`, redact((e as Error).message));
+    }
+  }
+
   const key = characterKey(character);
   writeRegistry(character?.code && key ? [{key, code: character.code}] : []);
   const episode = index + 1;
@@ -223,11 +260,12 @@ async function prepareVideo(ctx: WorkerCtx, job: JobRow) {
     totalFrames: spec.totalFrames,
     character: key,
     ctaLabel: ctaLabel(cta, name),
-    theme: resolveTheme(isThemeChoice(u.onboarding_data?.video_theme) ? u.onboarding_data.video_theme : null),
+    theme: resolveTheme(isThemeChoice(u.onboarding_data?.video_theme) ? u.onboarding_data.video_theme : defaultThemeFor(u.id, u.is_owner || u.id === ctx.ownerId)),
+    style,
   };
   const features = featuresFor(plan, new Date(v.slot_at), s.timezone, seconds, cta, niche);
-  await store.updateVideo(v.id, {plan: mk ? {...plan, marketing: mk} : plan, features, caption: captionFor(plan), duration_s: seconds, character_id: character?.id ?? null});
-  saveState(ctx, job, {kind: 'video', videoId: v.id, props, voicePath: voice.wavPath, seconds});
+  await store.updateVideo(v.id, {plan: {...plan, style, ...(credits.length ? {media_credits: credits} : {}), ...(mk ? {marketing: mk} : {})}, features, caption: captionFor(plan), duration_s: seconds, character_id: character?.id ?? null});
+  saveState(ctx, job, {kind: 'video', videoId: v.id, props, voicePath: voice.wavPath, mediaPaths, seconds});
 }
 
 async function prepareCharacters(ctx: WorkerCtx, job: JobRow) {
@@ -329,7 +367,7 @@ export async function render(ctx: WorkerCtx, jobId: string) {
   const st: State = fs.existsSync(path.join(dir, 'state.json')) ? JSON.parse(fs.readFileSync(path.join(dir, 'state.json'), 'utf8')) : {kind: 'none'};
   if (st.kind === 'video') {
     const outPath = path.join(dir, 'video.mp4');
-    await ctx.render.video({props: st.props, voicePath: st.voicePath, musicPath: null, outPath});
+    await ctx.render.video({props: st.props, voicePath: st.voicePath, musicPath: null, outPath, mediaPaths: st.mediaPaths});
     await ctx.render.check(outPath, st.props.totalFrames);
     const thumbPath = path.join(dir, 'thumb.jpg');
     try {

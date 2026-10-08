@@ -9,6 +9,7 @@ export const COMMANDS = [
   {command: 'dashboard', description: '📊 Full analytics'},
   {command: 'settings', description: '⚙️ Niche, goal, schedule, theme'},
   {command: 'marketing', description: '📣 Videos for your business'},
+  {command: 'knowledge', description: '📚 Teach me about your business'},
   {command: 'pause', description: '⏸ Stop posting'},
   {command: 'resume', description: '▶️ Start posting again'},
   {command: 'start', description: 'Set up or continue'},

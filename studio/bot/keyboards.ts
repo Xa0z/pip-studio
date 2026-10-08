@@ -57,9 +57,11 @@ export const K = {
     const rows: Keyboard = [];
     for (let i = 0; i < PRESET_IDS.length; i += 3)
       rows.push(PRESET_IDS.slice(i, i + 3).map((id, j) => b(`${current === id ? '✅ ' : ''}${i + j + 1}. ${PRESETS[id].label}`, `th:${id}`)));
-    rows.push([b(`${current === 'custom' ? '✅ ' : ''}🎨 My own colours`, 'th:custom')]);
+    rows.push([b(`${current === 'auto' ? '✅ ' : ''}✨ Colours made just for me`, 'th:auto')]);
+    rows.push([b(`${current === 'brand' ? '✅ ' : ''}🏷 My brand colours or logo`, 'th:brand'), b(`${current === 'custom' ? '✅ ' : ''}🎨 Pick 2 colours`, 'th:custom')]);
     return rows;
   },
+  brandFound: (): Keyboard => [[b('✅ Use these', 'th:usebrand'), b('✏️ Type them instead', 'th:brand')]],
   summary: (): Keyboard => [[b('🚀 Start my channel', 'sum:start')], [b('✏️ Change something', 'sum:edit')]],
   editPick: (): Keyboard => [
     [b('Niche', 'ed:niche'), b('Goal', 'ed:goal')],
@@ -101,14 +103,23 @@ export const K = {
     [b('🕘 Schedule', 'st:schedule'), b('🔢 Posts per day', 'st:ppd')],
     [b('✋/⚡ Mode', 'md:menu'), b('🎨 Video theme', 'st:theme')],
     [b('📣 Marketing videos', 'mk:menu'), b('🧑‍🎨 New character', 'st:newchar')],
+    [b('📚 Business knowledge', 'kn:menu')],
   ],
   refNotes: (): Keyboard => [[b('No changes', 'mk:nonotes')]],
   dailyRefs: (hasPrevious: boolean): Keyboard => [[b('🎬 Send new references', 'mk:refs')], ...(hasPrevious ? [[b('🔁 Reuse my last ones', 'mk:same')]] : [])],
   marketingMenu: (): Keyboard => [
     [b('🎬 Send new references', 'mk:refs')],
-    [b('🏪 Change business info', 'mk:business')],
+    [b('📚 Business knowledge', 'kn:menu'), b('🏪 Change summary', 'mk:business')],
     [b('🎓 Switch back to explainer videos', 'mk:off')],
   ],
+  knowledgeMenu: (count: number, explainer: boolean, useInExplainers: boolean): Keyboard => [
+    [b('➕ Add knowledge', 'kn:add')],
+    ...(count ? [[b('🗑 Remove one', 'kn:rm'), b('🧹 Clear all', 'kn:clear')]] : []),
+    ...(explainer ? [[b(useInExplainers ? '✅ Used in my explainer videos' : '⬜ Use in my explainer videos too', 'kn:explainers')]] : []),
+  ],
+  knowledgeDone: (): Keyboard => [[b('✅ Done', 'kn:done')]],
+  knowledgeRemove: (items: {id: string; label: string}[]): Keyboard => [...items.map((x) => [b(`🗑 ${x.label}`, `kn:del:${x.id}`)]), [b('⬅️ Back', 'kn:menu')]],
+  knowledgeClear: (): Keyboard => [[b('Yes, clear it all', 'kn:clear:yes'), b('Cancel', 'kn:menu')]],
   confirmNewCharacter: (): Keyboard => [[b('Yes, new character', 'st:newchar:yes'), b('Cancel', 'st:cancel')]],
   disconnect: (): Keyboard => [[b('Yes, delete everything', 'dc:yes')], [b('No, keep it', 'dc:no')]],
   dashboard: (url: string): Keyboard => [[{text: '📊 Open dashboard', web_app: {url}}]],

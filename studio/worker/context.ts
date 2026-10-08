@@ -4,6 +4,7 @@ import {checkDuration, renderStillPng, renderVideo} from '../../src/render.js';
 import type {Dispatcher} from '../lib/github.js';
 import type {Store} from '../lib/store.js';
 import type {Messenger} from '../lib/telegram.js';
+import type {MediaFinder} from './media.js';
 import type {Ask} from './planner.js';
 
 export type Renderer = {
@@ -24,6 +25,8 @@ export type WorkerCtx = {
   ownerId: number;
   minutesLimit: number;
   now: () => Date;
+  /** Finds and downloads library photos and clips (default: the real free libraries). */
+  findMedia?: MediaFinder;
 };
 
 export const realRenderer: Renderer = {video: renderVideo, still: renderStillPng, check: checkDuration};

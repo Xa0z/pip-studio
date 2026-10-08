@@ -1,4 +1,5 @@
 import {Easing, interpolate, spring} from 'remotion';
+import type {VideoStyle} from '../src/styles';
 
 /**
  * Shared motion vocabulary, following Remotion's animation guidance: every movement is
@@ -26,10 +27,19 @@ export const push = (frame: number, fps: number, delay = 0) =>
 export const punch = (frame: number, at: number, amount = 0.08, dur = 10) =>
   1 + amount * interpolate(frame, [at, at + 3, at + dur], [0, 1, 0], {...CLAMP, easing: EASE_OUT});
 
-/** How a scene enters and leaves. Cycles so a video never repeats the same cut. */
-export const TRANSITIONS = ['push', 'wipe', 'zoom'] as const;
-export type TransitionKind = (typeof TRANSITIONS)[number];
-export const transitionFor = (sceneIndex: number): TransitionKind => TRANSITIONS[(sceneIndex + 2) % TRANSITIONS.length];
+/** How a scene enters and leaves. Each video style has its own family of cuts, cycled so cuts never repeat back to back. */
+export type TransitionKind = 'push' | 'wipe' | 'zoom' | 'lift' | 'flip' | 'iris';
+export const CUT_FAMILIES: Record<VideoStyle['cuts'], TransitionKind[]> = {
+  classic: ['push', 'wipe', 'zoom'],
+  slide: ['lift', 'wipe', 'push'],
+  flip: ['flip', 'zoom', 'push'],
+  iris: ['iris', 'lift', 'zoom'],
+};
+export const TRANSITIONS = CUT_FAMILIES.classic;
+export const transitionFor = (sceneIndex: number, cuts: VideoStyle['cuts'] = 'classic'): TransitionKind => {
+  const family = CUT_FAMILIES[cuts] ?? CUT_FAMILIES.classic;
+  return family[(sceneIndex + 2) % family.length];
+};
 
 export const ENTER_FRAMES = 12;
 export const EXIT_FRAMES = 8;
