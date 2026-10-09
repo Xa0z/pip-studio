@@ -48,6 +48,14 @@ describe('TikTok upload', () => {
     expect(fake.posts[0].privacy).toBe('SELF_ONLY');
   });
 
+  it('tells the user to make a public account private when TikTok has not approved the app', async () => {
+    fake = new FakeTikTok({privacyOptions: ['PUBLIC_TO_EVERYONE', 'SELF_ONLY'], unaudited: true, publicAccount: true});
+    fake.install();
+    const err = await publishVideo(videoFile(2 * MB), 'caption', 'act.token', {privacy: 'PUBLIC_TO_EVERYONE', durationSec: 30, mode: 'direct'}).catch((e) => (e as Error).message);
+    expect(err).toMatch(/unaudited_client_can_only_post_to_private_accounts/);
+    expect(plainReason(err as string)).toMatch(/turn on Private account, then tap Retry/);
+  });
+
   it('tells the user what TikTok said', () => {
     expect(plainReason('TikTok post init: spam_risk_too_many_posts too many (log_id x)')).toMatch(/posted too many times today/);
     expect(plainReason('TikTok publish failed: file_format_check_failed')).toMatch(/could not read the video file/);
