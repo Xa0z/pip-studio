@@ -5,7 +5,8 @@ const TIKTOK_REASONS: [RegExp, string][] = [
   [/spam_risk_too_many_posts|too_many_posts/i, 'TikTok says this account posted too many times today. I will try again if you tap Retry later.'],
   [/spam_risk_too_many_pending_share|too_many_pending/i, 'TikTok has too many uploads waiting on this account. Open TikTok, finish or delete pending drafts, then tap Retry.'],
   [/spam_risk_user_banned|user_banned/i, 'TikTok has blocked posting from this account for now.'],
-  [/unaudited_client/i, 'TikTok only allows private posts until it approves the app, and the private post also failed.'],
+  // TikTok sends this even for "Only me" posts when the TikTok account itself is public.
+  [/unaudited_client/i, 'TikTok only lets apps it has not approved yet post to private accounts, and this TikTok account is public. In the TikTok app open Profile > ☰ > Settings and privacy > Privacy, turn on Private account, then tap Retry.'],
   [/privacy_level_option_mismatch/i, 'TikTok did not accept the privacy setting. Pick another one and tap Retry.'],
   [/access_token_invalid|scope_not_authorized|token_expired/i, 'the TikTok login stopped working. Connect TikTok again with /start.'],
   [/duration_check|duration/i, 'TikTok did not accept the video length.'],

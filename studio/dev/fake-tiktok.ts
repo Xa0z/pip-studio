@@ -8,6 +8,8 @@ export type FakeTikTokOptions = {
   maxDurationSec?: number;
   /** Like an app TikTok has not audited yet: only SELF_ONLY posts are accepted. */
   unaudited?: boolean;
+  /** With unaudited: the TikTok account is public, so TikTok refuses every post, "Only me" too. */
+  publicAccount?: boolean;
   /** Clock for create_time (tests move time forward). */
   now?: () => Date;
 };
@@ -101,7 +103,7 @@ export class FakeTikTok {
           si.total_chunk_count === Math.floor(si.video_size / si.chunk_size) &&
           (si.chunk_size === si.video_size ? si.video_size <= 64 * MB : si.chunk_size >= 5 * MB && si.chunk_size <= 64 * MB);
         if (!chunkOk) return this.json({error: {code: 'invalid_params', message: 'The chunk size is invalid', log_id: 'fake'}}, 400);
-        if (this.opts.unaudited && body.post_info?.privacy_level !== 'SELF_ONLY')
+        if (this.opts.unaudited && (this.opts.publicAccount || body.post_info?.privacy_level !== 'SELF_ONLY'))
           return this.json({error: {code: 'unaudited_client_can_only_post_to_private_accounts', message: 'Please review our integration guidelines', log_id: 'fake'}}, 403);
         const id = `pub_${this.publishes.size + 1}`;
         this.publishes.set(id, {caption: body.post_info?.title ?? '', privacy: body.post_info?.privacy_level, is_aigc: body.post_info?.is_aigc === true});
