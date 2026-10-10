@@ -1,0 +1,113 @@
+{
+ "video": "test-moon.mp4",
+ "script": "The Moon is slowly drifting away from Earth. About four centimetres every year.\n\nBillions of years ago, it was much closer. Tides were huge, and a day lasted only a few hours.\n\nAstronauts left mirrors on the Moon. Scientists still bounce lasers off them today.\nThe Moon is still leaving.",
+ "footage": [
+  {
+   "file": "clips/wikimedia-22270131.mp4",
+   "source": "wikimedia",
+   "id": "22270131",
+   "title": "2012-10-21 20-27-24-moon-flyby",
+   "author": "Thomas Bresson",
+   "license": "CC BY 3.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+   "page": "https://commons.wikimedia.org/wiki/File:2012-10-21_20-27-24-moon-flyby.ogv",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/transcoded/e/e0/2012-10-21_20-27-24-moon-flyby.ogv/2012-10-21_20-27-24-moon-flyby.ogv.1080p.vp9.webm",
+   "query": "leaving moon",
+   "downloadedAt": "2026-10-10T15:01:39.008Z"
+  },
+  {
+   "file": "clips/wikimedia-66390876.mp4",
+   "source": "wikimedia",
+   "id": "66390876",
+   "title": "M83-zoomin-NASA",
+   "author": "NASA",
+   "license": "Public domain",
+   "licenseUrl": "",
+   "page": "https://commons.wikimedia.org/wiki/File:M83-zoomin-NASA.webm",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/0/0c/M83-zoomin-NASA.webm?utm_source=commons.wikimedia.org&utm_campaign=api&utm_content=original",
+   "query": "billions closer years",
+   "downloadedAt": "2026-10-10T14:33:14.047Z"
+  },
+  {
+   "file": "clips/wikimedia-17304300.mp4",
+   "source": "wikimedia",
+   "id": "17304300",
+   "title": "The unusual history of the asteroid Lutetia",
+   "author": "ESO/M. Kornmesser, Nick Risinger",
+   "license": "CC BY 4.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by/4.0",
+   "page": "https://commons.wikimedia.org/wiki/File:The_unusual_history_of_the_asteroid_Lutetia.ogv",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/transcoded/7/77/The_unusual_history_of_the_asteroid_Lutetia.ogv/The_unusual_history_of_the_asteroid_Lutetia.ogv.480p.vp9.webm",
+   "query": "billions closer years",
+   "downloadedAt": "2026-10-10T14:33:06.224Z"
+  },
+  {
+   "file": "clips/wikimedia-43400033.mp4",
+   "source": "wikimedia",
+   "id": "43400033",
+   "title": "Pluto-FlyoverAnimation-20150918",
+   "author": "NASAgovVideo",
+   "license": "Public domain",
+   "licenseUrl": "",
+   "page": "https://commons.wikimedia.org/wiki/File:Pluto-FlyoverAnimation-20150918.webm",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/8/8e/Pluto-FlyoverAnimation-20150918.webm?utm_source=commons.wikimedia.org&utm_campaign=api&utm_content=original",
+   "query": "drifting slowly earth",
+   "downloadedAt": "2026-10-10T14:15:48.621Z"
+  },
+  {
+   "file": "clips/wikimedia-149888146.mp4",
+   "source": "wikimedia",
+   "id": "149888146",
+   "title": "Atmospheric Rivers Drench the Pacific Northwest (NESDIS 2023-12-08 2023 12 08 Atmospheric River Impacts NO TEXT)",
+   "author": "NOAA",
+   "license": "Public domain",
+   "licenseUrl": "",
+   "page": "https://commons.wikimedia.org/wiki/File:Atmospheric_Rivers_Drench_the_Pacific_Northwest_(NESDIS_2023-12-08_2023_12_08_Atmospheric_River_Impacts_NO_TEXT).webm",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/transcoded/c/c4/Atmospheric_Rivers_Drench_the_Pacific_Northwest_%28NESDIS_2023-12-08_2023_12_08_Atmospheric_River_Impacts_NO_TEXT%29.webm/Atmospheric_Rivers_Drench_the_Pacific_Northwest_%28NESDIS_2023-12-08_2023_12_08_Atmospheric_River_Impacts_NO_TEXT%29.webm.1080p.vp9.webm",
+   "query": "billions closer years",
+   "downloadedAt": "2026-10-10T14:16:11.043Z"
+  },
+  {
+   "file": "clips/wikimedia-20441843.mp4",
+   "source": "wikimedia",
+   "id": "20441843",
+   "title": "2012-07-26 22-00-15-moon",
+   "author": "Thomas Bresson",
+   "license": "CC BY 3.0",
+   "licenseUrl": "https://creativecommons.org/licenses/by/3.0",
+   "page": "https://commons.wikimedia.org/wiki/File:2012-07-26_22-00-15-moon.ogv",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/transcoded/e/ec/2012-07-26_22-00-15-moon.ogv/2012-07-26_22-00-15-moon.ogv.1080p.vp9.webm",
+   "query": "leaving moon",
+   "downloadedAt": "2026-10-10T15:01:48.331Z"
+  },
+  {
+   "file": "clips/wikimedia-96289858.mp4",
+   "source": "wikimedia",
+   "id": "96289858",
+   "title": "Echoes of the Universe's Creation Y8W9T6ahwSU",
+   "author": "NASA Goddard",
+   "license": "Public domain",
+   "licenseUrl": "",
+   "page": "https://commons.wikimedia.org/wiki/File:Echoes_of_the_Universe%27s_Creation_Y8W9T6ahwSU.webm",
+   "url": "https://upload.wikimedia.org/wikipedia/commons/transcoded/7/7d/Echoes_of_the_Universe%27s_Creation_Y8W9T6ahwSU.webm/Echoes_of_the_Universe%27s_Creation_Y8W9T6ahwSU.webm.1080p.vp9.webm",
+   "query": "scientists bounce",
+   "downloadedAt": "2026-10-10T14:16:49.507Z"
+  }
+ ],
+ "music": {
+  "file": "music/archive-DulceAlegria15MasteringBOX-dulce-alegria15-MasteringBOX-mp3.mp3",
+  "source": "archive",
+  "id": "DulceAlegria15MasteringBOX/dulce alegria15_MasteringBOX.mp3",
+  "title": "Dulce Alegría - Free Instrumental",
+  "author": "Daniel Triunfo",
+  "license": "Public domain",
+  "licenseUrl": "http://creativecommons.org/publicdomain/mark/1.0/",
+  "page": "https://archive.org/details/DulceAlegria15MasteringBOX",
+  "url": "https://archive.org/download/DulceAlegria15MasteringBOX/dulce%20alegria15_MasteringBOX.mp3",
+  "query": "instrumental ambient",
+  "downloadedAt": "2026-10-10T14:15:31.083Z"
+ },
+ "voice": "Kokoro TTS (af_heart), Apache-2.0, generated locally",
+ "sfx": "synthesised with ffmpeg, no licence needed",
+ "matcher": "clip"
+}

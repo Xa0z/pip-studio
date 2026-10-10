@@ -1,0 +1,416 @@
+{
+ "shots": [
+  {
+   "src": "m/0.mp4",
+   "start": 0,
+   "end": 78,
+   "transitionIn": null,
+   "focusY": 0.5,
+   "shake": null,
+   "kind": "clip",
+   "trimBefore": 518,
+   "kenBurns": null,
+   "punchIn": false,
+   "speedRamp": {
+    "slowFrames": 31,
+    "rate": 0.5
+   }
+  },
+  {
+   "src": "m/1.mp4",
+   "start": 78,
+   "end": 149,
+   "transitionIn": null,
+   "focusY": 0.5,
+   "shake": 376957,
+   "kind": "clip",
+   "trimBefore": 127,
+   "kenBurns": null,
+   "punchIn": true,
+   "speedRamp": null
+  },
+  {
+   "src": "m/2.mp4",
+   "start": 149,
+   "end": 230,
+   "transitionIn": {
+    "type": "fade",
+    "frames": 10,
+    "direction": "from-left"
+   },
+   "focusY": 0.5,
+   "shake": null,
+   "kind": "clip",
+   "trimBefore": 403,
+   "kenBurns": null,
+   "punchIn": false,
+   "speedRamp": null
+  },
+  {
+   "src": "m/3.mp4",
+   "start": 230,
+   "end": 277,
+   "transitionIn": null,
+   "focusY": 0.5,
+   "shake": 967203,
+   "kind": "clip",
+   "trimBefore": 28,
+   "kenBurns": null,
+   "punchIn": true,
+   "speedRamp": null
+  },
+  {
+   "src": "m/4.mp4",
+   "start": 277,
+   "end": 342,
+   "transitionIn": null,
+   "focusY": 0.5,
+   "shake": null,
+   "kind": "clip",
+   "trimBefore": 194,
+   "kenBurns": null,
+   "punchIn": false,
+   "speedRamp": null
+  },
+  {
+   "src": "m/5.mp4",
+   "start": 342,
+   "end": 404,
+   "transitionIn": {
+    "type": "fade",
+    "frames": 8,
+    "direction": "from-bottom"
+   },
+   "focusY": 0.5,
+   "shake": 738407,
+   "kind": "clip",
+   "trimBefore": 727,
+   "kenBurns": null,
+   "punchIn": false,
+   "speedRamp": null
+  },
+  {
+   "src": "m/6.mp4",
+   "start": 404,
+   "end": 483,
+   "transitionIn": null,
+   "focusY": 0.5,
+   "shake": null,
+   "kind": "clip",
+   "trimBefore": 638,
+   "kenBurns": null,
+   "punchIn": false,
+   "speedRamp": {
+    "slowFrames": 32,
+    "rate": 0.5
+   }
+  },
+  {
+   "src": "m/0.mp4",
+   "start": 483,
+   "end": 550,
+   "transitionIn": null,
+   "focusY": 0.5,
+   "shake": null,
+   "kind": "clip",
+   "trimBefore": 689,
+   "kenBurns": null,
+   "punchIn": true,
+   "speedRamp": null
+  }
+ ],
+ "words": [
+  {
+   "text": "The",
+   "start": 0.25,
+   "end": 0.42907770270270273
+  },
+  {
+   "text": "Moon",
+   "start": 0.42907770270270273,
+   "end": 0.6678479729729729
+  },
+  {
+   "text": "is",
+   "start": 0.6678479729729729,
+   "end": 0.7872331081081081
+  },
+  {
+   "text": "slowly",
+   "start": 0.7872331081081081,
+   "end": 1.1453885135135136
+  },
+  {
+   "text": "drifting",
+   "start": 1.1453885135135136,
+   "end": 1.6229290540540542
+  },
+  {
+   "text": "away",
+   "start": 1.6229290540540542,
+   "end": 1.8616993243243245
+  },
+  {
+   "text": "from",
+   "start": 1.8616993243243245,
+   "end": 2.100469594594595
+  },
+  {
+   "text": "Earth.",
+   "start": 2.100469594594595,
+   "end": 2.458625
+  },
+  {
+   "text": "About",
+   "start": 2.704172645185143,
+   "end": 2.997068478518476
+  },
+  {
+   "text": "four",
+   "start": 2.997068478518476,
+   "end": 3.231385145185143
+  },
+  {
+   "text": "centimetres",
+   "start": 3.231385145185143,
+   "end": 3.8757559785184763
+  },
+  {
+   "text": "every",
+   "start": 3.8757559785184763,
+   "end": 4.168651811851809
+  },
+  {
+   "text": "year.",
+   "start": 4.168651811851809,
+   "end": 4.461547645185143
+  },
+  {
+   "text": "Billions",
+   "start": 5.0652831916036085,
+   "end": 5.611016524936942
+  },
+  {
+   "text": "of",
+   "start": 5.611016524936942,
+   "end": 5.747449858270276
+  },
+  {
+   "text": "years",
+   "start": 5.747449858270276,
+   "end": 6.0885331916036085
+  },
+  {
+   "text": "ago,",
+   "start": 6.0885331916036085,
+   "end": 6.361399858270275
+  },
+  {
+   "text": "it",
+   "start": 6.361399858270275,
+   "end": 6.4978331916036085
+  },
+  {
+   "text": "was",
+   "start": 6.4978331916036085,
+   "end": 6.7024831916036085
+  },
+  {
+   "text": "much",
+   "start": 6.7024831916036085,
+   "end": 6.975349858270276
+  },
+  {
+   "text": "closer.",
+   "start": 6.975349858270276,
+   "end": 7.452866524936942
+  },
+  {
+   "text": "Tides",
+   "start": 7.775085648134661,
+   "end": 8.150715493095902
+  },
+  {
+   "text": "were",
+   "start": 8.150715493095902,
+   "end": 8.451219369064894
+  },
+  {
+   "text": "huge,",
+   "start": 8.451219369064894,
+   "end": 8.826849214026135
+  },
+  {
+   "text": "and",
+   "start": 8.826849214026135,
+   "end": 9.052227121002879
+  },
+  {
+   "text": "a",
+   "start": 9.052227121002879,
+   "end": 9.202479058987375
+  },
+  {
+   "text": "day",
+   "start": 9.202479058987375,
+   "end": 9.427856965964118
+  },
+  {
+   "text": "lasted",
+   "start": 9.427856965964118,
+   "end": 9.878612779917606
+  },
+  {
+   "text": "only",
+   "start": 9.878612779917606,
+   "end": 10.179116655886599
+  },
+  {
+   "text": "a",
+   "start": 10.179116655886599,
+   "end": 10.329368593871095
+  },
+  {
+   "text": "few",
+   "start": 10.329368593871095,
+   "end": 10.554746500847841
+  },
+  {
+   "text": "hours.",
+   "start": 10.554746500847841,
+   "end": 11.005502314801328
+  },
+  {
+   "text": "Astronauts",
+   "start": 11.51655068902159,
+   "end": 12.095287248161375
+  },
+  {
+   "text": "left",
+   "start": 12.095287248161375,
+   "end": 12.326781871817289
+  },
+  {
+   "text": "mirrors",
+   "start": 12.326781871817289,
+   "end": 12.73189746321514
+  },
+  {
+   "text": "on",
+   "start": 12.73189746321514,
+   "end": 12.847644775043095
+  },
+  {
+   "text": "the",
+   "start": 12.847644775043095,
+   "end": 13.021265742785031
+  },
+  {
+   "text": "Moon.",
+   "start": 13.021265742785031,
+   "end": 13.310634022354924
+  },
+  {
+   "text": "Scientists",
+   "start": 13.551104991491728,
+   "end": 14.161313324825063
+  },
+  {
+   "text": "still",
+   "start": 14.161313324825063,
+   "end": 14.466417491491729
+  },
+  {
+   "text": "bounce",
+   "start": 14.466417491491729,
+   "end": 14.83254249149173
+  },
+  {
+   "text": "lasers",
+   "start": 14.83254249149173,
+   "end": 15.19866749149173
+  },
+  {
+   "text": "off",
+   "start": 15.19866749149173,
+   "end": 15.381729991491728
+  },
+  {
+   "text": "them",
+   "start": 15.381729991491728,
+   "end": 15.625813324825062
+  },
+  {
+   "text": "today.",
+   "start": 15.625813324825062,
+   "end": 15.991938324825062
+  },
+  {
+   "text": "The",
+   "start": 16.206015926891162,
+   "end": 16.375038654163887
+  },
+  {
+   "text": "Moon",
+   "start": 16.375038654163887,
+   "end": 16.600402290527526
+  },
+  {
+   "text": "is",
+   "start": 16.600402290527526,
+   "end": 16.713084108709342
+  },
+  {
+   "text": "still",
+   "start": 16.713084108709342,
+   "end": 16.994788654163887
+  },
+  {
+   "text": "leaving.",
+   "start": 16.994788654163887,
+   "end": 17.44551592689116
+  }
+ ],
+ "speech": [
+  [
+   0.25,
+   4.461547645185143
+  ],
+  [
+   5.0652831916036085,
+   11.005502314801328
+  ],
+  [
+   11.51655068902159,
+   17.44551592689116
+  ]
+ ],
+ "voiceFile": "voice.wav",
+ "musicFile": "music.mp3",
+ "musicStart": 0,
+ "sfx": [
+  {
+   "file": "hit.wav",
+   "frame": 78,
+   "volume": 0.28
+  },
+  {
+   "file": "whoosh.wav",
+   "frame": 142,
+   "volume": 0.32
+  },
+  {
+   "file": "hit.wav",
+   "frame": 230,
+   "volume": 0.28
+  },
+  {
+   "file": "whoosh.wav",
+   "frame": 335,
+   "volume": 0.32
+  }
+ ],
+ "graded": true,
+ "grainFile": "grain.png",
+ "totalFrames": 550
+}
