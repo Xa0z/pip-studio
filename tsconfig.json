@@ -16,6 +16,7 @@
   },
   "include": [
     "remotion",
+    "scripts",
     "src",
     "studio",
     "api",

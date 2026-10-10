@@ -7,3 +7,5 @@ samples/
 work/
 public/app/
 remotion/character/generated/
+library/
+__pycache__/
