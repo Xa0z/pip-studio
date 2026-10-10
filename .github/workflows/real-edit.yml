@@ -112,3 +112,19 @@ jobs:
         run: |
           cp library/credits.json out/library-credits.json 2>/dev/null || true
           bash scripts/push-previews.sh previews-real-edit "Real-footage video from run ${{ github.run_id }}" out/*.mp4 out/*.credits.json out/*.props.json out/library-credits.json
+
+      - name: Send the video to the owner on Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          OWNER_TELEGRAM_ID: ${{ secrets.OWNER_TELEGRAM_ID }}
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$OWNER_TELEGRAM_ID" ]; then echo "No Telegram secrets, skipping"; exit 0; fi
+          for f in out/*.mp4; do
+            curl -sS --fail-with-body -o /dev/null \
+              -F chat_id="$OWNER_TELEGRAM_ID" \
+              -F supports_streaming=true \
+              -F caption="Real-footage test video ($(basename "$f")), run ${{ github.run_id }}" \
+              -F video=@"$f" \
+              "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendVideo"
+            echo "Sent $(basename "$f") to Telegram"
+          done
