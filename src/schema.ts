@@ -1,5 +1,6 @@
 import {z} from 'zod';
 import type {VideoTheme} from './themes';
+import type {VideoStyle} from './styles';
 
 export const CATEGORIES = ['space', 'human_body', 'animals', 'nature', 'physics'] as const;
 export type Category = (typeof CATEGORIES)[number];
@@ -27,6 +28,9 @@ export type IconName = (typeof ICONS)[number];
 
 export const LAYOUTS = ['bigNumber', 'compare', 'iconGrid', 'orbit', 'steps', 'spotlight'] as const;
 export type LayoutName = (typeof LAYOUTS)[number];
+/** A real photo or short clip from a free media library (Pip Studio only; found by code, not by Claude). */
+export const MEDIA_LAYOUT = 'media' as const;
+export const MAX_MEDIA_SCENES = 2;
 
 const Icon = z.enum(ICONS);
 const shortText = (max: number) => z.string().trim().min(1).max(max);
@@ -69,6 +73,19 @@ export const VisualSchema = z.discriminatedUnion('layout', [
     layout: z.literal('spotlight'),
     icon: Icon,
     caption: shortText(60),
+  }),
+  z.object({
+    layout: z.literal('media'),
+    kind: z.enum(['photo', 'clip']).default('photo'),
+    /** 2 to 5 plain words describing what the camera sees, e.g. "lava flowing at night". */
+    query: shortText(40),
+    caption: shortText(60),
+    /** Shown instead if no free photo or clip is found. */
+    icon: Icon,
+    /** Set by code after download: the file inside the render's public folder, and its length for clips. */
+    src: z.string().optional(),
+    seconds: z.number().optional(),
+    credit: z.string().optional(),
   }),
 ]);
 export type Visual = z.infer<typeof VisualSchema>;
@@ -160,6 +177,10 @@ export type VideoProps = {
   ctaLabel?: string;
   /** Full colour palette from the user's video theme (src/themes.ts). Default: Sage. */
   theme?: VideoTheme;
+  /** Backdrop, text motion, cuts, opening, captions and 2D/3D visuals (src/styles.ts). Default: the classic look. */
+  style?: Partial<VideoStyle>;
+  /** Key in remotion/director/registry.tsx of the episode Claude wrote as code for this video. Unset = scene layouts. */
+  episodeKey?: string | null;
   /** Play the cut whooshes and the button pop. Set by the renderer when assets/sfx is copied in. */
   sfx?: boolean;
 };

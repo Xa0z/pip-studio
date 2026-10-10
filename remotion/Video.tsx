@@ -6,25 +6,31 @@ import {Background} from './components/Background';
 import {isTalking, Subtitles} from './components/Subtitles';
 import {CTA_TAP, CtaScene} from './scenes/CtaScene';
 import {FactScene} from './scenes/FactScene';
+import {CardHook, PosterHook} from './scenes/HookVariants';
 import {hookClick, HookScene, hookSpeed, TYPE_START} from './scenes/HookScene';
 import {typedEnd} from './scenes/common';
 import {RecapScene} from './scenes/RecapScene';
 import {resolveTheme} from '../src/themes';
-import {FONT, ThemeContext, TOTAL_FRAMES} from './theme';
+import {FONT, StyleContext, ThemeContext, TOTAL_FRAMES, useStyle} from './theme';
+import {resolveStyle} from '../src/styles';
 import {EASE_IN, EASE_IN_OUT, ENTER_FRAMES, EXIT_FRAMES, prog, transitionFor, WIPE_FRAMES} from './motion';
+import {DirectorVideo} from './director/DirectorVideo';
+import {EPISODES} from './director/registry';
 
 type Box = {left: number; top: number; width: number};
 const PIP_BIG: Box = {left: 320, top: 770, width: 440};
 const PIP_CTA: Box = {left: 300, top: 700, width: 480};
 const PIP_CORNER: Box = {left: 840, top: 180, width: 200};
+const PIP_CORNER_LEFT: Box = {left: 40, top: 180, width: 200};
 
-const boxFor = (s: TimedScene): Box => (s.role === 'hook' ? PIP_BIG : s.role === 'cta' ? PIP_CTA : PIP_CORNER);
+const boxFor = (s: TimedScene, side: 'left' | 'right' = 'right'): Box => (s.role === 'hook' ? PIP_BIG : s.role === 'cta' ? PIP_CTA : side === 'left' ? PIP_CORNER_LEFT : PIP_CORNER);
 
-const SceneBody: React.FC<{scene: TimedScene; index: number; last: boolean; title: string; ctaLabel: string}> = ({scene, index, last, title, ctaLabel}) => {
+const SceneBody: React.FC<{scene: TimedScene; index: number; factIndex: number; last: boolean; title: string; ctaLabel: string}> = ({scene, index, factIndex, last, title, ctaLabel}) => {
   const frame = useCurrentFrame();
+  const style = useStyle();
   const d = scene.durationInFrames;
-  const enter = index === 0 ? 'zoom' : transitionFor(index);
-  const exit = last ? null : transitionFor(index + 1);
+  const enter = index === 0 ? 'zoom' : transitionFor(index, style.cuts);
+  const exit = last ? null : transitionFor(index + 1, style.cuts);
   const i = prog(frame, 0, ENTER_FRAMES);
   const o = interpolate(frame, [d - EXIT_FRAMES, d], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: EASE_IN});
   // A slow camera push across the whole scene keeps still frames alive.
@@ -37,13 +43,36 @@ const SceneBody: React.FC<{scene: TimedScene; index: number; last: boolean; titl
   if (exit === 'push') x -= o * 260;
   if (exit === 'zoom') scale *= 1 + o * 0.12;
   if (exit && exit !== 'wipe') opacity *= 1 - o;
+  let y = 0;
+  let rotY = 0;
+  let clip: string | undefined;
+  if (enter === 'lift') y += (1 - i) * 320;
+  if (exit === 'lift') y -= o * 320;
+  if (enter === 'flip') rotY += (1 - i) * -90;
+  if (exit === 'flip') rotY += o * 90;
+  // Iris: the new scene opens from a circle in the middle; the old one closes into one.
+  if (enter === 'iris' && i < 1) clip = `circle(${i * 120}% at 50% 45%)`;
+  if (exit === 'iris' && o > 0) clip = `circle(${(1 - o) * 120}% at 50% 45%)`;
   let blur = 0;
-  if (enter !== 'wipe' && index > 0) blur += (1 - i) * 18;
-  if (exit && exit !== 'wipe') blur += o * 22;
+  // Only the classic cuts blur; the other families stay crisp.
+  if (style.cuts === 'classic') {
+    if (enter !== 'wipe' && index > 0) blur += (1 - i) * 18;
+    if (exit && exit !== 'wipe') blur += o * 22;
+  }
+  const flat = rotY === 0;
   return (
-    <AbsoluteFill style={{opacity, scale: `${scale}`, translate: `${x}px 0`, filter: blur > 0.3 ? `blur(${blur}px)` : undefined}}>
-      {scene.role === 'hook' ? <HookScene scene={scene} title={title} /> : null}
-      {scene.role === 'fact' ? <FactScene scene={scene} /> : null}
+    <AbsoluteFill
+      style={{
+        opacity,
+        scale: `${scale}`,
+        translate: `${x}px ${y}px`,
+        transform: flat ? undefined : `perspective(1800px) rotateY(${rotY}deg)`,
+        clipPath: clip,
+        filter: blur > 0.3 ? `blur(${blur}px)` : undefined,
+      }}
+    >
+      {scene.role === 'hook' ? style.hook === 'card' ? <CardHook scene={scene} title={title} /> : style.hook === 'poster' ? <PosterHook scene={scene} title={title} /> : <HookScene scene={scene} title={title} /> : null}
+      {scene.role === 'fact' ? <FactScene scene={scene} factIndex={factIndex} /> : null}
       {scene.role === 'recap' ? <RecapScene scene={scene} /> : null}
       {scene.role === 'cta' ? <CtaScene scene={scene} label={ctaLabel} /> : null}
     </AbsoluteFill>
@@ -70,9 +99,18 @@ const Wipe: React.FC<{at: number; dir: 1 | -1}> = ({at, dir}) => {
 };
 
 /** One thin segment per scene along the top edge, filling as the video plays. */
-const Progress: React.FC<{scenes: TimedScene[]}> = ({scenes}) => {
+const Progress: React.FC<{scenes: TimedScene[]; kind: 'segments' | 'line' | 'none'; total: number}> = ({scenes, kind, total}) => {
   const th = useContext(ThemeContext);
   const frame = useCurrentFrame();
+  if (kind === 'none') return null;
+  if (kind === 'line') {
+    const fill = interpolate(frame, [0, total], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
+    return (
+      <div style={{position: 'absolute', top: 0, left: 0, width: 1080, height: 12, background: th.track}}>
+        <div style={{width: `${fill * 100}%`, height: '100%', background: th.accent}} />
+      </div>
+    );
+  }
   return (
     <div style={{position: 'absolute', top: 64, left: 80, right: 80, display: 'flex', gap: 10}}>
       {scenes.map((s, k) => {
@@ -87,8 +125,23 @@ const Progress: React.FC<{scenes: TimedScene[]}> = ({scenes}) => {
   );
 };
 
-export const Video: React.FC<VideoProps> = ({title, scenes, words, voiceFile, musicFile, totalFrames = TOTAL_FRAMES, character = 'pip', ctaLabel = '+ Follow Pip', theme, sfx = false}) => {
+export const Video: React.FC<VideoProps> = (props) => {
+  const th = props.theme ?? resolveTheme(null);
+  const style = resolveStyle(props.style);
+  // A video Claude wrote as code (studio/worker/director.ts) draws itself; everything else uses the scene layouts.
+  const Episode = props.episodeKey ? EPISODES[props.episodeKey] : undefined;
+  return (
+    <ThemeContext.Provider value={th}>
+      <StyleContext.Provider value={style}>
+        {Episode ? <DirectorVideo {...props} theme={th} Episode={Episode} /> : <LayoutVideo {...props} />}
+      </StyleContext.Provider>
+    </ThemeContext.Provider>
+  );
+};
+
+const LayoutVideo: React.FC<VideoProps> = ({title, scenes, words, voiceFile, musicFile, totalFrames = TOTAL_FRAMES, character = 'pip', ctaLabel = '+ Follow Pip', theme, style: styleIn, sfx = false}) => {
   const th = theme ?? resolveTheme(null);
+  const style = resolveStyle(styleIn);
   const Character = character ? CHARACTERS[character] ?? null : null;
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
@@ -97,8 +150,8 @@ export const Video: React.FC<VideoProps> = ({title, scenes, words, voiceFile, mu
   const idx = Math.max(0, scenes.findIndex((s) => frame >= s.from && frame < s.from + s.durationInFrames));
   const scene = scenes[idx];
   const prev = scenes[idx - 1];
-  const target = boxFor(scene);
-  const from = prev ? boxFor(prev) : target;
+  const target = boxFor(scene, style.side);
+  const from = prev ? boxFor(prev, style.side) : target;
   const move = spring({frame: frame - scene.from, fps, config: {damping: 16, mass: 0.7}});
   const lerp = (a: number, b: number) => a + (b - a) * move;
   const pipBox = {left: lerp(from.left, target.left), top: lerp(from.top, target.top), width: lerp(from.width, target.width)};
@@ -109,21 +162,22 @@ export const Video: React.FC<VideoProps> = ({title, scenes, words, voiceFile, mu
 
   return (
     <ThemeContext.Provider value={th}>
+    <StyleContext.Provider value={style}>
     <AbsoluteFill style={{backgroundColor: th.bg}}>
       <Background sceneIndex={idx} sceneFrom={scene.from} />
 
       {scenes.map((s, i) => (
         <Sequence key={i} from={s.from} durationInFrames={s.durationInFrames} layout="none">
-          <SceneBody scene={s} index={i} last={i === scenes.length - 1} title={title} ctaLabel={ctaLabel} />
+          <SceneBody scene={s} index={i} factIndex={scenes.slice(0, i).filter((x) => x.role === 'fact').length} last={i === scenes.length - 1} title={title} ctaLabel={ctaLabel} />
         </Sequence>
       ))}
 
-      {scenes.map((s, i) => (i > 0 && transitionFor(i) === 'wipe' ? <Wipe key={`w${i}`} at={s.from} dir={i % 2 ? 1 : -1} /> : null))}
+      {scenes.map((s, i) => (i > 0 && transitionFor(i, style.cuts) === 'wipe' ? <Wipe key={`w${i}`} at={s.from} dir={i % 2 ? 1 : -1} /> : null))}
 
-      <Progress scenes={scenes} />
+      <Progress scenes={scenes} kind={style.progress} total={totalFrames} />
 
       {showBadge ? (
-        <div style={{position: 'absolute', top: 236, left: 70, fontFamily: FONT, fontWeight: 700, fontSize: 36, color: th.onAccent, background: th.accent, borderRadius: 10, padding: '6px 24px'}}>{title}</div>
+        <div style={{position: 'absolute', top: 236, ...(style.side === 'left' ? {right: 70} : {left: 70}), fontFamily: FONT, fontWeight: 700, fontSize: 36, color: th.onAccent, background: th.accent, borderRadius: 10, padding: '6px 24px'}}>{title}</div>
       ) : null}
 
       {Character ? (
@@ -143,7 +197,12 @@ export const Video: React.FC<VideoProps> = ({title, scenes, words, voiceFile, mu
             ) : null,
           )
         : null}
-      {sfx && hook ? (
+      {sfx && hook && style.hook !== 'search' ? (
+        <Sequence from={hook.from + 10} durationInFrames={10} layout="none">
+          <Audio src={staticFile('sfx/pop.wav')} volume={0.3} />
+        </Sequence>
+      ) : null}
+      {sfx && hook && style.hook === 'search' ? (
         <>
           <Sequence from={hook.from + TYPE_START} durationInFrames={typedEnd(hook.headline, TYPE_START, hookSpeed(hook)) - TYPE_START} layout="none">
             <Audio src={staticFile('sfx/typing.wav')} volume={0.3} />
@@ -169,6 +228,7 @@ export const Video: React.FC<VideoProps> = ({title, scenes, words, voiceFile, mu
         />
       ) : null}
     </AbsoluteFill>
+    </StyleContext.Provider>
     </ThemeContext.Provider>
   );
 };

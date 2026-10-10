@@ -19,7 +19,7 @@ import {esc, T} from '../bot/texts.js';
 import {loadAnalytics, videoStats} from '../lib/analytics.js';
 import {aadFor, decryptSecret} from '../lib/crypto.js';
 import {ctaLabel, GOALS, goalScore, pickLength} from '../lib/goals.js';
-import {isThemeChoice, resolveTheme} from '../../src/themes.js';
+import {defaultThemeFor, isThemeChoice, resolveTheme} from '../../src/themes.js';
 import {nextNiche, nicheById} from '../lib/niches.js';
 import {findPatterns, isExperiment, plannerHints} from '../lib/patterns.js';
 import {sceneRange, type StudioPlan} from '../lib/plan-schema.js';
@@ -34,7 +34,17 @@ import type {WorkerCtx} from './context.js';
 import {makeVoiceSamples} from './voices.js';
 import {analyzeReference, studyReference, type MarketingContext} from './marketing.js';
 import {marketingSeconds} from '../lib/marketing.js';
+import {knowledgeText} from '../lib/knowledge.js';
+import {creditFor, realMediaFinder} from './media.js';
+import {isVideoStyle, pickStyle, seedFrom, styleLabel} from '../../src/styles.js';
 import {transcribeMedia} from '../../src/voice.js';
+import {episodeKey, fallbackScenes, writeEpisode, writeEpisodeRegistry} from './director.js';
+
+/**
+ * Director videos (the default): Claude first writes a creative plan with a brief, then writes the
+ * whole video as Remotion code from it. DIRECTOR_VIDEOS=off goes back to the fixed scene layouts.
+ */
+export const directorOn = () => !/^(off|0|false|no)$/i.test(process.env.DIRECTOR_VIDEOS ?? '');
 
 // ---------- state passed between phases ----------
 type VideoState = {
@@ -42,6 +52,10 @@ type VideoState = {
   videoId: string;
   props: Omit<VideoProps, 'voiceFile' | 'musicFile'>;
   voicePath: string;
+  /** Photos and clips from the free media library, copied into the render's public folder as media/<name>. */
+  mediaPaths?: string[];
+  /** Why the episode code could not be used (the video then used the scene layouts). */
+  episodeError?: string;
   seconds: number;
   outPath?: string;
   thumbPath?: string;
@@ -158,7 +172,8 @@ async function prepareVideo(ctx: WorkerCtx, job: JobRow) {
     }
     const facts = await studyReference(refFile, refDir, process.env.TTS_PROVIDER === 'fake' ? undefined : transcribeMedia);
     const analysis = await analyzeReference(facts, mk.notes, ask);
-    marketing = {business: mk.business, notes: mk.notes, analysis, index: mk.index};
+    // The latest knowledge (summary, notes, files, website), not just the summary saved when the slot was planned.
+    marketing = {business: knowledgeText(u.onboarding_data ?? {}) || mk.business, notes: mk.notes, analysis, index: mk.index};
     seconds = marketingSeconds(facts.duration || mk.ref.duration);
   }
   const {writePlan, revise} = await import('./planner.js');
@@ -175,6 +190,8 @@ async function prepareVideo(ctx: WorkerCtx, job: JobRow) {
     experiment,
     recentHookTypes: real.slice(0, 5).map((x) => x.features?.hook_type ?? '').filter(Boolean),
     marketing,
+    business: !mk && u.onboarding_data?.knowledge_in_explainers ? knowledgeText(u.onboarding_data, 5000) || undefined : undefined,
+    director: directorOn() ? {recentFormats: all.filter((x) => x.id !== v.id).map((x) => x.plan?.format).filter((f): f is string => typeof f === 'string').slice(0, 6)} : undefined,
   };
   let plan = await writePlan(pctx, ask);
 
@@ -212,22 +229,75 @@ async function prepareVideo(ctx: WorkerCtx, job: JobRow) {
   const scenes: TimedScene[] = buildTimeline(plan, voice, spec);
   validateTimeline(scenes, spec, sceneRange(seconds).min);
 
+  // Same colours every time, but a new look otherwise: different from this user's last few videos.
+  // The attempt number is in the seed, so Regenerate also gives a fresh look.
+  const recentStyles = all.filter((x) => x.id !== v.id).map((x) => x.plan?.style).filter(isVideoStyle).slice(0, 3);
+  const style = pickStyle(seedFrom(`${v.id}:${v.attempts}`), recentStyles);
+  console.log(`Style: ${styleLabel(style)}`);
+
+  // Real photos and clips the script asked for, from free libraries. A miss keeps the scene, drawn with its icon.
+  const mediaPaths: string[] = [];
+  const credits: string[] = [];
+  const used = new Set<string>();
+  const finder = ctx.findMedia ?? realMediaFinder;
+  for (const [i, sc] of scenes.entries()) {
+    const vis = sc.visual;
+    if (vis?.layout !== 'media') continue;
+    delete vis.src, delete vis.seconds, delete vis.credit;
+    try {
+      const got = await finder(vis, {dir: path.join(dir, 'media'), index: i, used, sceneSeconds: sc.durationInFrames / FPS});
+      if (got) {
+        vis.src = got.publicName;
+        vis.credit = creditFor(got.hit);
+        if (got.hit.kind === 'clip') vis.seconds = Math.min(15, got.hit.seconds ?? 15);
+        else vis.kind = 'photo';
+        mediaPaths.push(got.file);
+        credits.push(vis.credit);
+      }
+    } catch (e) {
+      console.warn(`No media for scene ${i + 1}:`, redact((e as Error).message));
+    }
+  }
+
   const key = characterKey(character);
   writeRegistry(character?.code && key ? [{key, code: character.code}] : []);
+  const theme = resolveTheme(isThemeChoice(u.onboarding_data?.video_theme) ? u.onboarding_data.video_theme : defaultThemeFor(u.id, u.is_owner || u.id === ctx.ownerId));
+
+  // Director videos: Claude writes the whole video as code from its own brief. If the code never passes
+  // the checks, the video uses the scene layouts instead (so a post is never lost to the code).
+  let epKey: string | null = null;
+  let episodeError: string | undefined;
+  const directed = !!(plan as {brief?: string}).brief;
+  if (directed) {
+    try {
+      const ep = await writeEpisode({plan, scenes, words: voice.words as Word[], theme, characterName: name, totalFrames: spec.totalFrames}, ask);
+      if (ep.code !== null) {
+        epKey = episodeKey(`${v.id}${v.attempts}`);
+        writeEpisodeRegistry([{key: epKey, code: ep.code}]);
+        console.log(`Episode code ready (${ep.rounds} fix round${ep.rounds === 1 ? '' : 's'})`);
+      } else episodeError = `code did not pass the checks: ${ep.errors.slice(0, 3).join(' | ')}`;
+    } catch (e) {
+      episodeError = `Claude could not write the code: ${redact((e as Error).message).slice(0, 300)}`;
+    }
+    if (episodeError) console.warn(`Using the scene layouts instead: ${episodeError}`);
+  }
+  if (!epKey) writeEpisodeRegistry([]);
   const episode = index + 1;
   const props: VideoState['props'] = {
     episode,
     title: mk ? plan.category.slice(0, 28) : `${nicheById(niche).label} #${episode}`,
-    scenes,
+    scenes: directed ? fallbackScenes(scenes) : scenes,
     words: voice.words as Word[],
     totalFrames: spec.totalFrames,
     character: key,
     ctaLabel: ctaLabel(cta, name),
-    theme: resolveTheme(isThemeChoice(u.onboarding_data?.video_theme) ? u.onboarding_data.video_theme : null),
+    theme,
+    style,
+    episodeKey: epKey,
   };
   const features = featuresFor(plan, new Date(v.slot_at), s.timezone, seconds, cta, niche);
-  await store.updateVideo(v.id, {plan: mk ? {...plan, marketing: mk} : plan, features, caption: captionFor(plan), duration_s: seconds, character_id: character?.id ?? null});
-  saveState(ctx, job, {kind: 'video', videoId: v.id, props, voicePath: voice.wavPath, seconds});
+  await store.updateVideo(v.id, {plan: {...plan, style, ...(credits.length ? {media_credits: credits} : {}), ...(mk ? {marketing: mk} : {}), ...(directed ? {episode: epKey ? 'code' : 'layouts'} : {})}, features, caption: captionFor(plan), duration_s: seconds, character_id: character?.id ?? null});
+  saveState(ctx, job, {kind: 'video', videoId: v.id, props, voicePath: voice.wavPath, mediaPaths, seconds, episodeError});
 }
 
 async function prepareCharacters(ctx: WorkerCtx, job: JobRow) {
@@ -329,8 +399,22 @@ export async function render(ctx: WorkerCtx, jobId: string) {
   const st: State = fs.existsSync(path.join(dir, 'state.json')) ? JSON.parse(fs.readFileSync(path.join(dir, 'state.json'), 'utf8')) : {kind: 'none'};
   if (st.kind === 'video') {
     const outPath = path.join(dir, 'video.mp4');
-    await ctx.render.video({props: st.props, voicePath: st.voicePath, musicPath: null, outPath});
-    await ctx.render.check(outPath, st.props.totalFrames);
+    const draw = async (props: VideoState['props']) => {
+      await ctx.render.video({props, voicePath: st.voicePath, musicPath: null, outPath, mediaPaths: st.mediaPaths});
+      await ctx.render.check(outPath, props.totalFrames);
+    };
+    if (st.props.episodeKey) {
+      try {
+        await draw(st.props);
+      } catch (e) {
+        // Claude's code broke while rendering: make the same video with the scene layouts.
+        st.episodeError = `render failed: ${(e as Error).message.slice(0, 300)}`;
+        console.warn(`Episode render failed, using the scene layouts instead: ${st.episodeError}`);
+        st.props = {...st.props, episodeKey: null};
+        writeEpisodeRegistry([]);
+        await draw(st.props);
+      }
+    } else await draw(st.props);
     const thumbPath = path.join(dir, 'thumb.jpg');
     try {
       execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', '1.6', '-i', outPath, '-frames:v', '1', '-q:v', '3', '-vf', 'scale=540:-2', thumbPath], {stdio: 'ignore'});
@@ -372,6 +456,8 @@ async function finishVideo(ctx: WorkerCtx, job: JobRow, st: VideoState) {
   const s = (await store.getSettings(v.user_id))!;
   const u = (await store.getUser(v.user_id))!;
   if (!st.outPath || !fs.existsSync(st.outPath)) throw new Error('render produced no video');
+  // Keep why Claude's code was not used, to see how often it happens.
+  if (st.episodeError) await store.updateVideo(v.id, {plan: {...(v.plan ?? {}), episode: 'layouts', episode_error: st.episodeError.slice(0, 400)}});
 
   if (v.is_dry_run) {
     if (st.thumbPath) await store.upload(`thumbs/${u.id}/${v.id}.jpg`, fs.readFileSync(st.thumbPath), 'image/jpeg');

@@ -208,10 +208,26 @@ export const refAnalysisAnswer = () =>
     cta: 'Tells viewers to tap the link in bio',
   });
 
+/** A director plan (step 1 of a director video): the layout plan plus a format, a brief and an idea per beat. */
+export function directorAnswer(characterName: string | null, req: PlanRequest = {}) {
+  const plan = JSON.parse(planAnswer(characterName, req));
+  return JSON.stringify({
+    ...plan,
+    format: 'tiny story with a twist',
+    brief: 'Open close on a slowly turning planet that fills the frame, then pull the camera back in one smooth dolly with spring easing. Each fact lands as a big bold card that slides up with a staggered spring, the key word marked in the accent colour. The character stands at the side and points at each new card. Keep everything flat and matte, theme colours only, and let the pace build towards a quick recap before a friendly wave at the end.',
+    scenes: plan.scenes.map((s: any, i: number) => ({...s, idea: `Beat ${i + 1}: a bold card with the headline slides up while the character reacts.`, icon: s.visual?.icon ?? 'planet'})),
+  });
+}
+
+/** The episode code the fake animator returns (step 2 of a director video). */
+export const episodeAnswer = () => '```tsx\n' + fs.readFileSync(path.join(ROOT, 'fixtures', 'director', 'basic-episode.tsx'), 'utf8') + '```';
+
 /** Fake Claude: picks the fixture from what the prompt asks for. */
 export function fakeAsk(characterName: () => string | null = () => 'Nova'): Ask {
   return async (prompt, system) => {
     if (/Reply with the word OK/i.test(prompt)) return 'OK';
+    if (/You are a senior motion designer/.test(system)) return episodeAnswer();
+    if (/YOU ARE THE CREATIVE DIRECTOR/.test(system)) return directorAnswer(characterName(), parsePlanRequest(prompt, system));
     if (/Weekly TikTok analysis/i.test(prompt)) return weeklyAnswer();
     if (/You study short marketing videos/.test(system)) return refAnalysisAnswer();
     if (/You design ORIGINAL cartoon characters/.test(system)) return /breaks these rules/.test(prompt) ? JSON.stringify({name: 'Nova', code: foxCode(FOX_VARIANTS[0])}) : characterAnswer();

@@ -4,7 +4,7 @@ import type {Scene} from '../../src/schema';
 import {EASE_OUT, pop, prog} from '../motion';
 import {Cursor} from '../components/Cursor';
 import {FONT, useTheme} from '../theme';
-import {KineticText} from './common';
+import {MotionText} from './common';
 
 /** "+ Follow Pip" becomes "✓ Following" after the tap. */
 const doneLabel = (l: string) => (/^\+\s*follow\b/i.test(l) ? '✓ Following' : `✓ ${l.replace(/^\+\s*/, '')}`);
@@ -29,7 +29,7 @@ export const CtaScene: React.FC<{scene: Scene; label?: string}> = ({scene, label
   return (
     <>
       <div style={{position: 'absolute', top: 330, left: 60, width: 960, textAlign: 'center', fontFamily: FONT, fontWeight: 800, fontSize: 90, lineHeight: 1.06, letterSpacing: -1, color: th.ink}}>
-        <KineticText text={scene.headline} highlight={scene.highlight} />
+        <MotionText text={scene.headline} highlight={scene.highlight} />
       </div>
       <div style={{position: 'absolute', top: 590, width: 1080, display: 'flex', justifyContent: 'center'}}>
         <div style={{position: 'relative', scale: `${b * press * breathe}`}}>
