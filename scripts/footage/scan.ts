@@ -6,7 +6,7 @@
 import {execFileSync} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import {readCredits} from './credits.js';
+import {looksLikeJunk, readCredits} from './credits.js';
 import type {Library} from './paths.js';
 
 export type MediaItem = {
@@ -55,6 +55,7 @@ export function scanLibrary(l: Library): MediaItem[] {
       const st = fs.statSync(abs);
       const prev = old.get(rel);
       const c = credits[rel];
+      if (c && looksLikeJunk(c.title)) continue; // downloaded before the filter existed
       const tags = [c?.title, c?.query, name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ')].filter(Boolean).join(' ').toLowerCase();
       if (prev && prev.size === st.size && prev.mtime === Math.round(st.mtimeMs)) {
         items.push({...prev, tags});

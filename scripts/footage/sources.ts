@@ -9,7 +9,7 @@ import {execFileSync} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import {log} from '../../src/log.js';
-import {addCredit, allowedLicense, Credit, readCredits} from './credits.js';
+import {addCredit, allowedLicense, Credit, looksLikeJunk, readCredits} from './credits.js';
 import {ff, Library} from './paths.js';
 
 export type Kind = 'clip' | 'photo';
@@ -76,6 +76,7 @@ export async function searchWikimedia(q: string, kind: Kind, fetcher: Fetch = fe
       if (Number(info.duration ?? 99) < 3) continue;
     }
     if (!url || Math.min(width ?? 0, height ?? 0) < 480) continue;
+    if (looksLikeJunk(String(p.title ?? ''))) continue;
     hits.push({
       source: 'wikimedia',
       id: String(p.pageid),
@@ -104,7 +105,7 @@ export async function searchArchive(q: string, kind: Kind, fetcher: Fetch = fetc
   const hits: Hit[] = [];
   for (const d of (j.response?.docs ?? []) as any[]) {
     // Uploads that are not footage (screen captures, talks, slideshows) make poor shots.
-    if (mediatype !== 'audio' && /screen ?(recording|capture|shot)|slide ?show|webinar|lecture|podcast|powerpoint|tutorial/i.test(String(d.title ?? ''))) continue;
+    if (mediatype !== 'audio' && looksLikeJunk(String(d.title ?? ''))) continue;
     const licenseUrl = String(d.licenseurl ?? '');
     const license = /publicdomain\/zero/.test(licenseUrl) ? 'CC0 1.0' : /publicdomain/.test(licenseUrl) ? 'Public domain' : /licenses\/by\//.test(licenseUrl) ? 'CC BY' : '';
     if (!allowedLicense(license, licenseUrl)) continue;

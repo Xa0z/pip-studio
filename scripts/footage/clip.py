@@ -22,7 +22,8 @@ import sys
 MODEL = "ViT-B-32"
 PRETRAINED = "laion2b_s34b_b79k"
 MAX_SEGMENTS = 14  # per clip
-MAX_SEG_SECONDS = 6.0  # longer shots are cut into pieces so each piece can be matched on its own
+MAX_SEG_SECONDS = 6.0
+NEGATIVE = ["a screenshot of text", "a document with lots of words", "a slide with a title and captions", "a weather map with labels", "a chart or diagram"]  # longer shots are cut into pieces so each piece can be matched on its own
 
 _model = None
 
@@ -175,6 +176,11 @@ def cmd_match(lib):
         m = np.stack(mat)
         texts = embed_texts([q["text"][:300] for q in req["queries"]])
         sims = texts @ m.T
+        # Footage full of on-screen text, charts or maps looks like a slide, not a shot: push it down.
+        neg = embed_texts(NEGATIVE) @ m.T
+        pos = embed_texts(["a photo", "a film still"]) @ m.T
+        penalty = np.clip(neg.max(axis=0) - pos.max(axis=0) + 0.02, 0, None) * 1.5
+        sims = sims - penalty[None, :]
         for q, row in zip(req["queries"], sims):
             order = np.argsort(-row)[:top]
             results[q["id"]] = [{"file": keys[j][0], "seg": keys[j][1], "score": round(float(row[j]), 4)} for j in order]

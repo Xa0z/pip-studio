@@ -38,3 +38,6 @@ export function allowedLicense(name: string, url = ''): boolean {
   if (/\b(nc|nd|sa)\b|-nc|-nd|-sa|noncommercial|no ?deriv|share ?alike|by-sa|by-nc|by-nd|gfdl|gpl|fair use|copyrighted/.test(n)) return false;
   return /cc0|cc-zero|publicdomain|public domain|\bpd\b|pdm|pd-|no known copyright|\bcc[- ]by\b|creativecommons\.org\/licenses\/by\/|pexels license|pixabay content license/.test(n);
 }
+
+/** Uploads that are not footage (screen captures, talks, slideshows) make poor shots. */
+export const looksLikeJunk = (title: string) => /screen ?(recording|capture|shot)|slide ?show|webinar|lecture|podcast|powerpoint|tutorial/i.test(title);
