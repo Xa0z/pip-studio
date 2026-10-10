@@ -52,4 +52,5 @@ jobs:
           mkdir -p out/director
           npx tsx studio/dev/director-test.ts render "fixtures/director/$NAME-plan.json" "fixtures/director/$NAME-episode.tsx" "out/director/$NAME.mp4"
       - name: Put the video on the previews-director branch
-        run: bash scripts/push-previews.sh previews-director "Director test: $NAME (${GITHUB_SHA::7})" "out/director/$NAME.mp4"
+        run: |
+          bash scripts/push-previews.sh previews-director "Director test $NAME (${GITHUB_SHA::7})" "out/director/$NAME.mp4"
