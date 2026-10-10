@@ -351,6 +351,9 @@ export async function makeVideo(input: MakeVideoInput): Promise<MakeVideoResult>
       outputLocation: video,
       inputProps: props,
       crf: 18,
+      // Grain is noise, which costs a lot of bits; cap the rate so a 60 s video stays well under TikTok's limits.
+      encodingMaxRate: '12M',
+      encodingBufferSize: '24M',
       pixelFormat: 'yuv420p',
       imageFormat: 'jpeg',
       jpegQuality: 92,

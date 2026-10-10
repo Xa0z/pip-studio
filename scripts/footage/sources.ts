@@ -103,6 +103,8 @@ export async function searchArchive(q: string, kind: Kind, fetcher: Fetch = fetc
   const j = await getJson(fetcher, url);
   const hits: Hit[] = [];
   for (const d of (j.response?.docs ?? []) as any[]) {
+    // Uploads that are not footage (screen captures, talks, slideshows) make poor shots.
+    if (mediatype !== 'audio' && /screen ?(recording|capture|shot)|slide ?show|webinar|lecture|podcast|powerpoint|tutorial/i.test(String(d.title ?? ''))) continue;
     const licenseUrl = String(d.licenseurl ?? '');
     const license = /publicdomain\/zero/.test(licenseUrl) ? 'CC0 1.0' : /publicdomain/.test(licenseUrl) ? 'Public domain' : /licenses\/by\//.test(licenseUrl) ? 'CC BY' : '';
     if (!allowedLicense(license, licenseUrl)) continue;
