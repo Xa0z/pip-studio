@@ -1,6 +1,6 @@
 /** The JSON Claude returns for a Pip Studio video (any niche, 30 to 62 s). Built on Pip Explains' scene schema. */
 import {z} from 'zod';
-import {countWords, SceneSchema, type Scene} from '../../src/schema.js';
+import {countWords, MAX_MEDIA_SCENES, SceneSchema, type Scene} from '../../src/schema.js';
 import {wordRange} from '../../src/timeline.js';
 import {HOOK_TYPES, type CtaType} from './goals.js';
 
@@ -54,6 +54,9 @@ export function studioPlanSchema(opts: StudioPlanOptions) {
         for (const h of sc.highlight) if (!sc.headline.toLowerCase().includes(h.toLowerCase())) issue(`scene ${i + 1}: highlight "${h}" is not in its headline`);
       });
       if (/#/.test(plan.caption)) issue('no hashtags inside the caption');
+      const media = s.filter((sc) => sc.visual?.layout === 'media');
+      if (media.length > MAX_MEDIA_SCENES) issue(`use the "media" layout at most ${MAX_MEDIA_SCENES} times`);
+      if (s.some((sc) => sc.visual?.layout === 'media' && sc.visual.src)) issue('leave "src" out of media visuals (code fills it in)');
     });
 }
 

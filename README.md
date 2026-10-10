@@ -131,10 +131,13 @@ Your existing TikTok developer app (from Pip Explains) needs a web login now, be
 2. Open the repo on GitHub > **Settings > Secrets and variables > Actions > New repository secret**. Add:
    `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `MASTER_ENCRYPTION_KEY`, `TELEGRAM_BOT_TOKEN`,
    `TIKTOK_CLIENT_KEY`, `TIKTOK_CLIENT_SECRET`, `GH_DISPATCH_TOKEN`, `OWNER_TELEGRAM_ID`, `PUBLIC_BASE_URL`.
-3. Optional: **Variables** tab > `ACTIONS_MINUTES_LIMIT`. Default 1700. On a **public** repo GitHub minutes are free, so you can set `0` (no limit).
-4. Open the **Actions** tab. If GitHub asks, click **I understand my workflows, go ahead and enable them**.
+3. Optional, free stock photos and clips (see "Photos and clips" below): `PEXELS_API_KEY` from
+   https://www.pexels.com/api/ (sign up, then **Your API key**) and `PIXABAY_API_KEY` from https://pixabay.com/api/docs/
+   (sign in; the key is shown under **Parameters > key**). Without them videos still get free Openverse photos, but no clips.
+4. Optional: **Variables** tab > `ACTIONS_MINUTES_LIMIT`. Default 1700. On a **public** repo GitHub minutes are free, so you can set `0` (no limit).
+5. Open the **Actions** tab. If GitHub asks, click **I understand my workflows, go ahead and enable them**.
    Open **Pip Studio tick** and click **Enable workflow** if it says disabled.
-5. Important: turn off the old Pip Explains schedule, or your channel gets two sets of videos:
+6. Important: turn off the old Pip Explains schedule, or your channel gets two sets of videos:
    Actions > **Post Pip video** > **...** > **Disable workflow**.
 
 ## 7. Connect Telegram to Vercel
@@ -165,7 +168,23 @@ to you. Nothing is posted until the first real slot, and in Approval mode only a
 ## Commands
 `/start` setup or continue · `/stats` today + 30-day chart · `/top` best videos · `/report` weekly report ·
 `/dashboard` Mini App · `/settings` change niche, goal, schedule, mode, or make a new character
-(the old one is kept) · `/pause` · `/resume` · `/disconnect` revokes TikTok and deletes all your data.
+(the old one is kept) · `/marketing` videos for a business · `/knowledge` business notes, files (PDF, Word, TXT, CSV)
+and website pages that scripts read · `/pause` · `/resume` · `/disconnect` revokes TikTok and deletes all your data.
+
+## Video variety
+Every video keeps the user's theme colours, but code picks a new style for each one (src/styles.ts): backdrop,
+headline motion, cut family, opening scene, captions, character corner, and 2D or 3D visuals. The opening, cuts,
+backdrop and headline motion never repeat back to back. 3D scenes use @remotion/three (Three.js) for bars, orbits
+and coin stacks, and CSS perspective for tiles and steps; they render on GitHub Actions like everything else.
+Preview several styles with `STILLS_IGNORE_CERTS=1 npx tsx studio/dev/style-stills.ts out/styles 4`.
+
+### Photos and clips
+A script can ask for up to two real photos or short clips (the `media` layout, with a plain search like
+"rainy street"). The worker finds them in free libraries (studio/worker/media.ts): Pexels and Pixabay
+(free keys, clips and photos, no credit required) and Openverse (no key, only CC0 and public-domain photos).
+Searches with brand names or famous characters are refused. Files are shrunk with ffmpeg, shown in a flat
+framed card, and their credit is kept in `plan.media_credits`. If nothing is found the scene shows its icon.
+Add `STILLS_MEDIA=<dir with photo.jpg and clip.mp4>` to the preview command to see the media scenes.
 
 ## Analytics
 - Account snapshot every 6 hours; video snapshots at 1 h, 6 h, 24 h, 3 days, 7 days, then daily to day 30. Never deleted.

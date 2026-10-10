@@ -83,6 +83,8 @@ jobs:
           OWNER_TELEGRAM_ID: ${{ secrets.OWNER_TELEGRAM_ID }}
           GH_DISPATCH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
           GITHUB_REPO: ${{ github.repository }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
         run: npx tsx studio/worker/cli.ts job prepare "$JOB_ID"
 
       - name: Render (no secrets)

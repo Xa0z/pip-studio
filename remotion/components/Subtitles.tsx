@@ -1,7 +1,7 @@
 import React, {useMemo} from 'react';
 import {spring, useCurrentFrame, useVideoConfig} from 'remotion';
 import type {Word} from '../../src/schema';
-import {FONT, useTheme} from '../theme';
+import {FONT, useStyle, useTheme} from '../theme';
 
 type Group = {words: Word[]; start: number; end: number};
 
@@ -24,6 +24,7 @@ export const groupWords = (words: Word[]): Group[] => {
 
 export const Subtitles: React.FC<{words: Word[]; top?: number}> = ({words, top = 1330}) => {
   const th = useTheme();
+  const style = useStyle();
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const t = frame / fps;
@@ -33,8 +34,11 @@ export const Subtitles: React.FC<{words: Word[]; top?: number}> = ({words, top =
   const g = groups[gi];
   const since = t - g.start;
   const pop = Math.min(1, 0.85 + since * 1.5);
+  const card = style.captions === 'card';
+  const underline = style.captions === 'underline';
   return (
-    <div style={{position: 'absolute', top, left: 40, width: 1000, display: 'flex', justifyContent: 'center', flexWrap: 'wrap', columnGap: 34, transform: `scale(${pop})`}}>
+    <div style={{position: 'absolute', top, left: 40, width: 1000, display: 'flex', justifyContent: 'center', transform: `scale(${pop})`}}>
+    <div style={{display: 'flex', justifyContent: 'center', flexWrap: 'wrap', columnGap: 34, ...(card ? {background: th.surface, border: `3px solid ${th.line}`, borderRadius: 26, padding: '12px 40px', boxShadow: `0 8px 0 ${th.track}`} : null)}}>
       {g.words.map((w, i) => {
         const active = t >= w.start - 0.03 && (t < (g.words[i + 1]?.start ?? Infinity));
         // Each word gets a small spring "hit" the moment it is spoken.
@@ -46,22 +50,25 @@ export const Subtitles: React.FC<{words: Word[]; top?: number}> = ({words, top =
             style={{
               fontFamily: FONT,
               fontWeight: 800,
-              fontSize: 80,
+              fontSize: card ? 72 : 80,
               letterSpacing: -0.5,
-              color: active ? th.onAccent : th.ink,
-              background: active ? th.accent : 'transparent',
+              color: active ? (underline || card ? th.accent : th.onAccent) : th.ink,
+              background: active && !underline && !card ? th.accent : 'transparent',
               borderRadius: 14,
               padding: '0 14px',
               margin: '0 -14px',
               display: 'inline-block',
+              position: 'relative',
               scale: `${lift}`,
-              rotate: active ? `${(1 - hit) * -3}deg` : '0deg',
+              rotate: active && !card ? `${(1 - hit) * -3}deg` : '0deg',
             }}
           >
             {w.text}
+            {underline && active ? <span style={{position: 'absolute', left: 14, right: 14, bottom: 2, height: 10, borderRadius: 5, background: th.accent, scale: `${hit} 1`, transformOrigin: '0 50%'}} /> : null}
           </span>
         );
       })}
+    </div>
     </div>
   );
 };

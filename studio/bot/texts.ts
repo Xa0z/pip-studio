@@ -90,14 +90,18 @@ export const T = {
     `⚡ Full auto is only for the owner until TikTok approves this app (their rules say each post needs your OK). I set <b>Approval mode</b> for now.`,
   summary: (s: {username: string; niches: string[]; goal: Goal; character: string | null; voice: string; theme: string; times: string[]; tz: string; mode: Mode; link?: string}) =>
     `📋 <b>Here's your channel:</b>\nTikTok: @${esc(s.username)}\nNiche: ${s.niches.map((p) => esc(nicheLabel(p))).join(', ')}\nGoal: ${GOALS[s.goal].emoji} ${GOALS[s.goal].label}${s.link ? ` (${esc(s.link)})` : ''}\nCharacter: ${s.character ? esc(s.character) : 'none'} · Voice: ${esc(s.voice)}\nTheme: ${esc(s.theme)}\nPosts: ${s.times.length}/day at ${s.times.join(', ')} (${esc(s.tz)})\nMode: ${s.mode === 'approval' ? '✋ Approval' : '⚡ Full auto'}`,
-  askTheme: () =>
-    `🎨 <b>Pick a look for your videos.</b>\nThis sets the background, text and highlight colours. You can change it any time in /settings.`,
+  askTheme: (own: string | null) =>
+    `🎨 <b>Pick a look for your videos.</b>\nThis sets the background, text and highlight colours. ${own ? `If you skip this, you get colours made just for you (<b>${esc(own)}</b>), so your videos don't look like anyone else's. ` : ''}Use your brand colours or logo to match your business. You can change it any time in /settings.`,
+  askBrand: () =>
+    `🏷 <b>Your brand colours</b>\n\nSend your <b>logo as a photo</b> and I'll pick the colours from it.\n\nOr type 2 or 3 colours: <b>background</b>, <b>main colour</b>, and an optional <b>second colour</b>. Like this:\n<code>#FFF8F0 #D2462E #2E5E8C</code>`,
+  brandFound: (label: string) => `🎨 From your logo I got: <b>${esc(label)}</b>\n(background, main colour${label.split(',').length > 2 ? ', second colour' : ''})\nUse these?`,
+  brandNone: () => `I couldn't find clear colours in that logo (it may be black and white). Type your colours instead, like <code>#FFF8F0 #D2462E</code>.`,
   typeTheme: () =>
     `✏️ Send two colours: the <b>background</b> first, then the <b>highlight</b>. Like this:\n<code>#F2E8DC #A84F2C</code>\nOr paste your brand palette with labels (Background, Primary, Text, Highlight...) and I'll use it.`,
   themeBad: (why: string) =>
     why === 'contrast'
       ? `Those two colours are too close, so highlights would be hard to see. Pick a darker or lighter highlight and send both again.`
-      : `I need two colours like <code>#F2E8DC #A84F2C</code> (background first, then highlight), or a labelled palette with a <b>Background</b> line. Try again.`,
+      : `I need colours like <code>#F2E8DC #A84F2C</code> (background first, then highlight), or a labelled palette with a <b>Background</b> line. Try again.`,
   themeSaved: (label: string) => `🎨 Video theme: <b>${esc(label)}</b>`,
   themePicked: (c: {bg: string; accent: string; ink?: string; inkMuted?: string; surface?: string; accent2?: string; accentSoft?: string; marker?: string}) => {
     const rows: [string, string | undefined][] = [
@@ -143,6 +147,7 @@ export const T = {
       '📊 /dashboard  full analytics',
       '⚙️ /settings  niche, goal, schedule, theme',
       '📣 /marketing  videos for your business',
+      '📚 /knowledge  teach me about your business',
       '⏸ /pause  and  ▶️ /resume  posting',
       '🗑 /disconnect  delete your data',
       '',
@@ -207,4 +212,45 @@ export const T = {
   marketingOff: () => `✅ Back to explainer videos. Pick your niche:`,
   marketingMenu: (business: string, lastDay: string | null) =>
     `📣 <b>Marketing videos are on</b>\n\nBusiness: ${esc([...business].slice(0, 200).join(''))}${business.length > 200 ? '…' : ''}\n${lastDay ? `Latest references: for ${esc(lastDay)}` : 'No references yet.'}`,
+
+  // Business knowledge
+  knowledgeMenu: (k: {items: {kind: string; title: string; chars: number}[]; summary: string | null; total: number; max: number; marketing: boolean; useInExplainers: boolean}) =>
+    [
+      '📚 <b>Business knowledge</b>',
+      '',
+      k.marketing
+        ? 'Your marketing videos only say what is written here: prices, offers, products, how to order. The more you add, the more varied and accurate they get.'
+        : `Tell me about your business and I can use it in your videos.${k.useInExplainers ? ' Your explainer videos pick topics for your customers and can mention your business at the end.' : ' Turn it on for your explainer videos below.'}`,
+      '',
+      k.summary ? `🏪 Summary: ${esc([...k.summary].slice(0, 120).join(''))}${k.summary.length > 120 ? '…' : ''}` : '🏪 No summary yet.',
+      ...(k.items.length
+        ? k.items.map((i, n) => `${n + 1}. ${i.kind === 'link' ? '🌐' : i.kind === 'file' ? '📄' : '📝'} ${esc(i.title)} <i>(${i.chars.toLocaleString('en-US')} characters)</i>`)
+        : ['Nothing else saved yet.']),
+      '',
+      `<i>${Math.round((k.total / k.max) * 100)}% of the space used.</i>`,
+    ].join('\n'),
+  askKnowledge: () =>
+    `➕ <b>Add business knowledge</b>\n\nSend me anything about your business, one message at a time:\n📝 type or forward a message (products, prices, offers, FAQ, opening hours, your story)\n📄 send a file (PDF, Word, TXT, CSV), like a menu or price list\n🌐 send your website link and I'll read the page\n\nOnly put real facts here: videos never make up offers or numbers. Tap Done when you're finished.`,
+  knowledgeAdded: (title: string, chars: number, trimmed: boolean) =>
+    `✅ Added <b>${esc(title)}</b> (${chars.toLocaleString('en-US')} characters)${trimmed ? '. It was long, so I kept the first part' : ''}. Send more or tap Done.`,
+  knowledgeReading: (what: string) => `📖 Reading ${esc(what)}…`,
+  knowledgeBad: (why: 'type' | 'big' | 'empty' | 'full' | 'read' | 'link', detail?: string) =>
+    why === 'type'
+      ? `I can read PDF, Word (.docx), TXT, CSV and web pages. Send it as one of those, or paste the text.`
+      : why === 'big'
+        ? `That file is over 5 MB. Send a smaller one, or paste the important part as text.`
+        : why === 'empty'
+          ? `I couldn't find any text in that. If it's a scanned PDF or a photo, type the important part instead.`
+          : why === 'full'
+            ? `Your business knowledge is full. Remove something you don't need any more (/knowledge, then Remove one).`
+            : why === 'link'
+              ? `I can't open that link${detail ? ` (${esc(detail)})` : ''}. Paste the text from the page instead.`
+              : `I couldn't read that file${detail ? ` (${esc(detail)})` : ''}. Paste the text instead.`,
+  knowledgePhoto: () => `I can't read photos yet. Send the text, a PDF or your website link instead.`,
+  knowledgeDone: (count: number) => `👍 Saved. Your next videos will use your ${count === 1 ? 'one piece' : `${count} pieces`} of business knowledge.`,
+  knowledgeCleared: () => `🧹 Cleared. Your short business summary is still saved.`,
+  knowledgeRemoved: (title: string) => `🗑 Removed ${esc(title)}.`,
+  knowledgeExplainers: (on: boolean) =>
+    on ? `✅ Your explainer videos will now pick topics your customers care about and can mention your business at the end.` : `👍 Your explainer videos won't use your business knowledge.`,
+  knowledgeHint: () => `Tip: you can also teach me more about your business (files, website, price list) with /knowledge.`,
 };
