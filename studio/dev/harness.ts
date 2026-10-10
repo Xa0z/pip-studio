@@ -85,6 +85,8 @@ export type HarnessOptions = {
   findMedia?: import('../worker/media.js').MediaFinder;
   /** Changes every video plan the fake Claude writes (e.g. to add a media scene). */
   editPlan?: (plan: any) => any;
+  /** Answer some Claude calls yourself (return undefined to use the normal fake answer). */
+  answer?: (prompt: string, system: string) => string | undefined;
   /** Write generated characters into the real remotion/ folder (only for real renders). */
   realRegistry?: boolean;
 };
@@ -116,8 +118,8 @@ export class Harness {
     const workDir = opts.workDir ?? fs.mkdtempSync(path.join(os.tmpdir(), 'pip-studio-work-'));
     this.mediaDir = opts.mediaDir ?? path.join(workDir, '_media');
     fs.mkdirSync(this.mediaDir, {recursive: true});
-    if (opts.realRegistry) delete process.env.STUDIO_REGISTRY_DIR;
-    else process.env.STUDIO_REGISTRY_DIR = path.join(workDir, '_registry');
+    if (opts.realRegistry) delete process.env.STUDIO_REGISTRY_DIR, delete process.env.STUDIO_EPISODE_DIR;
+    else (process.env.STUDIO_REGISTRY_DIR = path.join(workDir, '_registry')), (process.env.STUDIO_EPISODE_DIR = path.join(workDir, '_episodes'));
     const now = opts.now ?? (() => new Date());
     this.now = now;
     setMemoryStoreClock(now);
@@ -179,6 +181,8 @@ export class Harness {
         const inner = fakeAsk(() => this.characterName());
         return (prompt, system, images) => {
           this.systems.push(system);
+          const own = opts.answer?.(prompt, system);
+          if (own !== undefined) return Promise.resolve(own);
           const out = inner(prompt, system, images);
           const edit = opts.editPlan;
           if (!edit) return out;

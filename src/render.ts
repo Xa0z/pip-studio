@@ -12,6 +12,15 @@ import {TOTAL_FRAMES, FPS} from './timeline.js';
 
 const MUSIC_EXT = /\.(mp3|wav|m4a|aac|ogg)$/i;
 
+/**
+ * Chromium settings. REMOTION_GL=angle (or swangle, egl...) changes the WebGL backend if 3D scenes ever
+ * render blank on a server; RENDER_IGNORE_CERTS=1 is only for sandboxes whose proxy breaks Google Fonts.
+ */
+const chromiumOptions = () => ({
+  ...(process.env.REMOTION_GL ? {gl: process.env.REMOTION_GL as 'angle'} : {}),
+  ...(process.env.RENDER_IGNORE_CERTS ? {ignoreCertificateErrors: true} : {}),
+});
+
 /** Picks a track from assets/music (rotates by episode). Null if the folder is empty. */
 export const pickMusic = (episode: number): string | null => {
   const dir = path.join(ROOT, 'assets', 'music');
@@ -63,6 +72,7 @@ export async function renderVideo(opts: {
     id: opts.compositionId ?? 'PipVideo',
     inputProps,
     browserExecutable: process.env.REMOTION_BROWSER_EXECUTABLE || null,
+    chromiumOptions: chromiumOptions(),
   });
   const wantFrames = opts.props.totalFrames ?? TOTAL_FRAMES;
   if (composition.durationInFrames !== wantFrames || composition.fps !== FPS) {
@@ -84,6 +94,7 @@ export async function renderVideo(opts: {
     audioCodec: 'aac',
     audioBitrate: '320k',
     browserExecutable: process.env.REMOTION_BROWSER_EXECUTABLE || null,
+    chromiumOptions: chromiumOptions(),
     onProgress: ({progress}) => {
       const pct = Math.floor(progress * 100);
       if (pct >= lastPct + 10) {
@@ -122,6 +133,7 @@ export async function renderStillPng(opts: {compositionId: string; inputProps: R
     id: opts.compositionId,
     inputProps: opts.inputProps,
     browserExecutable: process.env.REMOTION_BROWSER_EXECUTABLE || null,
+    chromiumOptions: chromiumOptions(),
   });
   await renderStill({
     composition,
@@ -131,6 +143,7 @@ export async function renderStillPng(opts: {compositionId: string; inputProps: R
     frame: opts.frame ?? 0,
     imageFormat: opts.outPath.endsWith('.jpg') ? 'jpeg' : 'png',
     browserExecutable: process.env.REMOTION_BROWSER_EXECUTABLE || null,
+    chromiumOptions: chromiumOptions(),
   });
   return serveUrl;
 }

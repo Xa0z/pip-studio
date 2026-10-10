@@ -14,6 +14,8 @@ import {resolveTheme} from '../src/themes';
 import {FONT, StyleContext, ThemeContext, TOTAL_FRAMES, useStyle} from './theme';
 import {resolveStyle} from '../src/styles';
 import {EASE_IN, EASE_IN_OUT, ENTER_FRAMES, EXIT_FRAMES, prog, transitionFor, WIPE_FRAMES} from './motion';
+import {DirectorVideo} from './director/DirectorVideo';
+import {EPISODES} from './director/registry';
 
 type Box = {left: number; top: number; width: number};
 const PIP_BIG: Box = {left: 320, top: 770, width: 440};
@@ -123,7 +125,21 @@ const Progress: React.FC<{scenes: TimedScene[]; kind: 'segments' | 'line' | 'non
   );
 };
 
-export const Video: React.FC<VideoProps> = ({title, scenes, words, voiceFile, musicFile, totalFrames = TOTAL_FRAMES, character = 'pip', ctaLabel = '+ Follow Pip', theme, style: styleIn, sfx = false}) => {
+export const Video: React.FC<VideoProps> = (props) => {
+  const th = props.theme ?? resolveTheme(null);
+  const style = resolveStyle(props.style);
+  // A video Claude wrote as code (studio/worker/director.ts) draws itself; everything else uses the scene layouts.
+  const Episode = props.episodeKey ? EPISODES[props.episodeKey] : undefined;
+  return (
+    <ThemeContext.Provider value={th}>
+      <StyleContext.Provider value={style}>
+        {Episode ? <DirectorVideo {...props} theme={th} Episode={Episode} /> : <LayoutVideo {...props} />}
+      </StyleContext.Provider>
+    </ThemeContext.Provider>
+  );
+};
+
+const LayoutVideo: React.FC<VideoProps> = ({title, scenes, words, voiceFile, musicFile, totalFrames = TOTAL_FRAMES, character = 'pip', ctaLabel = '+ Follow Pip', theme, style: styleIn, sfx = false}) => {
   const th = theme ?? resolveTheme(null);
   const style = resolveStyle(styleIn);
   const Character = character ? CHARACTERS[character] ?? null : null;

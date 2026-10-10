@@ -48,9 +48,64 @@ function walk(node: any, visit: (n: Node, parent: Node | null) => void, parent: 
   }
 }
 
+/** What one kind of Claude-written file may use. */
+type Profile = {
+  maxBytes: number;
+  imports: Record<string, Set<string>>;
+  tags: Set<string>;
+  /** Tags like <Series.Sequence> that are allowed. */
+  memberTags: Set<string>;
+  exportName: string;
+  /** Object keys that are not allowed (CSS animation keys that would not render frame by frame). */
+  bannedKeys?: Set<string>;
+};
+
+const CHARACTER: Profile = {maxBytes: MAX_BYTES, imports: ALLOWED_IMPORTS, tags: SVG_TAGS, memberTags: new Set(['React.Fragment']), exportName: 'Character'};
+
+// ---------- episodes: a whole video's visuals, written by Claude as Remotion code ----------
+
+/** What studio/worker/director.ts lets an episode import. '../kit' is remotion/director/kit.tsx. */
+export const EPISODE_IMPORTS: Record<string, Set<string>> = {
+  react: new Set(['default', 'useId', 'useMemo', 'Fragment']),
+  remotion: new Set(['AbsoluteFill', 'Sequence', 'Series', 'Loop', 'Freeze', 'useCurrentFrame', 'useVideoConfig', 'interpolate', 'interpolateColors', 'spring', 'measureSpring', 'Easing', 'random']),
+  '@remotion/three': new Set(['ThreeCanvas']),
+  three: new Set(['DoubleSide', 'BackSide', 'FrontSide', 'MathUtils']),
+  '../kit': new Set(['Character', 'Icon', 'KineticText', 'Highlighted', 'Media', 'useTheme', 'FONT', 'useBeats', 'useWords', 'useHasCharacter', 'CANVAS', 'Beat']),
+};
+
+const HTML_TAGS = ['div', 'span', 'p', 'h1', 'h2', 'h3', 'strong', 'em', 'b', 'i', 'small', 'br', 'ul', 'ol', 'li'];
+
+/** React Three Fiber elements (3D). No <primitive>, loaders or textures: everything is built from plain shapes. */
+const R3F_TAGS = [
+  'group', 'mesh', 'instancedMesh', 'points', 'lineSegments',
+  'ambientLight', 'directionalLight', 'pointLight', 'spotLight', 'hemisphereLight', 'rectAreaLight',
+  'boxGeometry', 'sphereGeometry', 'cylinderGeometry', 'coneGeometry', 'torusGeometry', 'torusKnotGeometry', 'planeGeometry',
+  'circleGeometry', 'ringGeometry', 'capsuleGeometry', 'icosahedronGeometry', 'octahedronGeometry', 'dodecahedronGeometry',
+  'tetrahedronGeometry', 'latheGeometry', 'tubeGeometry', 'edgesGeometry',
+  'meshStandardMaterial', 'meshBasicMaterial', 'meshPhongMaterial', 'meshLambertMaterial', 'meshToonMaterial', 'meshPhysicalMaterial',
+  'meshMatcapMaterial', 'meshNormalMaterial', 'lineBasicMaterial', 'pointsMaterial', 'fog', 'color',
+];
+
+const EPISODE: Profile = {
+  maxBytes: 80_000,
+  imports: EPISODE_IMPORTS,
+  tags: new Set([...SVG_TAGS, ...HTML_TAGS, ...R3F_TAGS]),
+  memberTags: new Set(['React.Fragment', 'Series.Sequence']),
+  exportName: 'Episode',
+  bannedKeys: new Set(['animation', 'animationName', 'transition', 'transitionDuration', 'animationDuration']),
+};
+
+/** Checks a Claude-written episode (one file that draws a whole video). Empty = safe to render. */
+export const checkEpisodeCode = (code: string) => checkCode(code, EPISODE);
+
 export function checkCharacterCode(code: string): string[] {
+  return checkCode(code, CHARACTER);
+}
+
+function checkCode(code: string, profile: Profile): string[] {
   const errors: string[] = [];
-  if (Buffer.byteLength(code, 'utf8') > MAX_BYTES) errors.push(`code is over ${MAX_BYTES / 1000} KB`);
+  const MAX = profile.maxBytes;
+  if (Buffer.byteLength(code, 'utf8') > MAX) errors.push(`code is over ${MAX / 1000} KB`);
   let ast: any;
   try {
     ast = parse(code, {sourceType: 'module', plugins: ['typescript', 'jsx']});
@@ -63,6 +118,8 @@ export function checkCharacterCode(code: string): string[] {
   for (const name of TRUSTED_GLOBALS) if (numeric.declared.has(name)) errors.push(`"${name}" can't be redefined`);
 
   walk(ast.program, (n) => {
+    // Components imported from an allowed module can be used as tags too.
+    if (n.type === 'ImportDeclaration' && profile.imports[n.source.value]) for (const sp of n.specifiers) if (/^[A-Z]/.test(sp.local?.name ?? '')) localComponents.add(sp.local.name);
     if ((n.type === 'VariableDeclarator' || n.type === 'FunctionDeclaration') && n.id?.type === 'Identifier' && /^[A-Z]/.test(n.id.name)) {
       localComponents.add(n.id.name);
     }
@@ -71,7 +128,7 @@ export function checkCharacterCode(code: string): string[] {
   walk(ast.program, (n, parent) => {
     switch (n.type) {
       case 'ImportDeclaration': {
-        const allowed = ALLOWED_IMPORTS[n.source.value];
+        const allowed = profile.imports[n.source.value];
         if (!allowed) errors.push(`import from "${n.source.value}" is not allowed`);
         else if (n.importKind === 'type') break;
         else
@@ -91,9 +148,9 @@ export function checkCharacterCode(code: string): string[] {
       case 'ExportNamedDeclaration': {
         if (n.source) errors.push('re-exports are not allowed');
         const d = n.declaration;
-        if (d?.type === 'VariableDeclaration' && d.declarations.some((x: Node) => x.id?.name === 'Character')) exportsCharacter = true;
-        if (d?.type === 'FunctionDeclaration' && d.id?.name === 'Character') exportsCharacter = true;
-        if (n.specifiers?.some((s: Node) => (s.exported?.name ?? s.exported?.value) === 'Character')) exportsCharacter = true;
+        if (d?.type === 'VariableDeclaration' && d.declarations.some((x: Node) => x.id?.name === profile.exportName)) exportsCharacter = true;
+        if (d?.type === 'FunctionDeclaration' && d.id?.name === profile.exportName) exportsCharacter = true;
+        if (n.specifiers?.some((s: Node) => (s.exported?.name ?? s.exported?.value) === profile.exportName)) exportsCharacter = true;
         break;
       }
       case 'Identifier': {
@@ -109,14 +166,14 @@ export function checkCharacterCode(code: string): string[] {
       case 'StringLiteral':
       case 'TemplateElement': {
         const v: string = n.type === 'StringLiteral' ? n.value : n.value?.cooked ?? '';
-        if (URLISH.test(v)) errors.push('links and URLs are not allowed in character code');
+        if (URLISH.test(v)) errors.push('links and URLs are not allowed in this code');
         if (BANNED_ANYWHERE.has(v)) errors.push(`"${v}" is not allowed`);
         break;
       }
       case 'TemplateLiteral': {
         // `htt${''}ps://…` passes the per-piece check above: also check the pieces joined.
         const joined = n.quasis.map((q: Node) => q.value?.cooked ?? '').join('');
-        if (URLISH.test(joined)) errors.push('links and URLs are not allowed in character code');
+        if (URLISH.test(joined)) errors.push('links and URLs are not allowed in this code');
         if (BANNED_ANYWHERE.has(joined)) errors.push(`"${joined}" is not allowed`);
         break;
       }
@@ -129,10 +186,10 @@ export function checkCharacterCode(code: string): string[] {
       case 'JSXOpeningElement': {
         const name = n.name;
         if (name.type === 'JSXIdentifier') {
-          if (/^[a-z]/.test(name.name) && !SVG_TAGS.has(name.name)) errors.push(`<${name.name}> is not allowed (only SVG drawing tags)`);
+          if (/^[a-z]/.test(name.name) && !profile.tags.has(name.name)) errors.push(`<${name.name}> is not allowed${profile === CHARACTER ? ' (only SVG drawing tags)' : ''}`);
           if (/^[A-Z]/.test(name.name) && !localComponents.has(name.name) && name.name !== 'Fragment') errors.push(`<${name.name}> is not defined in this file`);
         } else if (name.type === 'JSXMemberExpression') {
-          if (!(name.object.name === 'React' && name.property.name === 'Fragment')) errors.push('only React.Fragment is allowed as a member tag');
+          if (!profile.memberTags.has(`${name.object.name}.${name.property.name}`)) errors.push(`only ${[...profile.memberTags].join(', ')} allowed as member tags`);
         } else errors.push('namespaced tags are not allowed');
         for (const a of n.attributes) {
           if (a.type === 'JSXSpreadAttribute') {
@@ -151,6 +208,7 @@ export function checkCharacterCode(code: string): string[] {
       case 'ClassProperty':
         // The number-index check trusts .map(…) index params, .length and Math: keep those meaning what they say.
         if (!n.computed && TRUSTED_KEYS.has(n.key?.name ?? n.key?.value)) errors.push(`defining "${n.key.name ?? n.key.value}" is not allowed`);
+        if (!n.computed && profile.bannedKeys?.has(n.key?.name ?? n.key?.value)) errors.push(`CSS "${n.key.name ?? n.key.value}" does not render frame by frame: animate with useCurrentFrame() and interpolate()`);
         break;
       case 'AssignmentExpression':
         if ((n.left.type === 'MemberExpression' || n.left.type === 'OptionalMemberExpression') && !n.left.computed && TRUSTED_KEYS.has(n.left.property.name)) {
@@ -171,7 +229,7 @@ export function checkCharacterCode(code: string): string[] {
     }
   });
 
-  if (!exportsCharacter) errors.push('must export a component named "Character"');
+  if (!exportsCharacter) errors.push(`must export a component named "${profile.exportName}"`);
   return [...new Set(errors)];
 }
 

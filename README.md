@@ -186,6 +186,23 @@ Searches with brand names or famous characters are refused. Files are shrunk wit
 framed card, and their credit is kept in `plan.media_credits`. If nothing is found the scene shows its icon.
 Add `STILLS_MEDIA=<dir with photo.jpg and clip.mp4>` to the preview command to see the media scenes.
 
+### Director videos (the default)
+Each video is made in two Claude calls, so there is no fixed video type:
+1. **The brief** (studio/worker/planner.ts, studio/lib/director-schema.ts): Claude picks a format that fits the topic
+   (myth vs fact, countdown, one long 3D camera move...), different from the channel's recent ones, and writes the
+   script as free "beats" (what is said and what is seen) plus a motion designer's brief.
+2. **The code** (studio/worker/director.ts): after the voice is made, Claude writes the whole video as one Remotion
+   file from that brief, timed to the real voice. Its prompt carries the rules from the official Remotion skill
+   (`.claude/skills/remotion-best-practices`, from `npx skills add remotion-dev/skills`) and the kit
+   (remotion/director/kit.tsx). Only the theme colours, font, captions and character are fixed.
+
+The file is checked before it can run (studio/lib/charcheck.ts: only allowed imports and tags, no network, no
+CSS animation; then a TypeScript check), and Claude gets the errors to fix (2 rounds). If it still fails, or the
+render breaks, the same script is rendered with the scene layouts, so a post is never lost. `plan.episode` says
+which one was used. Set `DIRECTOR_VIDEOS=off` to always use the layouts. If 3D ever renders blank on a server,
+set `REMOTION_GL=angle`. Test videos: put `<name>-plan.json` and `<name>-episode.tsx` in fixtures/director and push;
+the "Director test video" workflow renders them with the real voice to the previews-director branch.
+
 ## Analytics
 - Account snapshot every 6 hours; video snapshots at 1 h, 6 h, 24 h, 3 days, 7 days, then daily to day 30. Never deleted.
 - Engagement = (likes + comments + shares) / views. 24 h velocity = views at the 24 h snapshot.

@@ -1,0 +1,92 @@
+{
+  "niche": "Science & space",
+  "category": "the moon",
+  "topic": "Why we only see one side of the Moon",
+  "format": "one long 3D camera move with live counters",
+  "mainFact": "The Moon spins once on its axis in about 27 days, the same time it takes to orbit Earth, so the same side always faces us (tidal locking).",
+  "supportingDetails": [
+    "The Moon's rotation period and its orbital period are both about 27.3 days.",
+    "Earth's gravity slowed the young Moon's spin until the two periods matched.",
+    "The far side gets as much sunlight as the near side; it is not permanently dark."
+  ],
+  "source": "NASA Science: Moon in Motion (tidal locking)",
+  "hookType": "shock",
+  "captionStyle": "question",
+  "caption": "Why do we only ever see one side of the Moon? It's spinning the whole time.",
+  "hashtags": ["#space", "#moon", "#science", "#didyouknow"],
+  "brief": "CONCEPT: one continuous 3D shot of the Earth-Moon system, like a single camera move that never cuts. The hook works because everyone has looked at the Moon, and nobody has noticed it hides a face. We start uncomfortably close on the Moon's near side, filling the frame, with three big crater discs in the accent colour forming a simple 'face' pattern. Then we keep pulling back and up until the viewer can see the whole trick from above.\n\nLOOK: flat, matte 3D (meshStandardMaterial, roughness about 0.9, no shine). Moon in the surface colour with accent craters on ONE side only, so you can always tell which side faces Earth. Earth is a smaller sphere in accent2 with an ink-coloured ring for an equator. Ambient light plus one directional key light from the side (the Sun), so the Moon has a clear lit half and a soft shaded half. Background stays the theme background, no stars.\n\nBEAT FLOW: (0) Hook: extreme close-up on the crater face, slow push in, big two-line headline at the top that stamps in word by word. Pip pops up from the bottom-left corner, surprised. (1) Camera dollies back with spring easing until Earth enters at the bottom of the frame; the crater face keeps looking at Earth. (2) A thin ink axis line appears through the Moon and a curved arrow shows it spinning; a label card 'SPIN' with a counter ticking 0 to 27 days slides in from the right. (3) Camera cranes up to a top-down view; the Moon travels around Earth on a dashed orbit ring, still showing Earth the same face; a second card 'ORBIT' counts to 27 days, staggered under the first. (4) Both counters land on 27 at the same moment and snap together with a small scale punch; the words 'TIDAL LOCKING' stamp in with the accent marker. (5) Rewind feel: the Moon stretches into an egg shape toward Earth (scale on one axis) and its spin visibly slows, then settles back to round and locked. (6) The Sun light swings so the far side is lit; camera orbits behind the Moon to show the plain, unseen side catching full light; headline 'NOT DARK. JUST HIDDEN.' (7) CTA: camera eases back to the opening angle, a 'PART 2' card flips in, Pip waves big in the middle-bottom area above the captions.\n\nMOTION: everything driven by the frame: camera dolly and crane with Easing.bezier(0.16, 1, 0.3, 1) or spring(damping 200); cards enter with a staggered spring from the side and leave by sliding out before the next beat; counters use interpolate with clamp; no hard cuts, the 3D canvas stays the same across beats so it reads as one shot. Pip stays in the frame the whole time, small (about 300 px wide) in a corner during the explanation, bigger for the hook and the CTA, pointing at the counters in beats 2 to 4 and thinking during beat 5. Energy: calm and confident at first, building speed at the locking moment, friendly at the end.",
+  "scenes": [
+    {
+      "role": "hook",
+      "narration": "The Moon is hiding its other face from you.",
+      "headline": "The Moon is hiding",
+      "highlight": ["hiding"],
+      "pip": {"expression": "surprised", "pose": "pointing"},
+      "idea": "Extreme close-up of the Moon's near side filling the frame, three accent crater discs like a face, slow push in. Headline stamps in at the top. Pip pops up bottom-left, surprised, pointing at the Moon.",
+      "icon": "moon"
+    },
+    {
+      "role": "fact",
+      "narration": "From Earth, we always see the same side of the Moon. Same craters, every night.",
+      "headline": "Always the same side",
+      "highlight": ["same side"],
+      "pip": {"expression": "happy", "pose": "idle"},
+      "idea": "Camera dollies back with spring easing; Earth rises into the bottom of the frame. The crater face keeps pointing at Earth. Headline slides in from the left.",
+      "icon": "earth"
+    },
+    {
+      "role": "fact",
+      "narration": "But the Moon does spin. It turns once on its axis every twenty-seven days.",
+      "headline": "It does spin",
+      "highlight": ["spin"],
+      "pip": {"expression": "excited", "pose": "pointing"},
+      "idea": "A thin axis line pierces the Moon and a curved arrow loops around it. A 'SPIN' card with a day counter ticking from 0 to 27 slides in from the right. Pip points at the card.",
+      "icon": "clock"
+    },
+    {
+      "role": "fact",
+      "narration": "And it takes the same twenty-seven days to circle the Earth once.",
+      "headline": "One orbit, 27 days",
+      "highlight": ["27 days"],
+      "pip": {"expression": "thinking", "pose": "pointing"},
+      "idea": "Camera cranes up to a top-down view. The Moon travels around Earth on a dashed ring while its crater face keeps looking at Earth. An 'ORBIT' counter card staggers in under the 'SPIN' card and counts to 27.",
+      "icon": "planet"
+    },
+    {
+      "role": "fact",
+      "narration": "Spin and orbit match perfectly, so the same face always points at us. Scientists call this tidal locking.",
+      "headline": "Tidal locking",
+      "highlight": ["locking"],
+      "pip": {"expression": "excited", "pose": "jumping"},
+      "idea": "Both counters land on 27 together and snap side by side with a scale punch. 'TIDAL LOCKING' stamps in with the accent marker. The orbit keeps turning underneath.",
+      "icon": "lock"
+    },
+    {
+      "role": "fact",
+      "narration": "Long ago, Earth's gravity slowed the Moon's spin until the two speeds locked together.",
+      "headline": "Gravity hit the brakes",
+      "highlight": ["brakes"],
+      "pip": {"expression": "thinking", "pose": "idle"},
+      "idea": "The Moon stretches into an egg shape pointing at Earth while it spins fast, then the spin slows down and the Moon settles round and locked. A small 'LONG AGO' tag in the corner.",
+      "icon": "magnet"
+    },
+    {
+      "role": "fact",
+      "narration": "So the far side is not dark. It gets just as much sunlight. We simply never face it.",
+      "headline": "Not dark. Just hidden.",
+      "highlight": ["hidden"],
+      "pip": {"expression": "wink", "pose": "pointing"},
+      "idea": "The sunlight swings round so the far side is fully lit; the camera orbits behind the Moon to show its plain, crater-free side in full light. Headline at the top.",
+      "icon": "sun"
+    },
+    {
+      "role": "cta",
+      "narration": "Follow Pip for part two: what the far side really looks like!",
+      "headline": "Part 2: the far side",
+      "highlight": ["far side"],
+      "pip": {"expression": "happy", "pose": "waving"},
+      "idea": "Camera eases back to the opening angle. A 'PART 2' card flips in. Pip waves big, centred above the captions.",
+      "icon": "moon"
+    }
+  ]
+}

@@ -179,6 +179,8 @@ export type VideoProps = {
   theme?: VideoTheme;
   /** Backdrop, text motion, cuts, opening, captions and 2D/3D visuals (src/styles.ts). Default: the classic look. */
   style?: Partial<VideoStyle>;
+  /** Key in remotion/director/registry.tsx of the episode Claude wrote as code for this video. Unset = scene layouts. */
+  episodeKey?: string | null;
   /** Play the cut whooshes and the button pop. Set by the renderer when assets/sfx is copied in. */
   sfx?: boolean;
 };

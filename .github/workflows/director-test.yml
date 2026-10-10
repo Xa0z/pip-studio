@@ -1,0 +1,55 @@
+name: Director test video
+
+# Renders a director video (brief + Claude-written Remotion code) from files in fixtures/director,
+# with the real voice, and puts the MP4 on the previews-director branch.
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'fixtures/director/<name>-plan.json and <name>-episode.tsx'
+        default: 'moon'
+  push:
+    paths:
+      - 'fixtures/director/*-plan.json'
+      - 'fixtures/director/*-episode.tsx'
+      - '.github/workflows/director-test.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: director-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NAME: ${{ inputs.name || 'moon' }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: nm
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: nm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - if: steps.nm.outputs.cache-hit != 'true'
+        run: npm ci
+      - run: command -v ffmpeg || (sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg)
+      - run: npx remotion browser ensure
+      - uses: actions/cache@v4
+        with:
+          path: .models
+          key: models-${{ runner.os }}-${{ hashFiles('pip.config.json', 'src/voice.ts') }}
+          restore-keys: models-${{ runner.os }}-
+      - name: Render
+        run: |
+          mkdir -p out/director
+          npx tsx studio/dev/director-test.ts render "fixtures/director/$NAME-plan.json" "fixtures/director/$NAME-episode.tsx" "out/director/$NAME.mp4"
+      - name: Put the video on the previews-director branch
+        run: bash scripts/push-previews.sh previews-director "Director test: $NAME (${GITHUB_SHA::7})" "out/director/$NAME.mp4"
